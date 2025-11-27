@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import DatagridCustom from "./FScomponent/DatagridCustom"; // הנתיב בהתאם למבנה שלך
+import DatagridCustom from "../components/FScomponent/DatagridCustom"; // הנתיב בהתאם למבנה שלך
 import { TextField, MenuItem, Box } from "@mui/material";
 
 // שדות סטטוס בעברית

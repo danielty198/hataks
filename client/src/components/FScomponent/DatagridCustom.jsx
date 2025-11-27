@@ -1,21 +1,20 @@
-import { DataGrid, GridActionsCellItem,GridToolbarContainer ,GridToolbarColumnsButton,GridToolbarFilterButton,GridToolbarExport,GridToolbarQuickFilter} from "@mui/x-data-grid";
+import { DataGrid, GridActionsCellItem, GridToolbarContainer, GridToolbarColumnsButton, GridToolbarFilterButton, GridToolbarExport, GridToolbarQuickFilter } from "@mui/x-data-grid";
 import dayjs from "dayjs";
 import { Typography, Tooltip, Avatar, ThemeProvider, Box, CircularProgress, Backdrop, Fab, IconButton, } from "@mui/material";
-import { tableTheme } from "../../theme";
-import {useState, useEffect,useContext,useMemo,useCallback,
+// import { theme } from "../../theme";
+import {
+    useState, useEffect, useContext, useMemo, useCallback,
 } from "react";
 import InsertModal from "./InsertModal";
-import { useHistory } from "react-router-dom";
+import { useNavigate } from "react-router-dom";   // ✅ UPDATED
 import AddIcon from "@mui/icons-material/Add";
 import SaveIcon from "@mui/icons-material/Save";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 
-import { baseUrl, roles } from "../assets";
-import { AssetsContext } from "../contexts";
-import SignaturePad from "./SignaturePad";
-import OrdersNumbersDialog from "./OrdersNumbersDialog";
-import { useCookie } from "DanielsWonderlandOfMagic/CacheOfKingSean";
+import { baseUrl } from "../../assets";
+import { tableTheme } from "../../theme";
+// import { useCookie } from "DanielsWonderlandOfMagic/CacheOfKingSean";
 
 // ============================================================
 // Helper functions
@@ -84,13 +83,10 @@ export default function DatagridCustom({
     const [editedRows, setEditedRows] = useState([]);
     const [loading, setLoading] = useState(false);
     const [exportLoading, setExportLoading] = useState(false);
-    const { assets } = useContext(AssetsContext);
-    const history = useHistory();
+    const navigate = useNavigate();   // ✅ UPDATED
 
     const [openSignature, setOpenSignature] = useState(false);
     const [openOrderNumbers, setOpenOrderNumbers] = useState(false);
-
-    const [user] = useCookie("OM_user");
 
     // ============================================================
     // Fetch Data
@@ -226,7 +222,6 @@ export default function DatagridCustom({
 
             let formatted = value;
 
-            if (field === "role") formatted = roles[value];
             if (field.includes("Date") && !field.includes("Time"))
                 formatted = formatDate(value);
             if (field.includes("DateTime")) formatted = formatDateTime(value);
@@ -315,18 +310,6 @@ export default function DatagridCustom({
                     const idx = updated.findIndex((el) => el._id === newRow._id);
                     if (idx !== -1) updated.splice(idx, 1);
 
-                    // role mapping
-                    if (oldRow.role !== newRow.role)
-                        newRow.role = roles.findIndex((r) => r === newRow.role);
-
-                    // battalion → company mapping
-                    if (oldRow.battalion !== newRow.battalion) {
-                        newRow.company =
-                            assets.egedStructure
-                                .find((el) => el.battalion === newRow.battalion)
-                                ?.companies?.[0]?.company || "";
-                    }
-
                     setEditedRows([...updated, newRow]);
                     return newRow;
                 }}
@@ -344,7 +327,6 @@ export default function DatagridCustom({
         doubleClickFunc,
         clickFunc,
         cellDoubleClickFunc,
-        assets,
     ]);
 
     // ============================================================
@@ -380,7 +362,7 @@ export default function DatagridCustom({
                             color="success"
                             disabled={!modalContent?.length}
                             onClick={() => {
-                                addPage ? history.push(addPage) : setOpen(true);
+                                addPage ? navigate(addPage) : setOpen(true);   // ✅ UPDATED
                             }}
                         >
                             <AddIcon />
