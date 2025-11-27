@@ -8,18 +8,9 @@ export const theme = createTheme({
 });
 
 
-export const tableTheme = createTheme({
-
-    components: {
-        MuiTablePagination: {
-            styleOverrides: {
-                actions: {
-                    direction: 'rtl !important',
-                    transform: 'rotate(180deg)',
-                }
-            }
-        },
-    },
-},
-    heIL
-)
+export const tableTheme = createTheme(
+  {
+    direction: "rtl",
+  },
+  heIL
+);

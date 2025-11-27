@@ -66,7 +66,7 @@ export default function RepairsPage() {
   // api: שם ה־route (DatagridCustom יבקשת GET ל /api/{api}/)
   // frontFetch: ריק כדי לטעון את ה־GET הבסיסי (או תשים ''/ או ערך אחר אם צריך)
   return (
-    <Box sx={{ direction: "rtl", p: 2 }}>
+    <Box sx={{ p: 2 }}>
       <DatagridCustom
         api="repairs"
         frontFetch=""            // GET /api/repairs/
