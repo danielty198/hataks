@@ -1,10 +1,12 @@
 const express = require("express");
 const router = express.Router();
 
-const repairsModel = require("../models/Repairs");
+const hataksModel = require("../models/Hataks");
+
 const CrudOperations = require("../crudOperations");
 
-const crud = new CrudOperations(repairsModel);
+
+const crud = new CrudOperations(hataksModel);
 
 router.get("/", crud.getAll);
 router.get("/:id", crud.getById);

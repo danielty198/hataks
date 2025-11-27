@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import { Box, AppBar, Toolbar, Typography, Button } from "@mui/material";
 import Sidebar from "./components/Sidebar";
@@ -8,6 +8,7 @@ import Sidebar from "./components/Sidebar";
 import Repairs from "./pages/Repairs";
 
 function App() {
+
   return (
     <Box sx={{ display: "flex" }}>
       <Sidebar />
@@ -28,8 +29,11 @@ function App() {
           </Routes>
         </Box>
       </Box>
+
     </Box>
   );
 }
 
 export default App;
+
+
