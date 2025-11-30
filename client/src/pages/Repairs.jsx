@@ -1,66 +1,209 @@
 import React, { useState, useMemo } from "react";
 import DatagridCustom from "../components/FScomponent/DatagridCustom"; // הנתיב בהתאם למבנה שלך
-import { TextField, MenuItem, Box } from "@mui/material";
-
+import { TextField, MenuItem, Box, Autocomplete } from "@mui/material";
+import { DatePicker } from '@mui/x-date-pickers'
 // שדות סטטוס בעברית
 const STATUS_OPTIONS = ["ממתין", "בטיפול", "הושלם"];
 
 export default function RepairsPage() {
   // inputs ישלחו ל־InsertModal (הם נוצרים פה כהתחלה)
   const [inputs, setInputs] = useState({
-    carModel: "",
-    ownerName: "",
-    repairDate: "",
-    status: STATUS_OPTIONS[0],
-    notes: "",
+
   });
 
   // הגדרת עמודת הטבלה (columnsConfig) בקונפיגורציה שמתאימה ל־DatagridCustom
   const columnsConfig = useMemo(() => {
     return [
-      { field: "carModel", headerName: "דגם רכב", flex: 1, isEdit: true },
-      { field: "ownerName", headerName: "שם בעלים", flex: 1, isEdit: true },
-      { field: "repairDate", headerName: "תאריך תיקון", flex: 0.8, isEdit: true, type: "date" },
-      { field: "status", headerName: "סטטוס", flex: 0.8, isEdit: true, valueOptions: STATUS_OPTIONS },
-      { field: "notes", headerName: "הערות", flex: 1, isEdit: true },
-      // אופציונלי: שדה מחיקה/פעולות מופיע כ־columnConfig אם תרצה
+      { field: "manoiya", headerName: "מנועיה", flex: 1, isEdit: true },
+      { field: "hatakType", headerName: "סוג חט\"כ", flex: 1, isEdit: true },
+      { field: "sendingDivision", headerName: "אוגדה מוסרת", flex: 1, isEdit: true },
+      { field: "sendingBrigade", headerName: "חטיבה מוסרת", flex: 1, isEdit: true },
+      { field: "sendingBattalion", headerName: "חטיבה מוסרת", flex: 1, isEdit: true },
+      { field: "zadik", headerName: "צ' של כלי", flex: 1, isEdit: true },
+
+      { field: "reciveDate", headerName: "תאריך קבלה", flex: 1, isEdit: true, type: "date" },
+
+      { field: "engineSerial", headerName: "מספר מנוע", flex: 1, isEdit: true },
+      { field: "minseretSerial", headerName: "מספר ממסרת", flex: 1, isEdit: true },
+
+      { field: "hatakStatus", headerName: "סטטוס חט\"כ", flex: 1, isEdit: true },
+      { field: "problem", headerName: "פירוט תקלה", flex: 1, isEdit: true },
+      { field: "waitingHHType", headerName: "סוג ח\"ח ממתין", flex: 1, isEdit: true },
+      { field: "michlalNeed", headerName: "צריכת מכלל", flex: 1, isEdit: true },
+
+      { field: "recivingDivision", headerName: "אוגדה מקבלת", flex: 1, isEdit: true },
+      { field: "recivingBrigade", headerName: "חטיבה מקבלת", flex: 1, isEdit: true },
+      { field: "recivingBattalion", headerName: "גדוד מקבל", flex: 1, isEdit: true },
+
+      { field: "startWorkingDate", headerName: "תאריך לפקודה", flex: 1, isEdit: true, type: "date" },
+      { field: "forManoiya", headerName: "מנועיה לפקודה", flex: 1, isEdit: true },
+
+      { field: "performenceExpectation", headerName: "צפי ביצוע", flex: 1, isEdit: true },
+      { field: "intended", headerName: "מיועד ל?", flex: 1, isEdit: true },
+
+      // אופציונלי — עמודת פעולות
       { field: "delete", headerName: "מחק", flex: 0.6, type: "actions" },
     ];
   }, []);
 
+
   // תכנים שיועברו ל־InsertModal — חשוב: כל פריט חייב להכיל props.id (InsertModal בודק את זה)
   // InsertModal ייצור TextField חדש מתוך inp.props (הוא עושה {...inp.props})
+
+
+
+
+  const selectOptions = {
+    manoiya: [],
+    hatakType: [],
+    hatakStatus: [],
+    waitingHHType: []
+  };
+
   const modalContent = useMemo(() => {
     return [
-      <TextField key="carModel" id="carModel" label="דגם רכב" variant="outlined" fullWidth />,
-      <TextField key="ownerName" id="ownerName" label="שם בעלים" variant="outlined" fullWidth />,
+      // SELECT: manoiya
       <TextField
-        key="repairDate"
-        id="repairDate"
-        label="תאריך תיקון"
-        type="date"
-        InputLabelProps={{ shrink: true }}
-        variant="outlined"
-        fullWidth
-      />,
-      <TextField
-        key="status"
-        id="status"
-        label="סטטוס"
+        key="manoiya"
         select
-        defaultValue={STATUS_OPTIONS[0]}
+        name="manoiya"
+        id="manoiya"
+        label="מנועיה"
         variant="outlined"
-        fullWidth
+        SelectProps={{ native: true }}
       >
-        {STATUS_OPTIONS.map((s) => (
-          <MenuItem key={s} value={s}>
-            {s}
-          </MenuItem>
+        <option value=""></option>
+        {selectOptions.manoiya.map((opt) => (
+          <option key={opt} value={opt}>{opt}</option>
         ))}
       </TextField>,
-      <TextField key="notes" id="notes" label="הערות" variant="outlined" fullWidth multiline rows={3} />,
+      // SELECT: hatakType
+      <TextField
+        key="hatakType"
+        select
+        name="hatakType"
+        id="hatakType"
+        label='סוג חט"כ'
+        variant="outlined"
+        SelectProps={{ native: true }}
+      >
+        <option value=""></option>
+        {selectOptions.hatakType.map((opt) => (
+          <option key={opt} value={opt}>{opt}</option>
+        ))}
+      </TextField>,
+      // AUTOCOMPLETE FIELDS
+      <Autocomplete
+        key="sendingDivision"
+        options={[]}
+        renderInput={(params) => (
+          <TextField {...params} label="אוגדה מוסרת" id="sendingDivision" />
+        )}
+      />,
+      <Autocomplete
+        key="sendingBrigade"
+        options={[]}
+        renderInput={(params) => (
+          <TextField {...params} label="חטיבה מוסרת" id="sendingBrigade" />
+        )}
+      />,
+      <Autocomplete
+        key="sendingBattalion"
+        options={[]}
+        renderInput={(params) => (
+          <TextField {...params} label="גדוד מוסר" id="sendingBattalion" />
+        )}
+      />,
+      <Autocomplete
+        key="zadik"
+        options={[]}
+        renderInput={(params) => (
+          <TextField {...params} label="צ' של כלי" id="zadik" />
+        )}
+      />,
+      // DATE PICKER
+      <DatePicker
+        key="reciveDate"
+        label="תאריך קבלה"
+        slotProps={{ textField: { id: "reciveDate", variant: "outlined" } }}
+      />,
+      <Autocomplete
+        key="engineSerial"
+        options={[]}
+        renderInput={(params) => (
+          <TextField {...params} label="מספר מנוע" id="engineSerial" />
+        )}
+      />,
+      <Autocomplete
+        key="minseretSerial"
+        options={[]}
+        renderInput={(params) => (
+          <TextField {...params} label="מספר ממסרת" id="minseretSerial" />
+        )}
+      />,
+      // SELECT: hatakStatus
+      <TextField
+        key="hatakStatus"
+        select
+        id="hatakStatus"
+        label='סטטוס חט"כ'
+        variant="outlined"
+        SelectProps={{ native: true }}
+      >
+        <option value=""></option>
+        {selectOptions.hatakStatus.map((opt) => (
+          <option key={opt} value={opt}>{opt}</option>
+        ))}
+      </TextField>,
+      // TEXT FIELD
+      <TextField key="problem" id="problem" label="פירוט תקלה" variant="outlined" />,
+      // SELECT: waitingHHType
+      <TextField
+        key="waitingHHType"
+        select
+        id="waitingHHType"
+        label='סוג ח"ח ממתין'
+        variant="outlined"
+        SelectProps={{ native: true }}
+      >
+        <option value=""></option>
+        {selectOptions.waitingHHType.map((opt) => (
+          <option key={opt} value={opt}>{opt}</option>
+        ))}
+      </TextField>,
+      <TextField key="michlalNeed" id="michlalNeed" label="צריכת מכלל" variant="outlined" />,
+      <Autocomplete
+        key="recivingDivision"
+        options={[]}
+        renderInput={(params) => (
+          <TextField {...params} label="אוגדה מקבלת" id="recivingDivision" />
+        )}
+      />,
+      <Autocomplete
+        key="recivingBrigade"
+        options={[]}
+        renderInput={(params) => (
+          <TextField {...params} label="חטיבה מקבלת" id="recivingBrigade" />
+        )}
+      />,
+      <Autocomplete
+        key="recivingBattalion"
+        options={[]}
+        renderInput={(params) => (
+          <TextField {...params} label="גדוד מקבל" id="recivingBattalion" />
+        )}
+      />,
+      <DatePicker
+        key="startWorkingDate"
+        label="תאריך לפקודה"
+        slotProps={{ textField: { id: "startWorkingDate", variant: "outlined" } }}
+      />,
+      <TextField key="forManoiya" id="forManoiya" label="מנועיה לפקודה" variant="outlined" />,
+      <TextField key="performenceExpectation" id="performenceExpectation" label="צפי ביצוע" variant="outlined" />,
+      <TextField key="intended" id="intended" label="מיועד ל?" variant="outlined" />,
     ];
-  }, []);
+  }, [selectOptions]);
+
 
   // props עיקריים ל־DatagridCustom
   // api: שם ה־route (DatagridCustom יבקשת GET ל /api/{api}/)

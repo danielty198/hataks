@@ -1,5 +1,6 @@
-import React from "react";
-import DataGridCustom from "../../components/DatagridCustom";
+import React, { useMemo } from "react";
+import { TextField } from "@mui/material";
+import DatagridCustom from "../components/FScomponent/DatagridCustom";
 
 export default function Hataks() {
     const columnsConfig = [
@@ -14,28 +15,11 @@ export default function Hataks() {
 
     const modalContent = useMemo(() => {
         return [
-            <TextField key="battalion" id="battalion" label="דגם רכב" variant="outlined" fullWidth />,
-            <TextField key="brigade" id="brigade" label="שם בעלים" variant="outlined" fullWidth />,
-            <TextField
-                key="division"
-                id="division"
-                label="תאריך תיקון"
-                type="date"
-                InputLabelProps={{ shrink: true }}
-                variant="outlined"
-                fullWidth
-            />,
-            <TextField
-                key="engineSerial"
-                id="engineSerial"
-                label="סטטוס"
-                select
-                defaultValue={STATUS_OPTIONS[0]}
-                variant="outlined"
-                fullWidth
-            >
-            </TextField>,
-            <TextField key="notes" id="notes" label="הערות" variant="outlined" fullWidth multiline rows={3} />,
+            <TextField key="battalion" id="battalion" label="דגם רכב" variant="outlined" />,
+            <TextField key="brigade" id="brigade" label="שם בעלים" variant="outlined" />,
+            <TextField key="division" id="division" label="תאריך תיקון" type="date" variant="outlined" />,
+            <TextField key="engineSerial" id="engineSerial" label="סטטוס" variant="outlined" />,
+            <TextField key="notes" id="notes" label="הערות" variant="outlined" />,
         ];
     }, []);
 
@@ -43,10 +27,11 @@ export default function Hataks() {
 
     return (
         <div style={{ padding: 20, direction: "rtl" }}>
-            <DataGridCustom
-                title="הטאקים"
+            <DatagridCustom
+                title="חטכים"
                 columnsConfig={columnsConfig}
                 api='hataks'
+                modalContent={modalContent}
             />
         </div>
     );

@@ -7,21 +7,30 @@ const RepairSchema = new mongoose.Schema({
   sendingBrigade: String,
   sendingBattalion: String,
   zadik: String,
-  cameHas: { enum: ['שע"מ', 'שבר'], type: String },
-  reciveDate: Date,
+  cameHas: {
+    // enum: ['שע"מ', 'שבר'], 
+    type: String
+  },
+  reciveDate: String//Date
+  ,
   engineSerial: String,
   minseretSerial: String,
-  hatakStatus: { type: String, enum: ['כשיר', 'בלאי'] },
+  hatakStatus: {
+    type: String,
+    //  enum: ['כשיר', 'בלאי']
+  },
   problem: String,
-  waitingHatakType: String,
+  waitingHHType: String,
   michlalNeed: String,
   recivingDivision: String,
   recivingBrigade: String,
   recivingBattalion: String,
-  startWorkingDate: Date,
+  startWorkingDate: String //Date
+  ,
+  forManoiya: String,
   performenceExpectation: String,
-  intended:String,
- 
+  intended: String,
+
 }, { timestamps: true });
 
 module.exports = mongoose.model('Repair', RepairSchema);

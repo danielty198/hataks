@@ -6,6 +6,8 @@ import Sidebar from "./components/Sidebar";
 // import Dashboard from "./pages/Dashboard";
 // import Cars from "./pages/Cars";
 import Repairs from "./pages/Repairs";
+import Hataks from "./pages/Hataks";
+import BI from "./pages/BI";
 
 function App() {
 
@@ -23,8 +25,8 @@ function App() {
 
         <Box sx={{ mt: 3 }}>
           <Routes>
-            {/* <Route path="/" element={<Dashboard />} />
-            <Route path="/cars" element={<Cars />} /> */}
+            <Route path="/bi" element={<BI />} />
+            <Route path="/hataks" element={<Hataks />} />
             <Route path="/repairs" element={<Repairs />} />
           </Routes>
         </Box>

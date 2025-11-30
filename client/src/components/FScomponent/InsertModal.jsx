@@ -47,6 +47,8 @@ export default function InsertModal({ open, setOpen, route, inputs, content, rel
                     }
 
                     if (obj[key] === '') {
+                        console.log(obj)
+                        console.log(obj[key])
                         window.alert('אחד הנתונים חסר')
                         return
                     }

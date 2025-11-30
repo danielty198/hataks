@@ -9,6 +9,7 @@ class CrudOperations {
             const items = await this.model.find();
             res.json(items);
         } catch (err) {
+            console.log(err)
             res.status(500).json({ message: err.message });
         }
     };
@@ -19,6 +20,7 @@ class CrudOperations {
             const item = await this.model.findById(req.params.id);
             res.json(item);
         } catch (err) {
+            console.log(err)
             res.status(500).json({ message: err.message });
         }
     };
@@ -27,10 +29,12 @@ class CrudOperations {
     create = async (req, res) => {
         try {
             console.log('recived')
+            console.log(req.body)
             const newItem = new this.model(req.body);
             const saved = await newItem.save();
             res.json(saved);
         } catch (err) {
+            console.log(err)
             res.status(400).json({ message: err.message });
         }
     };
@@ -45,6 +49,7 @@ class CrudOperations {
             );
             res.json(updated);
         } catch (err) {
+             console.log(err)
             res.status(400).json({ message: err.message });
         }
     };
@@ -55,6 +60,7 @@ class CrudOperations {
             await this.model.findByIdAndDelete(req.params.id);
             res.json({ message: "Deleted" });
         } catch (err) {
+             console.log(err)
             res.status(500).json({ message: err.message });
         }
     };

@@ -8,6 +8,12 @@ import rtlPlugin from 'stylis-plugin-rtl';
 import { CssBaseline, ThemeProvider } from '@mui/material';
 import { theme } from './theme';
 import { BrowserRouter } from 'react-router-dom';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+
+
+
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
 const cacheRtl = createCache({
@@ -20,9 +26,10 @@ root.render(
     <CssBaseline />
     <ThemeProvider theme={theme}>
       <BrowserRouter>
-        <App />
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <App />
+        </LocalizationProvider>
       </BrowserRouter>
-        
     </ThemeProvider>
   </CacheProvider>
 );
