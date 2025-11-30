@@ -6,7 +6,6 @@ import Sidebar from "./components/Sidebar";
 // import Dashboard from "./pages/Dashboard";
 // import Cars from "./pages/Cars";
 import Repairs from "./pages/Repairs";
-import Hataks from "./pages/Hataks";
 import BI from "./pages/BI";
 
 function App() {
@@ -19,14 +18,12 @@ function App() {
         <AppBar position="static" color="transparent" elevation={0}>
           <Toolbar sx={{ justifyContent: "space-between" }}>
             <Typography variant="h4">מערכת ניהול מוסך</Typography>
-            <Button variant="contained">הוספת תיקון</Button>
           </Toolbar>
         </AppBar>
 
         <Box sx={{ mt: 3 }}>
           <Routes>
             <Route path="/bi" element={<BI />} />
-            <Route path="/hataks" element={<Hataks />} />
             <Route path="/repairs" element={<Repairs />} />
           </Routes>
         </Box>

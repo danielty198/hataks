@@ -1,9 +1,9 @@
 import React, { useState, useMemo } from "react";
-import DatagridCustom from "../components/FScomponent/DatagridCustom"; // הנתיב בהתאם למבנה שלך
+
 import { TextField, MenuItem, Box, Autocomplete } from "@mui/material";
 import { DatePicker } from '@mui/x-date-pickers'
-// שדות סטטוס בעברית
-const STATUS_OPTIONS = ["ממתין", "בטיפול", "הושלם"];
+import { generateData } from "../assets";
+import DatagridCustom from "../components/DatagridCustom";
 
 export default function RepairsPage() {
   // inputs ישלחו ל־InsertModal (הם נוצרים פה כהתחלה)
@@ -11,41 +11,69 @@ export default function RepairsPage() {
 
   });
 
+  const selectOptions = {
+    manoiya: [],
+    hatakType: [],
+    hatakStatus: [],
+    waitingHHType: []
+  };
+
   // הגדרת עמודת הטבלה (columnsConfig) בקונפיגורציה שמתאימה ל־DatagridCustom
   const columnsConfig = useMemo(() => {
     return [
-      { field: "manoiya", headerName: "מנועיה", flex: 1, isEdit: true },
-      { field: "hatakType", headerName: "סוג חט\"כ", flex: 1, isEdit: true },
-      { field: "sendingDivision", headerName: "אוגדה מוסרת", flex: 1, isEdit: true },
-      { field: "sendingBrigade", headerName: "חטיבה מוסרת", flex: 1, isEdit: true },
-      { field: "sendingBattalion", headerName: "חטיבה מוסרת", flex: 1, isEdit: true },
-      { field: "zadik", headerName: "צ' של כלי", flex: 1, isEdit: true },
+      // SELECT
+      { field: "manoiya", headerName: "מנועיה", isEdit: true, type: "singleSelect", valueOptions: selectOptions.manoiya },
 
-      { field: "reciveDate", headerName: "תאריך קבלה", flex: 1, isEdit: true, type: "date" },
+      // SELECT
+      { field: "hatakType", headerName: 'סוג חט"כ', isEdit: true, type: "singleSelect", valueOptions: selectOptions.hatakType },
 
-      { field: "engineSerial", headerName: "מספר מנוע", flex: 1, isEdit: true },
-      { field: "minseretSerial", headerName: "מספר ממסרת", flex: 1, isEdit: true },
+      // AUTOCOMPLETE → string
+      { field: "sendingDivision", headerName: "אוגדה מוסרת", isEdit: true, type: "string" },
+      { field: "sendingBrigade", headerName: "חטיבה מוסרת", isEdit: true, type: "string" },
+      { field: "sendingBattalion", headerName: "גדוד מוסר", isEdit: true, type: "string" },
+      { field: "zadik", headerName: "צ' של כלי", isEdit: true, type: "string" },
 
-      { field: "hatakStatus", headerName: "סטטוס חט\"כ", flex: 1, isEdit: true },
-      { field: "problem", headerName: "פירוט תקלה", flex: 1, isEdit: true },
-      { field: "waitingHHType", headerName: "סוג ח\"ח ממתין", flex: 1, isEdit: true },
-      { field: "michlalNeed", headerName: "צריכת מכלל", flex: 1, isEdit: true },
+      // DATE
+      { field: "reciveDate", headerName: "תאריך קבלה", isEdit: true, type: "date" },
 
-      { field: "recivingDivision", headerName: "אוגדה מקבלת", flex: 1, isEdit: true },
-      { field: "recivingBrigade", headerName: "חטיבה מקבלת", flex: 1, isEdit: true },
-      { field: "recivingBattalion", headerName: "גדוד מקבל", flex: 1, isEdit: true },
+      // AUTOCOMPLETE
+      { field: "engineSerial", headerName: "מספר מנוע", isEdit: true, type: "string" },
+      { field: "minseretSerial", headerName: "מספר ממסרת", isEdit: true, type: "string" },
 
-      { field: "startWorkingDate", headerName: "תאריך לפקודה", flex: 1, isEdit: true, type: "date" },
-      { field: "forManoiya", headerName: "מנועיה לפקודה", flex: 1, isEdit: true },
+      // SELECT
+      { field: "hatakStatus", headerName: 'סטטוס חט"כ', isEdit: true, type: "singleSelect", valueOptions: selectOptions.hatakStatus },
 
-      { field: "performenceExpectation", headerName: "צפי ביצוע", flex: 1, isEdit: true },
-      { field: "intended", headerName: "מיועד ל?", flex: 1, isEdit: true },
+      // TEXT
+      { field: "problem", headerName: "פירוט תקלה", isEdit: true, type: "string" },
 
-      // אופציונלי — עמודת פעולות
-      { field: "delete", headerName: "מחק", flex: 0.6, type: "actions" },
+      // SELECT
+      { field: "waitingHHType", headerName: 'סוג ח"ח ממתין', isEdit: true, type: "singleSelect", valueOptions: selectOptions.waitingHHType },
+
+      // TEXT
+      { field: "michlalNeed", headerName: "צריכת מכלל", isEdit: true, type: "string" },
+
+      // AUTOCOMPLETE
+      { field: "recivingDivision", headerName: "אוגדה מקבלת", isEdit: true, type: "string" },
+      { field: "recivingBrigade", headerName: "חטיבה מקבלת", isEdit: true, type: "string" },
+      { field: "recivingBattalion", headerName: "גדוד מקבל", isEdit: true, type: "string" },
+
+      // DATE
+      { field: "startWorkingDate", headerName: "תאריך לפקודה", isEdit: true, type: "date" },
+
+      // TEXT
+      { field: "forManoiya", headerName: "מנועיה לפקודה", isEdit: true, type: "string" },
+
+      { field: "performenceExpectation", headerName: "צפי ביצוע", isEdit: true, type: "string" },
+      { field: "intended", headerName: "מיועד ל?", isEdit: true, type: "string" },
+
+      // ACTIONS
+      { field: "delete", headerName: "מחק", type: "actions" },
     ];
-  }, []);
+  }, [selectOptions]);
 
+  const rows = useMemo(() => {
+    return generateData(columnsConfig)
+  }, [])
 
   // תכנים שיועברו ל־InsertModal — חשוב: כל פריט חייב להכיל props.id (InsertModal בודק את זה)
   // InsertModal ייצור TextField חדש מתוך inp.props (הוא עושה {...inp.props})
@@ -53,12 +81,7 @@ export default function RepairsPage() {
 
 
 
-  const selectOptions = {
-    manoiya: [],
-    hatakType: [],
-    hatakStatus: [],
-    waitingHHType: []
-  };
+
 
   const modalContent = useMemo(() => {
     return [
@@ -209,22 +232,18 @@ export default function RepairsPage() {
   // api: שם ה־route (DatagridCustom יבקשת GET ל /api/{api}/)
   // frontFetch: ריק כדי לטעון את ה־GET הבסיסי (או תשים ''/ או ערך אחר אם צריך)
   return (
-    <Box sx={{ p: 2 }}>
+
+    <Box sx={{ width:'100vw'}}>
       <DatagridCustom
-        api="repairs"
-        frontFetch=""            // GET /api/repairs/
-        editFetch="edit"        // PUT /api/repairs/edit  (DatagridCustom משתמש ב־editFetch כברירת מחדל)
-        createFetch=""          // InsertModal ישלח PATCH ל /api/repairs/ (התאמה לשרת שלך)
-        deleteFetch="delete"    // DELETE /api/repairs/delete
-        columnsConfig={columnsConfig}
-        modalContent={modalContent}
-        title="תיקוני רכב"
-        inputs={inputs}
-        setInputs={setInputs}
-        modalHeight="52vh"
-        isAllRequired={false}
-        fileName="תיקוני_רכב"
+        rows={rows}
+        columns={columnsConfig}
       />
     </Box>
+
   );
+
+
+
+
 }
+
