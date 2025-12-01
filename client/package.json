@@ -5,6 +5,9 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
+    "@fontsource/assistant": "^5.2.9",
+    "@fontsource/heebo": "^5.2.8",
+    "@fontsource/rubik": "^5.2.8",
     "@mui/icons-material": "^7.3.5",
     "@mui/material": "^7.3.5",
     "@mui/x-charts": "^8.19.0",

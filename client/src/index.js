@@ -11,7 +11,18 @@ import { BrowserRouter } from 'react-router-dom';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
-
+import '@fontsource/assistant/400.css';
+import '@fontsource/assistant/500.css';
+import '@fontsource/assistant/600.css';
+import '@fontsource/assistant/700.css';
+import '@fontsource/rubik/400.css';
+import '@fontsource/rubik/500.css';
+import '@fontsource/rubik/600.css';
+import '@fontsource/rubik/700.css';
+import '@fontsource/heebo/400.css';
+import '@fontsource/heebo/500.css';
+import '@fontsource/heebo/600.css';
+import '@fontsource/heebo/700.css';
 
 
 const root = ReactDOM.createRoot(document.getElementById('root'));

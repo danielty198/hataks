@@ -1,15 +1,14 @@
 import React, { useState, useMemo } from "react";
 
-import { TextField, MenuItem, Box, Autocomplete } from "@mui/material";
+import { TextField, MenuItem, Box, Autocomplete, Typography, Button } from "@mui/material";
 import { DatePicker } from '@mui/x-date-pickers'
-import { generateData } from "../assets";
-import DatagridCustom from "../components/DatagridCustom";
-
+import { generateData } from "../../assets";
+import DatagridCustom from "../../components/DatagridCustom";
+import InsertModal from '../../components/InsertModal'
 export default function RepairsPage() {
-  // inputs ישלחו ל־InsertModal (הם נוצרים פה כהתחלה)
-  const [inputs, setInputs] = useState({
 
-  });
+  const [open, setOpen] = useState(false)
+
 
   const selectOptions = {
     manoiya: [],
@@ -233,11 +232,21 @@ export default function RepairsPage() {
   // frontFetch: ריק כדי לטעון את ה־GET הבסיסי (או תשים ''/ או ערך אחר אם צריך)
   return (
 
-    <Box sx={{ width:'100vw'}}>
+
+    <Box sx={{ width: '90%' }}>
+      <Typography variant="h1" gutterBottom>חטכים</Typography>
+      <Button variant="contained" onClick={() => setOpen(true)}>הוספה</Button>
+      <InsertModal
+        modalContent={modalContent}
+        open={open}
+        setOpen={setOpen} />
       <DatagridCustom
         rows={rows}
         columns={columnsConfig}
+        route='hataks'
       />
+
+
     </Box>
 
   );

@@ -1,14 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Drawer,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Box,
-  Typography,
-} from "@mui/material";
+import { Box, List, ListItem, ListItemIcon, ListItemText, Typography } from "@mui/material";
 
 export default function Sidebar() {
   const navigate = useNavigate();
@@ -21,16 +13,14 @@ export default function Sidebar() {
   ];
 
   return (
-    <Drawer
-      variant="permanent"
-      anchor="left"
+    <Box
       sx={{
-        "& .MuiDrawer-paper": {
-          width: 240,
-          boxSizing: "border-box",
-          backgroundColor: "#13293D",
-          color: "#fff",
-        },
+        width: '12vw',
+        height: '100vh',
+        backgroundColor: "#13293D",
+        color: "#fff",
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       <Box sx={{ p: 3 }}>
@@ -39,13 +29,13 @@ export default function Sidebar() {
         </Typography>
       </Box>
 
-      <List>
+      <List sx={{ flexGrow: 1 }}>
         {menuItems.map((item) => (
           <ListItem
             key={item.path}
             button
             onClick={() => navigate(item.path)}
-             sx={{
+            sx={{
               "&:hover": {
                 backgroundColor: "#0F1F2E", // darker shade
               },
@@ -56,6 +46,6 @@ export default function Sidebar() {
           </ListItem>
         ))}
       </List>
-    </Drawer>
+    </Box>
   );
 }

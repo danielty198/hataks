@@ -6,6 +6,7 @@ class CrudOperations {
     // GET all
     getAll = async (req, res) => {
         try {
+            console.log('enter crud get all')
             const items = await this.model.find();
             res.json(items);
         } catch (err) {
@@ -17,6 +18,7 @@ class CrudOperations {
     // GET by ID
     getById = async (req, res) => {
         try {
+            console.log('enter crud get id')
             const item = await this.model.findById(req.params.id);
             res.json(item);
         } catch (err) {
@@ -28,8 +30,7 @@ class CrudOperations {
     // POST create
     create = async (req, res) => {
         try {
-            console.log('recived')
-            console.log(req.body)
+            console.log('enter crud create')
             const newItem = new this.model(req.body);
             const saved = await newItem.save();
             res.json(saved);
@@ -42,6 +43,7 @@ class CrudOperations {
     // PUT update
     update = async (req, res) => {
         try {
+            console.log('enter crud update')
             const updated = await this.model.findByIdAndUpdate(
                 req.params.id,
                 req.body,
@@ -57,6 +59,7 @@ class CrudOperations {
     // DELETE
     delete = async (req, res) => {
         try {
+            console.log('enter crud delete')
             await this.model.findByIdAndDelete(req.params.id);
             res.json({ message: "Deleted" });
         } catch (err) {
