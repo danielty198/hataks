@@ -27,7 +27,7 @@ app.use('/api/repairs', repairsRouter);
 app.use('/api/hataks', hataksRouter)
 
 const PORT = process.env.PORT || 5000;
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.MONGO_URI, )
   .then(() => {
     console.log('MongoDB connected');
     app.listen(PORT, () => console.log(`Server listening on ${PORT}`));
