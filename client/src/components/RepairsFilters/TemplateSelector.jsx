@@ -63,7 +63,7 @@ export default function TemplateSelector({
       setSaving(false);
     }
   };
-
+  console.log('TemplateSelector')
   const handleDelete = async () => {
     if (!templateToDelete) return;
 

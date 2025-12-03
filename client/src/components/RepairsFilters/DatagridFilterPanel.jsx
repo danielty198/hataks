@@ -96,6 +96,7 @@ export default function DatagridFilterPanel({
   
   // Column search
   const [columnSearch, setColumnSearch] = useState("");
+  console.log('DatagridFilterPanel')
 
   // Load templates from localStorage
   useEffect(() => {

@@ -13,7 +13,7 @@ const datePickerSlotProps = {
     sx: textFieldSx,
   },
 };
-
+console.log('FilterInput')
 // Simple text input with local state - no debounce effect needed
 const TextInput = memo(function TextInput({ field, headerName, initialValue, onChange }) {
   const [value, setValue] = useState(initialValue || "");
