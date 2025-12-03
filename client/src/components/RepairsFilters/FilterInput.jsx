@@ -1,4 +1,4 @@
-import { memo, useState, useCallback, useMemo } from "react";
+import { memo, useState, useCallback, useMemo, useEffect } from "react";
 import { TextField, FormControl, InputLabel, Select, MenuItem, Stack } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
@@ -13,31 +13,36 @@ const datePickerSlotProps = {
     sx: textFieldSx,
   },
 };
-console.log('FilterInput')
-// Simple text input with local state - no debounce effect needed
-const TextInput = memo(function TextInput({ field, headerName, initialValue, onChange }) {
-  const [value, setValue] = useState(initialValue || "");
+
+// Simple text input with local state
+const TextInput = memo(function TextInput({ field, headerName, value, onChange }) {
+  const [localValue, setLocalValue] = useState(value || "");
+
+  // Sync local state with prop value
+  useEffect(() => {
+    setLocalValue(value || "");
+  }, [value]);
 
   const handleChange = useCallback((e) => {
-    setValue(e.target.value);
+    setLocalValue(e.target.value);
   }, []);
 
   const handleBlur = useCallback(() => {
-    onChange(field, value);
-  }, [onChange, field, value]);
+    onChange(field, localValue);
+  }, [onChange, field, localValue]);
 
   const handleKeyDown = useCallback((e) => {
     if (e.key === "Enter") {
-      onChange(field, value);
+      onChange(field, localValue);
     }
-  }, [onChange, field, value]);
+  }, [onChange, field, localValue]);
 
   return (
     <TextField
       fullWidth
       size="small"
       label={headerName}
-      value={value}
+      value={localValue}
       onChange={handleChange}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
@@ -52,14 +57,12 @@ const SelectInput = memo(function SelectInput({ field, headerName, value, valueO
     onChange(field, e.target.value);
   }, [onChange, field]);
 
-  const menuItems = useMemo(() => (
-    <>
-      <MenuItem value=""><em>הכל</em></MenuItem>
-      {valueOptions.map((option) => (
-        <MenuItem key={option} value={option}>{option}</MenuItem>
-      ))}
-    </>
-  ), [valueOptions]);
+  const menuItems = useMemo(() => [
+    <MenuItem key="all" value=""><em>הכל</em></MenuItem>,
+    ...valueOptions.map((option) => (
+      <MenuItem key={option} value={option}>{option}</MenuItem>
+    ))
+  ], [valueOptions]);
 
   return (
     <FormControl fullWidth size="small">
@@ -112,7 +115,7 @@ const DateRangeInput = memo(function DateRangeInput({ field, headerName, dateFro
   );
 });
 
-// Main component - extracts primitive props to help memo work
+// Main component
 const FilterInput = memo(function FilterInput({ column, value, dateFrom, dateTo, onChange, onDateChange }) {
   const { field, headerName, type, valueOptions } = column;
 
@@ -144,12 +147,11 @@ const FilterInput = memo(function FilterInput({ column, value, dateFrom, dateTo,
     <TextInput
       field={field}
       headerName={headerName}
-      initialValue={value}
+      value={value}
       onChange={onChange}
     />
   );
 }, (prevProps, nextProps) => {
-  // Custom comparison - only re-render if these specific values change
   return (
     prevProps.value === nextProps.value &&
     prevProps.dateFrom === nextProps.dateFrom &&

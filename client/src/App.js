@@ -23,7 +23,6 @@ function App() {
           justifyContent: "center",
 
           position:'relative',
-          border: 1
         }}
       >
 

@@ -126,7 +126,7 @@ function FilterPanel({
     [filterableColumns.length, localVisibleColumns.length]
   );
 
-  const badgeCount = activeFiltersCount + hiddenColumnsCount;
+  const badgeCount = activeFiltersCount;
 
   // Stable callbacks
   const openDrawer = useCallback(() => setDrawerOpen(true), []);
@@ -153,6 +153,7 @@ function FilterPanel({
   }, [defaultVisibleColumns]);
 
   const handleApply = useCallback(async () => {
+    console.log('starting filter apply');
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -163,7 +164,7 @@ function FilterPanel({
       });
 
       const queryString = params.toString();
-      const url = queryString ? `${baseUrl}/api/hataks?${queryString}` : `${baseUrl}/api/hataks`;
+      const url = queryString ? `${baseUrl}/api/repairs?${queryString}` : `${baseUrl}/api/repairs`;
 
       const res = await fetch(url);
       if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
@@ -172,6 +173,7 @@ function FilterPanel({
 
       onFiltersChange?.(localFilters);
       onVisibleColumnsChange?.(localVisibleColumns);
+      console.log('filter apply done, data loaded:', data);
       onDataLoaded?.(data);
       setDrawerOpen(false);
     } catch (err) {

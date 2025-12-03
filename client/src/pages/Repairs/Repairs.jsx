@@ -35,7 +35,7 @@ const columnsConfig = [
   { field: "startWorkingDate", headerName: "תאריך לפקודה", isEdit: true, type: "date" },
   { field: "forManoiya", headerName: "מנועיה לפקודה", isEdit: true, type: "string" },
   { field: "performenceExpectation", headerName: "צפי ביצוע", isEdit: true, type: "string" },
-  { field: "intended", headerName: "מיועד ל?", isEdit: true, type: "string" , type: "singleSelect", valueOptions: intended },
+  { field: "intended", headerName: "מיועד ל?", isEdit: true, type: "string", type: "singleSelect", valueOptions: intended },
   { field: "delete", headerName: "מחק", type: "actions" },
 ];
 
@@ -150,7 +150,7 @@ export default function RepairsPage() {
   }, [visibleColumns]);
 
   // Stable data reference - only changes when rows actually change
-  const gridData = useMemo(() => rows.length > 0 ? rows : undefined, [rows]);
+  const gridData = useMemo(() => rows, [rows]);
   // ogdot
   // Modal content
   const modalContent = useMemo(() => [
