@@ -50,7 +50,7 @@ export function generateData(columns, count = 10) {
 }
 
 
-export const intended = [
+export const intendedOptions = [
   "פצ\"ן",
   "פד\"ם",
   "סבב אגד",
@@ -61,7 +61,7 @@ export const intended = [
 
 
 
-export const hatakType = [
+export const hatakTypeOptions = [
   "סימן 4",
   "סימן 3",
   "נמר",
@@ -99,7 +99,7 @@ export const hatakType = [
 
 
 
-export const manoiya = [
+export const manoiyaOptions = [
   "653",
   "651",
   "703",
@@ -110,7 +110,7 @@ export const manoiya = [
 
 
 
-export const ogdot = [
+export const ogdotOptions = [
   "252",
   "162",
   "143",
@@ -136,7 +136,7 @@ export const ogdot = [
 
 
 
-export const hatakStatus = [
+export const hatakStatusOptions = [
   "כשיר סבב",
   "כשיר פיקודי",
   "כשיר חוב",

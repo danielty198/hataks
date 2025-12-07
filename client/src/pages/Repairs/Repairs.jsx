@@ -1,11 +1,10 @@
 import React, { useState, useMemo, useEffect, useCallback, memo } from "react";
 import { Box, Typography, Button, Snackbar, Alert } from "@mui/material";
-import { DatePicker } from "@mui/x-date-pickers";
-import { TextField, Autocomplete } from "@mui/material";
-import { baseUrl, hatakStatus, hatakType, intended, manoiya, ogdot } from "../../assets";
+import { baseUrl, hatakStatusOptions, hatakTypeOptions, intendedOptions, manoiyaOptions, ogdotOptions } from "../../assets";
+
 import DatagridCustom from "../../components/DatagridCustom";
-import InsertModal from "../../components/InsertModal";
 import { FilterPanel, TemplateSelector } from "../../components/RepairsFilters";
+import InsertModal from "../../components/InsertModal/InsertModal";
 
 // Move OUTSIDE component - these never change
 const selectOptions = {
@@ -15,51 +14,66 @@ const selectOptions = {
   waitingHHType: [],
 };
 
+const ROUTE = "repairs";
+
 const columnsConfig = [
-  { field: "manoiya", headerName: "מנועיה", isEdit: true, type: "singleSelect", valueOptions: manoiya },
-  { field: "hatakType", headerName: 'סוג חט"כ', isEdit: true, type: "singleSelect", valueOptions: hatakType },
-  { field: "sendingDivision", headerName: "אוגדה מוסרת", isEdit: true, type: "string", type: "singleSelect", valueOptions: ogdot },
+  { field: "manoiya", headerName: "מנועיה", isEdit: true, type: "singleSelect", valueOptions: manoiyaOptions },
+  { field: "hatakType", headerName: 'סוג חט"כ', isEdit: true, type: "singleSelect", valueOptions: hatakTypeOptions },
+  { field: "sendingDivision", headerName: "אוגדה מוסרת", isEdit: true, type: "singleSelect", valueOptions: ogdotOptions },
   { field: "sendingBrigade", headerName: "חטיבה מוסרת", isEdit: true, type: "string" },
   { field: "sendingBattalion", headerName: "גדוד מוסר", isEdit: true, type: "string" },
   { field: "zadik", headerName: "צ' של כלי", isEdit: true, type: "string" },
   { field: "reciveDate", headerName: "תאריך קבלה", isEdit: true, type: "date" },
   { field: "engineSerial", headerName: "מספר מנוע", isEdit: true, type: "string" },
   { field: "minseretSerial", headerName: "מספר ממסרת", isEdit: true, type: "string" },
-  { field: "hatakStatus", headerName: 'סטטוס חט"כ', isEdit: true, type: "singleSelect", valueOptions: hatakStatus },
+  { field: "hatakStatus", headerName: 'סטטוס חט"כ', isEdit: true, type: "singleSelect", valueOptions: hatakStatusOptions },
+  { field: 'tipulType', headerName: 'סוג טיפול', isEdit: true, type: "singleSelect", valueOptions: ['שבר', 'שע"מ'] },
   { field: "problem", headerName: "פירוט תקלה", isEdit: true, type: "string" },
   { field: "waitingHHType", headerName: 'סוג ח"ח ממתין', isEdit: true, type: "singleSelect", valueOptions: selectOptions.waitingHHType },
   { field: "michlalNeed", headerName: "צריכת מכלל", isEdit: true, type: "string" },
-  { field: "recivingDivision", headerName: "אוגדה מקבלת", isEdit: true, type: "string", type: "singleSelect", valueOptions: ogdot },
+  { field: "recivingDivision", headerName: "אוגדה מקבלת", isEdit: true, type: "singleSelect", valueOptions: ogdotOptions },
   { field: "recivingBrigade", headerName: "חטיבה מקבלת", isEdit: true, type: "string" },
   { field: "recivingBattalion", headerName: "גדוד מקבל", isEdit: true, type: "string" },
   { field: "startWorkingDate", headerName: "תאריך לפקודה", isEdit: true, type: "date" },
   { field: "forManoiya", headerName: "מנועיה לפקודה", isEdit: true, type: "string" },
   { field: "performenceExpectation", headerName: "צפי ביצוע", isEdit: true, type: "string" },
-  { field: "intended", headerName: "מיועד ל?", isEdit: true, type: "string", type: "singleSelect", valueOptions: intended },
+  { field: "intended", headerName: "מיועד ל?", isEdit: true, type: "singleSelect", valueOptions: intendedOptions },
+
+  // ACTIONS (callback injected later)
+  { field: "edit", headerName: "ערוך", type: "actions" },
   { field: "delete", headerName: "מחק", type: "actions" },
 ];
 
 const defaultVisibleColumns = columnsConfig.filter((c) => c.type !== "actions").map((c) => c.field);
 
 // Stable sx objects
-const containerSx = { width: "90%", };
+const containerSx = { width: "90%" };
 const toolbarSx = { display: "flex", gap: 2, mb: 2, flexWrap: "wrap", alignItems: "center" };
 
 // Memoized DataGrid wrapper to prevent re-renders
-const MemoizedDataGrid = memo(function MemoizedDataGrid({ data, columns, route }) {
-  return <DatagridCustom data={data} columns={columns} route={route} />;
+const MemoizedDataGrid = memo(function MemoizedDataGrid({ data, columns, route, onProcessRowUpdate }) {
+  return (
+    <DatagridCustom 
+      data={data} 
+      columns={columns} 
+      route={route}
+      processRowUpdate={onProcessRowUpdate}
+    />
+  );
 });
 
 export default function RepairsPage() {
   const [open, setOpen] = useState(false);
   const [rows, setRows] = useState([]);
+  const [editData, setEditData] = useState();
   const [filters, setFilters] = useState({});
   const [visibleColumns, setVisibleColumns] = useState(defaultVisibleColumns);
   const [templates, setTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+  const [pendingChanges, setPendingChanges] = useState([]); // Track unsaved changes
 
-  // Function to fetch data from backend
+  // Fetch data
   const fetchData = useCallback(async (appliedFilters = {}) => {
     try {
       const params = new URLSearchParams();
@@ -79,7 +93,7 @@ export default function RepairsPage() {
     }
   }, []);
 
-  // Fetch templates on mount
+  // Fetch templates + data
   useEffect(() => {
     const fetchTemplates = async () => {
       try {
@@ -91,7 +105,9 @@ export default function RepairsPage() {
       }
     };
     fetchTemplates();
+    fetchData();
   }, []);
+
 
   const handleSelectTemplate = useCallback(async (templateId) => {
     setSelectedTemplate(templateId);
@@ -103,7 +119,6 @@ export default function RepairsPage() {
     setFilters(template.filters);
     setVisibleColumns(template.visibleColumns);
 
-    // Use the fetchData function
     await fetchData(template.filters);
   }, [templates, fetchData]);
 
@@ -119,87 +134,166 @@ export default function RepairsPage() {
 
   const openModal = useCallback(() => setOpen(true), []);
 
-  // Handle successful insert - refetch data
-  const handleInsertSuccess = useCallback(async (newData) => {
-    console.log("New record created:", newData);
-
-    // Show success snackbar
+  const handleInsertSuccess = useCallback(async () => {
     setSnackbar({
       open: true,
       message: "הרשומה נוספה בהצלחה!",
       severity: "success"
     });
-
-    // Refetch data with current filters
     await fetchData(filters);
   }, [filters, fetchData]);
 
-  // Handle snackbar close
-  const handleCloseSnackbar = useCallback((event, reason) => {
-    if (reason === 'clickaway') {
-      return;
-    }
+  const handleCloseSnackbar = useCallback(() => {
     setSnackbar(prev => ({ ...prev, open: false }));
   }, []);
 
-  // Filter visible columns for DataGrid
+  // Track row edits from the DataGrid
+  const handleProcessRowUpdate = useCallback((newRow, oldRow) => {
+    // Check if this row is already in pending changes
+    setPendingChanges(prev => {
+      const existingIndex = prev.findIndex(r => r._id === newRow._id);
+      
+      if (existingIndex !== -1) {
+        // Update existing pending change
+        const updated = [...prev];
+        updated[existingIndex] = newRow;
+        return updated;
+      } else {
+        // Add new pending change
+        return [...prev, newRow];
+      }
+    });
+    
+    // Update local state immediately for UI
+    setRows(prev => prev.map(r => (r._id === newRow._id ? newRow : r)));
+    
+    return newRow;
+  }, []);
+
+  // Save all pending changes
+  const handleSaveChanges = useCallback(async () => {
+    if (pendingChanges.length === 0) return;
+
+    try {
+      const updatePromises = pendingChanges.map(async (row) => {
+        const res = await fetch(`${baseUrl}/api/${ROUTE}/${row._id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(row),
+        });
+
+        if (!res.ok) throw new Error(`Failed to update row ${row._id}`);
+        return await res.json();
+      });
+
+      await Promise.all(updatePromises);
+
+      setPendingChanges([]); // Clear pending changes
+      
+      setSnackbar({
+        open: true,
+        message: `${pendingChanges.length} שינויים נשמרו בהצלחה!`,
+        severity: "success",
+      });
+
+    } catch (err) {
+      console.error("Failed to save changes:", err);
+      setSnackbar({
+        open: true,
+        message: "שגיאה בשמירת השינויים",
+        severity: "error",
+      });
+    }
+  }, [pendingChanges]);
+
+  // ======================================================
+  // ACTION HANDLER (edit / add)
+  // ======================================================
+  const handleSubmit = useCallback(async (data, isEdit) => {
+    try {
+
+      let res;
+      let updatedRecord;
+
+      if (isEdit) {
+        if (!data?._id) throw new Error("Missing record id for update");
+
+        res = await fetch(`${baseUrl}/api/${ROUTE}/${data._id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+
+        if (!res.ok) throw new Error("נכשל עדכון שורה");
+        updatedRecord = await res.json();
+        setRows(prev => prev.map(r => (r._id === data._id ? updatedRecord.data : r)));
+
+        setSnackbar({
+          open: true,
+          message: "הרשומה עודכנה בהצלחה!",
+          severity: "success",
+        });
+      } else {
+        res = await fetch(`${baseUrl}/api/${ROUTE}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+
+        if (!res.ok) throw new Error("נכשל הוספת שורה");
+        updatedRecord = await res.json();
+
+        setRows(prev => [...prev, updatedRecord]);
+
+        setSnackbar({
+          open: true,
+          message: "הרשומה נוספה בהצלחה!",
+          severity: "success",
+        });
+      }
+
+      setOpen(false);
+
+    } catch (err) {
+      console.error(err);
+
+      setSnackbar({
+        open: true,
+        message: err.message || "פעולה נכשלה",
+        severity: "error",
+      });
+    }
+  }, []);
+
+
+  const handleOpenEdit = useCallback((rowData) => {
+    setEditData(rowData.row);   // <-- set the row to edit
+    setOpen(true);          // <-- open modal
+  }, []);
+
+  // ======================================================
+  // inject handleSubmit into columnsConfig
+  // ======================================================
+  const columnsWithActions = useMemo(() => {
+    return columnsConfig.map(col => {
+      if (col.field === "edit") {
+        return { ...col, action: handleOpenEdit };
+      }
+      return col;
+    });
+  }, [handleOpenEdit]);
+
+  // visible columns
   const displayColumns = useMemo(() => {
-    return columnsConfig.filter(
-      (col) => visibleColumns.includes(col.field) || col.type === "actions" || col.headerName === "מחק"
+    return columnsWithActions.filter(
+      (col) => visibleColumns.includes(col.field) || col.type === "actions"
     );
-  }, [visibleColumns]);
+  }, [visibleColumns, columnsWithActions]);
 
-  // Stable data reference - only changes when rows actually change
   const gridData = useMemo(() => rows, [rows]);
-  // ogdot
-  // Modal content
-  const modalContent = useMemo(() => [
-    <TextField key="manoiya" select name="manoiya" id="manoiya" label="מנועיה" variant="outlined" SelectProps={{ native: true }}>
-      <option value=""></option>
-      {manoiya.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
-    </TextField>,
-    <TextField key="hatakType" select name="hatakType" id="hatakType" label='סוג חט"כ' variant="outlined" SelectProps={{ native: true }}>
-      <option value=""></option>
-      {hatakType.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
-    </TextField>,
-    <TextField key="sendingDivision" select name="sendingDivision" id="sendingDivision" label="אוגדה מוסרת" variant="outlined" SelectProps={{ native: true }}>
-      <option value=""></option>
-      {ogdot.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
-    </TextField>
-    ,
-    <Autocomplete key="sendingBrigade" options={[]} renderInput={(params) => <TextField {...params} label="חטיבה מוסרת" id="sendingBrigade" />} />,
-    <Autocomplete key="sendingBattalion" options={[]} renderInput={(params) => <TextField {...params} label="גדוד מוסר" id="sendingBattalion" />} />,
-    <Autocomplete key="zadik" options={[]} renderInput={(params) => <TextField {...params} label="צ' של כלי" id="zadik" />} />,
-    <DatePicker key="reciveDate" label="תאריך קבלה" slotProps={{ textField: { id: "reciveDate", variant: "outlined" } }} />,
-    <Autocomplete key="engineSerial" options={[]} renderInput={(params) => <TextField {...params} label="מספר מנוע" id="engineSerial" />} />,
-    <Autocomplete key="minseretSerial" options={[]} renderInput={(params) => <TextField {...params} label="מספר ממסרת" id="minseretSerial" />} />,
-    <TextField key="hatakStatus" select id="hatakStatus" label='סטטוס חט"כ' variant="outlined" SelectProps={{ native: true }}>
-      <option value=""></option>
-      {hatakStatus.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
-    </TextField>,
-    <TextField key="problem" id="problem" label="פירוט תקלה" variant="outlined" />,
-    <TextField key="waitingHHType" select id="waitingHHType" label='סוג ח"ח ממתין' variant="outlined" SelectProps={{ native: true }}>
-      <option value=""></option>
-      {selectOptions.waitingHHType.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
-    </TextField>,
-    <TextField key="michlalNeed" id="michlalNeed" label="צריכת מכלל" variant="outlined" />,
 
-    <TextField key="recivingDivision" select name="recivingDivision" id="recivingDivision" label="אוגדה מקבלת" variant="outlined" SelectProps={{ native: true }}>
-      <option value=""></option>
-      {ogdot.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
-    </TextField>
-    ,
-    <Autocomplete key="recivingBrigade" options={[]} renderInput={(params) => <TextField {...params} label="חטיבה מקבלת" id="recivingBrigade" />} />,
-    <Autocomplete key="recivingBattalion" options={[]} renderInput={(params) => <TextField {...params} label="גדוד מקבל" id="recivingBattalion" />} />,
-    <DatePicker key="startWorkingDate" label="תאריך לפקודה" slotProps={{ textField: { id: "startWorkingDate", variant: "outlined" } }} />,
-    <TextField key="forManoiya" id="forManoiya" label="מנועיה לפקודה" variant="outlined" />,
-    <TextField key="performenceExpectation" id="performenceExpectation" label="צפי ביצוע" variant="outlined" />,
-    <TextField key="intended" id="intended" name="intended" label="מיועד ל?" select variant="outlined" SelectProps={{ native: true }}>
-      <option value=""></option>
-      {intended.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
-    </TextField>
 
-  ], []);
+  console.log('repairs')
 
   return (
     <Box sx={containerSx}>
@@ -207,6 +301,14 @@ export default function RepairsPage() {
 
       <Box sx={toolbarSx}>
         <Button variant="contained" onClick={openModal}>הוספה</Button>
+        <Button 
+          variant="contained" 
+          id='saveChanges'
+          onClick={handleSaveChanges}
+          disabled={pendingChanges.length === 0}
+        >
+          שמירת שינויים {pendingChanges.length > 0 && `(${pendingChanges.length})`}
+        </Button>
 
         <TemplateSelector
           templates={templates}
@@ -229,20 +331,27 @@ export default function RepairsPage() {
       </Box>
 
       <InsertModal
-        modalContent={modalContent}
         open={open}
         setOpen={setOpen}
-        route='repairs'
+        onClose={() => setOpen(false)}
+        onSubmit={handleSubmit}
+        editData={editData}
+        route={ROUTE}
         onSuccess={handleInsertSuccess}
       />
 
-      <MemoizedDataGrid data={gridData} columns={displayColumns} route="repairs" />
+      <MemoizedDataGrid 
+        data={gridData} 
+        columns={displayColumns} 
+        route={ROUTE}
+        onProcessRowUpdate={handleProcessRowUpdate}
+      />
 
       <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}
         onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
         <Alert
           onClose={handleCloseSnackbar}

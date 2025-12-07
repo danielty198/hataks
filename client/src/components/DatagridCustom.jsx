@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DataGrid, GridActionsCellItem } from "@mui/x-data-grid";
 import CloseIcon from "@mui/icons-material/Close";
+import EditIcon from '@mui/icons-material/Edit';
 import {
   Box,
   Snackbar,
@@ -15,14 +16,13 @@ export default function DatagridCustom({
   data,
   columns,
   route,
-  templateGroup,
-  showFilterPanel = true,
+  processRowUpdate,
 }) {
   const [rows, setRows] = useState([]);
 
 
   useEffect(() => {
-    console.log(rows)
+    // console.log(rows)
   }, [rows])
   const [loading, setLoading] = useState({
     getRows: false,
@@ -109,77 +109,77 @@ export default function DatagridCustom({
   /* -------------------------------------------
    * CELL SAVE HANDLER
    * ------------------------------------------- */
-  const handleRowUpdate = useCallback(
-    async (newRow, oldRow) => {
-      // Find all fields that changed
-      const changedFields = {};
-      Object.keys(newRow).forEach((key) => {
-        if (newRow[key] !== oldRow[key]) {
-          changedFields[key] = newRow[key];
-        }
-      });
+  // const handleRowUpdate = useCallback(
+  //   async (newRow, oldRow) => {
+  //     // Find all fields that changed
+  //     const changedFields = {};
+  //     Object.keys(newRow).forEach((key) => {
+  //       if (newRow[key] !== oldRow[key]) {
+  //         changedFields[key] = newRow[key];
+  //       }
+  //     });
 
-      // No changes
-      if (Object.keys(changedFields).length === 0) return oldRow;
+  //     // No changes
+  //     if (Object.keys(changedFields).length === 0) return oldRow;
 
-      const id = newRow._id;
+  //     const id = newRow._id;
 
-      setLoadingFlag("save", true);
+  //     setLoadingFlag("save", true);
 
-      try {
-        const res = await fetch(`${baseUrl}/api/${route}/${id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(changedFields),
-        });
+  //     try {
+  //       const res = await fetch(`${baseUrl}/api/${route}/${id}`, {
+  //         method: "PATCH",
+  //         headers: { "Content-Type": "application/json" },
+  //         body: JSON.stringify(changedFields),
+  //       });
 
-        if (!res.ok) throw new Error("Save failed");
+  //       if (!res.ok) throw new Error("Save failed");
 
-        // Update rows state
-        setRows((prev) =>
-          prev.map((r) => (r._id === id ? newRow : r))
-        );
+  //       // Update rows state
+  //       setRows((prev) =>
+  //         prev.map((r) => (r._id === id ? newRow : r))
+  //       );
 
-        showSnack("נשמר בהצלחה!", "success", {
-          undo: async () => {
-            try {
-              // Build the old fields to restore
-              const oldFields = {};
-              Object.keys(changedFields).forEach((key) => {
-                oldFields[key] = oldRow[key];
-              });
+  //       showSnack("נשמר בהצלחה!", "success", {
+  //         undo: async () => {
+  //           try {
+  //             // Build the old fields to restore
+  //             const oldFields = {};
+  //             Object.keys(changedFields).forEach((key) => {
+  //               oldFields[key] = oldRow[key];
+  //             });
 
-              // Send fetch to undo changes in database
-              const undoRes = await fetch(`${baseUrl}/api/${route}/${id}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(oldFields),
-              });
+  //             // Send fetch to undo changes in database
+  //             const undoRes = await fetch(`${baseUrl}/api/${route}/${id}`, {
+  //               method: "PATCH",
+  //               headers: { "Content-Type": "application/json" },
+  //               body: JSON.stringify(oldFields),
+  //             });
 
-              if (!undoRes.ok) throw new Error("Undo failed");
+  //             if (!undoRes.ok) throw new Error("Undo failed");
 
-              // Revert rows state
-              setRows((prev) =>
-                prev.map((r) => (r._id === id ? oldRow : r))
-              );
+  //             // Revert rows state
+  //             setRows((prev) =>
+  //               prev.map((r) => (r._id === id ? oldRow : r))
+  //             );
 
-              showSnack("שינויים השתחזרו בהצלחה", "success");
-            } catch (err) {
-              showSnack("שחזור שינויים נכשל", "error");
-            }
-          },
-        });
+  //             showSnack("שינויים השתחזרו בהצלחה", "success");
+  //           } catch (err) {
+  //             showSnack("שחזור שינויים נכשל", "error");
+  //           }
+  //         },
+  //       });
 
-        return newRow;
-      } catch (err) {
-        showSnack("שמירה נכשלה", "error");
-        return oldRow;
-      } finally {
-        setLoadingFlag("save", false);
-      }
-    },
-    [route, setLoadingFlag]
-  );
+  //       return newRow;
+  //     } catch (err) {
+  //       showSnack("שמירה נכשלה", "error");
+  //       return oldRow;
+  //     } finally {
+  //       setLoadingFlag("save", false);
+  //     }
+  //   },
+  //   [route, setLoadingFlag]
+  // );
 
   const handleProcessRowUpdateError = useCallback((error) => {
     console.error("Row update error:", error);
@@ -213,8 +213,6 @@ export default function DatagridCustom({
   );
 
 
-
-
   /* -------------------------------------------
    * COLUMNS PROCESS
    * ------------------------------------------- */
@@ -244,6 +242,17 @@ export default function DatagridCustom({
           };
         }
 
+        if (c.field === 'edit' || c.headerName === 'ערון') {
+          c.getActions = (params) => [
+            <GridActionsCellItem
+              key="edit"
+              icon={<EditIcon />}
+              label="Edit"
+              onClick={() => c.action(params, true)}
+            />,
+          ];
+        }
+
         // delete column
         if (c.headerName === "delete" || c.headerName === "מחק") {
           c.type = "actions";
@@ -264,7 +273,7 @@ export default function DatagridCustom({
       });
   }, [columns, visibleColumns, deleteRow]);
 
-  console.log(snack.severity)
+console.log('datagrid')
 
   return (
     <Box sx={{ width: "100%", height: "80%", position: "relative" }}>
@@ -281,7 +290,7 @@ export default function DatagridCustom({
         disableSelectionOnClick
         getRowId={(row) => row._id}
         sx={{ minHeight: "60%" }}
-        processRowUpdate={handleRowUpdate}
+        processRowUpdate={processRowUpdate}
         onProcessRowUpdateError={handleProcessRowUpdateError}
       />
 

@@ -6,6 +6,7 @@ const RepairSchema = new mongoose.Schema({
   sendingDivision: String,
   sendingBrigade: String,
   sendingBattalion: String,
+  tipulType:String,
   zadik: String,
   cameHas: {
     // enum: ['שע"מ', 'שבר'], 

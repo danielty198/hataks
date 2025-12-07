@@ -125,6 +125,7 @@ function FilterPanel({
     filterableColumns.length - localVisibleColumns.length,
     [filterableColumns.length, localVisibleColumns.length]
   );
+  
 
   const badgeCount = activeFiltersCount;
 
