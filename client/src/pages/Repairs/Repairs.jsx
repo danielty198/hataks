@@ -333,7 +333,7 @@ export default function RepairsPage() {
       <InsertModal
         open={open}
         setOpen={setOpen}
-        onClose={() => setOpen(false)}
+        onClose={() => {setOpen(false); setEditData()}}
         onSubmit={handleSubmit}
         editData={editData}
         route={ROUTE}
