@@ -40,6 +40,7 @@ const columnsConfig = [
   { field: "intended", headerName: "מיועד ל?", isEdit: true, type: "singleSelect", valueOptions: intendedOptions },
 
   // ACTIONS (callback injected later)
+  { field: "history", headerName: "היסטוריה", type: "actions" },
   { field: "edit", headerName: "ערוך", type: "actions" },
   { field: "delete", headerName: "מחק", type: "actions" },
 ];
@@ -53,9 +54,9 @@ const toolbarSx = { display: "flex", gap: 2, mb: 2, flexWrap: "wrap", alignItems
 // Memoized DataGrid wrapper to prevent re-renders
 const MemoizedDataGrid = memo(function MemoizedDataGrid({ data, columns, route, onProcessRowUpdate }) {
   return (
-    <DatagridCustom 
-      data={data} 
-      columns={columns} 
+    <DatagridCustom
+      data={data}
+      columns={columns}
       route={route}
       processRowUpdate={onProcessRowUpdate}
     />
@@ -152,7 +153,7 @@ export default function RepairsPage() {
     // Check if this row is already in pending changes
     setPendingChanges(prev => {
       const existingIndex = prev.findIndex(r => r._id === newRow._id);
-      
+
       if (existingIndex !== -1) {
         // Update existing pending change
         const updated = [...prev];
@@ -163,10 +164,10 @@ export default function RepairsPage() {
         return [...prev, newRow];
       }
     });
-    
+
     // Update local state immediately for UI
     setRows(prev => prev.map(r => (r._id === newRow._id ? newRow : r)));
-    
+
     return newRow;
   }, []);
 
@@ -189,7 +190,7 @@ export default function RepairsPage() {
       await Promise.all(updatePromises);
 
       setPendingChanges([]); // Clear pending changes
-      
+
       setSnackbar({
         open: true,
         message: `${pendingChanges.length} שינויים נשמרו בהצלחה!`,
@@ -271,12 +272,19 @@ export default function RepairsPage() {
     setOpen(true);          // <-- open modal
   }, []);
 
+  const handleOpenHistory = () => {
+    
+  }
+
   // ======================================================
   // inject handleSubmit into columnsConfig
   // ======================================================
   const columnsWithActions = useMemo(() => {
     return columnsConfig.map(col => {
       if (col.field === "edit") {
+        return { ...col, action: handleOpenEdit };
+      }
+      if (col.field === "history") {
         return { ...col, action: handleOpenEdit };
       }
       return col;
@@ -301,8 +309,8 @@ export default function RepairsPage() {
 
       <Box sx={toolbarSx}>
         <Button variant="contained" onClick={openModal}>הוספה</Button>
-        <Button 
-          variant="contained" 
+        <Button
+          variant="contained"
           id='saveChanges'
           onClick={handleSaveChanges}
           disabled={pendingChanges.length === 0}
@@ -333,16 +341,16 @@ export default function RepairsPage() {
       <InsertModal
         open={open}
         setOpen={setOpen}
-        onClose={() => {setOpen(false); setEditData()}}
+        onClose={() => { setOpen(false); setEditData() }}
         onSubmit={handleSubmit}
         editData={editData}
         route={ROUTE}
         onSuccess={handleInsertSuccess}
       />
 
-      <MemoizedDataGrid 
-        data={gridData} 
-        columns={displayColumns} 
+      <MemoizedDataGrid
+        data={gridData}
+        columns={displayColumns}
         route={ROUTE}
         onProcessRowUpdate={handleProcessRowUpdate}
       />

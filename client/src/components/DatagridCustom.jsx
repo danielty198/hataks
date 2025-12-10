@@ -10,6 +10,7 @@ import {
   CircularProgress,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
+import HistoryIcon from '@mui/icons-material/History';
 import { baseUrl } from "../assets";
 
 export default function DatagridCustom({
@@ -266,6 +267,18 @@ export default function DatagridCustom({
           ];
         }
 
+        if (c.headerName === "history" || c.headerName === "היסטוריה") {
+          c.type = "actions";
+          c.getActions = (params) => [
+            <GridActionsCellItem
+              key="history"
+              icon={<HistoryIcon />}
+              label="history"
+              onClick={() =>  c.action(params, true)}
+            />,
+          ];
+        }
+
         if (!c.flex) c.flex = 1;
         if (!c.minWidth) c.minWidth = 100;
 
@@ -273,7 +286,7 @@ export default function DatagridCustom({
       });
   }, [columns, visibleColumns, deleteRow]);
 
-console.log('datagrid')
+  console.log('datagrid')
 
   return (
     <Box sx={{ width: "100%", height: "80%", position: "relative" }}>
