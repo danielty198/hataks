@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { FormCardStyled, SectionTitle, SectionIcon } from '../styles/styledComponents';
-import { colors } from '../constants';
+import { colors } from '../../../assets';
 
 const FormCard = ({ icon: Icon, title, subtitle, children, iconGradient }) => (
   <FormCardStyled elevation={0}>

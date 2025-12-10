@@ -1,5 +1,5 @@
 import { styled, alpha, StepConnector, stepConnectorClasses, Dialog, Box, Paper, Button, IconButton } from '@mui/material';
-import { colors } from '../constants';
+import { colors } from '../../../assets';
 
 export const ColorlibConnector = styled(StepConnector)(() => ({
   [`&.${stepConnectorClasses.alternativeLabel}`]: {

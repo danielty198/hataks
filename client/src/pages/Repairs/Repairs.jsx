@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback, memo } from "react";
 import { Box, Typography, Button, Snackbar, Alert } from "@mui/material";
-import { baseUrl, hatakStatusOptions, hatakTypeOptions, intendedOptions, manoiyaOptions, ogdotOptions } from "../../assets";
+import { baseUrl, hatakStatusOptions, hatakTypeOptions, intendedOptions, manoiyaOptions, ogdotOptions, waitingHHTypeOptions, colors, waitingHHTypeRequiredString } from "../../assets";
 
 import DatagridCustom from "../../components/DatagridCustom";
 import { FilterPanel, TemplateSelector } from "../../components/RepairsFilters";
@@ -29,7 +29,7 @@ const columnsConfig = [
   { field: "hatakStatus", headerName: 'סטטוס חט"כ', isEdit: true, type: "singleSelect", valueOptions: hatakStatusOptions },
   { field: 'tipulType', headerName: 'סוג טיפול', isEdit: true, type: "singleSelect", valueOptions: ['שבר', 'שע"מ'] },
   { field: "problem", headerName: "פירוט תקלה", isEdit: true, type: "string" },
-  { field: "waitingHHType", headerName: 'סוג ח"ח ממתין', isEdit: true, type: "singleSelect", valueOptions: selectOptions.waitingHHType },
+  { field: "waitingHHType", headerName: 'סוג ח"ח ממתין', isEdit: true, isMultiSelect: true, valueOptions: waitingHHTypeOptions },
   { field: "michlalNeed", headerName: "צריכת מכלל", isEdit: true, type: "string" },
   { field: "recivingDivision", headerName: "אוגדה מקבלת", isEdit: true, type: "singleSelect", valueOptions: ogdotOptions },
   { field: "recivingBrigade", headerName: "חטיבה מקבלת", isEdit: true, type: "string" },
@@ -53,9 +53,9 @@ const toolbarSx = { display: "flex", gap: 2, mb: 2, flexWrap: "wrap", alignItems
 // Memoized DataGrid wrapper to prevent re-renders
 const MemoizedDataGrid = memo(function MemoizedDataGrid({ data, columns, route, onProcessRowUpdate }) {
   return (
-    <DatagridCustom 
-      data={data} 
-      columns={columns} 
+    <DatagridCustom
+      data={data}
+      columns={columns}
       route={route}
       processRowUpdate={onProcessRowUpdate}
     />
@@ -149,10 +149,35 @@ export default function RepairsPage() {
 
   // Track row edits from the DataGrid
   const handleProcessRowUpdate = useCallback((newRow, oldRow) => {
+    // Check if there are actual changes
+
+    const hasChanges = Object.keys(newRow).some(key => newRow[key] !== oldRow[key]);
+
+    if (!hasChanges) {
+      // return oldRow; // No changes, return old row
+    }
+
+    // Check if hatakStatus was changed to the value that requires waitingHHType
+    console.log(newRow.waitingHHType)
+    if (newRow.hatakStatus === waitingHHTypeRequiredString) {
+
+      if (!newRow.waitingHHType || (Array.isArray(newRow.waitingHHType) && ((newRow.waitingHHType.length === 0) || ((newRow.waitingHHType.length === 1) && (newRow.waitingHHType[0] === ''))))) {
+        // Show error snackbar
+        const errMsg = 'כאשר סטטוס חטכ הוא ממתין ל- ח"ח חייב לתת לסוג ח"ח ממתין ערך'
+        setSnackbar({
+          open: true,
+          message: errMsg,
+          severity: 'error'
+        });
+        throw Error(errMsg)
+        return oldRow; // Revert to old row
+      }
+    }
+
     // Check if this row is already in pending changes
     setPendingChanges(prev => {
       const existingIndex = prev.findIndex(r => r._id === newRow._id);
-      
+
       if (existingIndex !== -1) {
         // Update existing pending change
         const updated = [...prev];
@@ -163,10 +188,10 @@ export default function RepairsPage() {
         return [...prev, newRow];
       }
     });
-    
+
     // Update local state immediately for UI
     setRows(prev => prev.map(r => (r._id === newRow._id ? newRow : r)));
-    
+
     return newRow;
   }, []);
 
@@ -189,7 +214,7 @@ export default function RepairsPage() {
       await Promise.all(updatePromises);
 
       setPendingChanges([]); // Clear pending changes
-      
+
       setSnackbar({
         open: true,
         message: `${pendingChanges.length} שינויים נשמרו בהצלחה!`,
@@ -301,11 +326,17 @@ export default function RepairsPage() {
 
       <Box sx={toolbarSx}>
         <Button variant="contained" onClick={openModal}>הוספה</Button>
-        <Button 
-          variant="contained" 
+        <Button
+          variant="contained"
           id='saveChanges'
           onClick={handleSaveChanges}
           disabled={pendingChanges.length === 0}
+          sx={{
+            backgroundColor: colors.success,
+            '&:hover': {
+              backgroundColor: colors.successLight,
+            },
+          }}
         >
           שמירת שינויים {pendingChanges.length > 0 && `(${pendingChanges.length})`}
         </Button>
@@ -333,16 +364,16 @@ export default function RepairsPage() {
       <InsertModal
         open={open}
         setOpen={setOpen}
-        onClose={() => setOpen(false)}
+        onClose={() => { setOpen(false); setEditData() }}
         onSubmit={handleSubmit}
         editData={editData}
         route={ROUTE}
         onSuccess={handleInsertSuccess}
       />
 
-      <MemoizedDataGrid 
-        data={gridData} 
-        columns={displayColumns} 
+      <MemoizedDataGrid
+        data={gridData}
+        columns={displayColumns}
         route={ROUTE}
         onProcessRowUpdate={handleProcessRowUpdate}
       />

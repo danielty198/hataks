@@ -4,7 +4,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import SaveIcon from '@mui/icons-material/Save';
 import { ActionButtonStyled } from '../styles/styledComponents';
-import { colors, steps } from '../constants';
+import { colors, steps } from '../../../assets';
 
 const ActionButtons = ({ activeStep, onClose, onBack, onNext, onSubmit, isEditMode }) => (
   <>

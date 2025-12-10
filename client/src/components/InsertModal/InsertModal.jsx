@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { DialogContent, DialogActions, Divider, Box, Typography, alpha } from '@mui/material';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import dayjs from 'dayjs';
@@ -13,8 +11,8 @@ import StepYechida from './components/steps/StepYechida';
 import StepAcher from './components/steps/StepAcher';
 
 import { StyledDialog, StyledDialogTitle } from './styles/styledComponents';
-import { colors, steps, getDefaultFormData } from './constants';
-import { hatakStatusOptions, hatakTypeOptions, intendedOptions, manoiyaOptions, ogdotOptions } from '../../assets';
+import { colors, steps, getDefaultFormData, waitingHHTypeRequiredString } from '../../assets';
+import { useEngineSerials } from '../../contexts/EngineSerialContext';
 
 const InsertModal = ({
   open,
@@ -29,6 +27,7 @@ const InsertModal = ({
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState(getDefaultFormData());
   const [errors, setErrors] = useState({});
+  const { enginesList, loading, error , fetchEngineSerials } = useEngineSerials()
 
   const isEditMode = useMemo(() => editData !== null, [editData]);
 
@@ -51,6 +50,12 @@ const InsertModal = ({
   }, [open, editData]);
 
   const handleChange = useCallback((field, value) => {
+    if (field === 'engineSerial' && value.length > 0) {
+      const lastChar = value[value.length - 1];
+      if (!/[0-9]/.test(lastChar)) {
+        return;
+      }
+    }
     setFormData(prev => ({ ...prev, [field]: value }));
     setErrors(prev => {
       if (prev[field]) {
@@ -73,6 +78,17 @@ const InsertModal = ({
       if (!formData.problem) newErrors.problem = true;
       if (!formData.reciveDate) newErrors.reciveDate = true;
     }
+
+    // Validate step 2 (StepAcher) - check if waitingHHType is required
+    console.log(formData.waitingHHType)
+    if (step === 2) {
+      if (formData.hatakStatus === waitingHHTypeRequiredString) {
+        if (!formData.waitingHHType || formData.waitingHHType.length === 0) {
+          newErrors.waitingHHType = true;
+        }
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }, [formData]);
@@ -88,7 +104,7 @@ const InsertModal = ({
   }, []);
 
   const handleSubmit = useCallback(() => {
-    console.log(handleSubmit)
+    console.log(validateStep(activeStep))
     if (validateStep(activeStep)) {
       const submitData = {
         ...formData,
@@ -107,18 +123,6 @@ const InsertModal = ({
     [activeStep]
   );
 
-  const memoizedOptions = useMemo(() => ({
-    manoiyaOptions,
-    hatakTypeOptions,
-    hatakStatusOptions,
-    intendedOptions,
-    ogdotOptions,
-    zadikOptions,
-    brigadeOptions,
-    battalionOptions,
-    waitingHHTypeOptions
-  }), [zadikOptions, brigadeOptions, battalionOptions, waitingHHTypeOptions]);
-
   const renderStepContent = useMemo(() => {
     switch (activeStep) {
       case 0:
@@ -127,10 +131,6 @@ const InsertModal = ({
             formData={formData}
             errors={errors}
             onChange={handleChange}
-            manoiyaOptions={memoizedOptions.manoiyaOptions}
-            hatakTypeOptions={memoizedOptions.hatakTypeOptions}
-            hatakStatusOptions={memoizedOptions.hatakStatusOptions}
-            zadikOptions={memoizedOptions.zadikOptions}
           />
         );
       case 1:
@@ -138,79 +138,74 @@ const InsertModal = ({
           <StepYechida
             formData={formData}
             onChange={handleChange}
-            ogdotOptions={memoizedOptions.ogdotOptions}
-            brigadeOptions={memoizedOptions.brigadeOptions}
-            battalionOptions={memoizedOptions.battalionOptions}
           />
         );
       case 2:
         return (
           <StepAcher
             formData={formData}
+            errors={errors}
             onChange={handleChange}
-            waitingHHTypeOptions={memoizedOptions.waitingHHTypeOptions}
-            manoiyaOptions={memoizedOptions.manoiyaOptions}
-            intendedOptions={memoizedOptions.intendedOptions}
           />
         );
       default:
         return null;
     }
-  }, [activeStep, formData, errors, handleChange, memoizedOptions]);
+  }, [activeStep, formData, errors, handleChange]);
 
   return (
-      <StyledDialog open={open} onClose={onClose} maxWidth="lg" fullWidth dir="rtl">
-        <StyledDialogTitle>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5 }}>
-            <Box
-              sx={{
-                backgroundColor: alpha(colors.white, 0.2),
-                borderRadius: 3,
-                p: 1.5,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              {isEditMode ? <EditIcon sx={{ fontSize: 32 }} /> : <AddIcon sx={{ fontSize: 32 }} />}
-            </Box>
-            <Box>
-              <Typography variant="h5" fontWeight={700}>
-                {dialogTitle}
-              </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.85, mt: 0.5 }}>
-                {stepDescription}
-              </Typography>
-            </Box>
+    <StyledDialog open={open} onClose={onClose} maxWidth="lg" fullWidth dir="rtl">
+      <StyledDialogTitle>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5 }}>
+          <Box
+            sx={{
+              backgroundColor: alpha(colors.white, 0.2),
+              borderRadius: 3,
+              p: 1.5,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {isEditMode ? <EditIcon sx={{ fontSize: 32 }} /> : <AddIcon sx={{ fontSize: 32 }} />}
           </Box>
-        </StyledDialogTitle>
+          <Box>
+            <Typography variant="h5" fontWeight={700}>
+              {dialogTitle}
+            </Typography>
+            <Typography variant="body2" sx={{ opacity: 0.85, mt: 0.5 }}>
+              {stepDescription}
+            </Typography>
+          </Box>
+        </Box>
+      </StyledDialogTitle>
 
-        <DialogContent sx={{ p: 4, backgroundColor: colors.background }}>
-          <StepperHeader activeStep={activeStep} />
-          <Box sx={{ minHeight: 420 }}>{renderStepContent}</Box>
-        </DialogContent>
+      <DialogContent sx={{ p: 4, backgroundColor: colors.background }}>
+        <StepperHeader activeStep={activeStep} />
+        <Box sx={{ minHeight: 420 }}>{renderStepContent}</Box>
+      </DialogContent>
 
-        <Divider />
+      <Divider />
 
-        <DialogActions
-          sx={{
-            px: 4,
-            py: 2.5,
-            backgroundColor: colors.white,
-            gap: 2,
-            justifyContent: 'space-between',
-          }}
-        >
-          <ActionButtons
-            activeStep={activeStep}
-            onClose={onClose}
-            onBack={handleBack}
-            onNext={handleNext}
-            onSubmit={handleSubmit}
-            isEditMode={isEditMode}
-          />
-        </DialogActions>
-      </StyledDialog>
+      <DialogActions
+        sx={{
+          px: 4,
+          py: 2.5,
+          backgroundColor: colors.white,
+          gap: 2,
+          justifyContent: 'space-between',
+        }}
+      >
+        <ActionButtons
+          activeStep={activeStep}
+          onClose={onClose}
+          onBack={handleBack}
+          onNext={handleNext}
+          onSubmit={handleSubmit}
+          isEditMode={isEditMode}
+        />
+      </DialogActions>
+    </StyledDialog>
   );
 };
 

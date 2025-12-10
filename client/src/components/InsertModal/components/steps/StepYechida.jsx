@@ -2,16 +2,13 @@ import React from 'react';
 import { Fade, Box } from '@mui/material';
 import GroupsIcon from '@mui/icons-material/Groups';
 import FormCard from '../FormCard';
-import { SelectField, AutocompleteField } from '../FormFields';
+import { SelectField, InputField } from '../FormFields';
 import { FieldsRow } from '../../styles/styledComponents';
-import { colors } from '../../constants';
+import { ogdotOptions,colors  } from '../../../../assets';
 
 const StepYechida = ({
   formData,
   onChange,
-  ogdotOptions,
-  brigadeOptions,
-  battalionOptions,
 }) => (
   <Fade in={true} timeout={400}>
     <Box>
@@ -28,17 +25,15 @@ const StepYechida = ({
             value={formData.sendingDivision}
             onChange={onChange}
           />
-          <AutocompleteField
+          <InputField
             name="sendingBrigade"
             label="חטיבה מוסרת"
-            options={brigadeOptions}
             value={formData.sendingBrigade}
             onChange={onChange}
           />
-          <AutocompleteField
+          <InputField
             name="sendingBattalion"
             label="גדוד מוסר"
-            options={battalionOptions}
             value={formData.sendingBattalion}
             onChange={onChange}
           />
@@ -59,17 +54,15 @@ const StepYechida = ({
             value={formData.recivingDivision}
             onChange={onChange}
           />
-          <AutocompleteField
+          <InputField
             name="recivingBrigade"
             label="חטיבה מקבלת"
-            options={brigadeOptions}
             value={formData.recivingBrigade}
             onChange={onChange}
           />
-          <AutocompleteField
+          <InputField
             name="recivingBattalion"
             label="גדוד מקבל"
-            options={battalionOptions}
             value={formData.recivingBattalion}
             onChange={onChange}
           />

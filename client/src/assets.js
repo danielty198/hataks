@@ -11,6 +11,31 @@ export const civil = true
 
 export const baseUrl = clientPort === serverPort ? "" : (civil ? `http://localhost:${serverPort}` : `http://vm0099eged:${serverPort}`);
 
+export const getDefaultFormData = () => {
+  return {
+    manoiya: '',
+    hatakType: '',
+    zadik: null,
+    engineSerial: '',
+    minseretSerial: '',
+    hatakStatus: '',
+    tipulType: '',
+    problem: '',
+    reciveDate: null,
+    sendingDivision: '',
+    sendingBrigade: null,
+    sendingBattalion: null,
+    recivingDivision: '',
+    recivingBrigade: null,
+    recivingBattalion: null,
+    waitingHHType: '',
+    michlalNeed: '',
+    startWorkingDate: null,
+    forManoiya: '',
+    performenceExpectation: '',
+    intended: '',
+  }
+};
 
 
 
@@ -49,6 +74,21 @@ export function generateData(columns, count = 10) {
   return rows;
 }
 
+
+
+
+export const steps = [
+  { label: 'ראשי', description: 'פרטים בסיסיים' },
+  { label: 'נתוני יחידה', description: 'יחידה מוסרת ומקבלת' },
+  { label: 'אחר', description: 'פרטים נוספים' },
+];
+
+export const tipulTypeOptions = ['שבר', 'שע"מ'];
+export const michlalNeedOptions = ['מנוע', 'ממסרת', 'מנוע + ממסרת'];
+export const performenceOptions = ['כן', 'לא'];
+
+export const waitingHHTypeRequiredString = 'ממתין ח"ח'
+export const zadikOptions = [1,2,3,4,5,6,6,7,8,9,9,0]
 
 export const intendedOptions = [
   "פצ\"ן",
@@ -132,7 +172,7 @@ export const ogdotOptions = [
 
 
 
-
+export const waitingHHTypeOptions = [1, 2, 3, 4, 5, 6]
 
 
 
@@ -149,3 +189,54 @@ export const hatakStatusOptions = [
   "דרג ג' ממתין לחוליה",
   "דרג ג' נשלח למש\"א"
 ];
+
+
+export const colors = {
+  primary: '#13293D',
+  primaryLight: '#3a5f7d',
+  primaryDark: '#0d1e2b',
+  white: '#ffffff',
+  background: '#f5f7fa',
+  cardBg: '#ffffff',
+  border: '#e0e6ed',
+  success: '#2e7d32',
+  successLight: '#4caf50',
+};
+
+
+
+export const datagridcustomCellClassNames = {
+  '& .hatak-kosher': {
+    backgroundColor: '#d4edda',
+    color: '#155724',
+    fontWeight: '500',
+  },
+
+  // נופק - תורכיז פסטל
+  '& .hatak-nofek': {
+    backgroundColor: '#d1ecf1',
+    color: '#0c5460',
+    fontWeight: '500',
+  },
+
+  // בלאי - צהוב פסטל
+  '& .hatak-balai': {
+    backgroundColor: '#fff3cd',
+    color: '#856404',
+    fontWeight: '500',
+  },
+
+  // דרג ג' + ממתין ח"ח - כתום פסטל
+  '& .hatak-darag3': {
+    backgroundColor: '#ffe5d0',
+    color: '#8b4513',
+    fontWeight: '500',
+  },
+
+  // מושבת - אדום פסטל
+  '& .hatak-mushbat': {
+    backgroundColor: '#f8d7da',
+    color: '#721c24',
+    fontWeight: '500',
+  },
+}

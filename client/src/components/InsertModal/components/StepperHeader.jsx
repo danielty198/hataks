@@ -5,7 +5,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import GroupsIcon from '@mui/icons-material/Groups';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import { ColorlibConnector, ColorlibStepIconRoot } from '../styles/styledComponents';
-import { colors, steps } from '../constants';
+import { colors, steps } from '../../../assets';
 
 const stepIcons = {
   1: <SettingsIcon sx={{ fontSize: 26 }} />,

@@ -21,7 +21,7 @@ const RepairSchema = new mongoose.Schema({
     //  enum: ['כשיר', 'בלאי']
   },
   problem: String,
-  waitingHHType: String,
+  waitingHHType: [],
   michlalNeed: String,
   recivingDivision: String,
   recivingBrigade: String,

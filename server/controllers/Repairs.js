@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 function buildMatchStage(filters) {
   const matchStage = {};
   const reservedKeys = ["_page", "_limit", "_sort", "_order"];
-  
+
   // Fields that should use partial text search
   const textSearchFields = ["problem", "notes", "description"];
 
@@ -58,75 +58,88 @@ function buildMatchStage(filters) {
 
 
 const getRows = async (req, res) => {
-    try {
-        const filters = req.query;
+  try {
+    const filters = req.query;
 
-        // Build match stage
-        const matchStage = buildMatchStage(filters);
+    // Build match stage
+    const matchStage = buildMatchStage(filters);
 
-        // Build pipeline
-        const pipeline = [];
+    // Build pipeline
+    const pipeline = [];
 
-        if (Object.keys(matchStage).length > 0) {
-            pipeline.push({ $match: matchStage });
-        }
-
-        // Sort by newest first
-        pipeline.push({ $sort: { _id: -1 } });
-
-        const results = await model.aggregate(pipeline).allowDiskUse(true);
-
-        // Return array directly to match your frontend expectation
-        res.json(results);
-    } catch (err) {
-        console.error("Aggregate error:", err);
-        res.status(500).json({ error: "Failed to fetch data" });
+    if (Object.keys(matchStage).length > 0) {
+      pipeline.push({ $match: matchStage });
     }
+
+    // Sort by newest first
+    pipeline.push({ $sort: { _id: -1 } });
+
+    const results = await model.aggregate(pipeline).allowDiskUse(true);
+
+    // Return array directly to match your frontend expectation
+    res.json(results);
+  } catch (err) {
+    console.error("Aggregate error:", err);
+    res.status(500).json({ error: "Failed to fetch data" });
+  }
 };
 
 const updateById = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const updates = req.body;
+  try {
+    const { id } = req.params;
+    const updates = req.body;
 
-        // Validate ObjectId
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-            return res.status(400).json({ error: "Invalid ID format" });
-        }
-
-        // Validate updates
-        if (!updates || Object.keys(updates).length === 0) {
-            return res.status(400).json({ error: "No fields to update" });
-        }
-
-        // Remove _id from updates
-        delete updates._id;
-
-
-        const result = await model.findByIdAndUpdate(
-            id,
-            { $set: updates },
-            { new: true }
-        );
-
-        if (!result) {
-            return res.status(404).json({ error: "Document not found" });
-        }
-
-        res.json({
-            success: true,
-            data: result
-        });
-    } catch (err) {
-        console.error("Update error:", err);
-        res.status(500).json({ error: "Failed to update" });
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "Invalid ID format" });
     }
+
+    // Validate updates
+    if (!updates || Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: "No fields to update" });
+    }
+
+    // Remove _id from updates
+    delete updates._id;
+
+
+    const result = await model.findByIdAndUpdate(
+      id,
+      { $set: updates },
+      { new: true }
+    );
+
+    if (!result) {
+      return res.status(404).json({ error: "Document not found" });
+    }
+
+    res.json({
+      success: true,
+      data: result
+    });
+  } catch (err) {
+    console.error("Update error:", err);
+    res.status(500).json({ error: "Failed to update" });
+  }
 }
 
 
 
+// Function to get all distinct engineSerial values from the Repair collection
+const getDistinctEngineSerials = async (req, res) => {
+  try {
+    // Fetch distinct engineSerial values
+    const engineSerials = await model.distinct('engineSerial');
+    // Return the result as JSON
+    res.json(engineSerials);
+  } catch (error) {
+    console.error('Error fetching distinct engineSerials:', error);
+    res.status(500).json({ error: 'Failed to fetch distinct engineSerials' });
+  }
+}
+
 
 
 module.exports = {
-    updateById, getRows,
+  updateById, getRows, getDistinctEngineSerials
 };  
