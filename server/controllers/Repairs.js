@@ -140,6 +140,28 @@ const getDistinctEngineSerials = async (req, res) => {
 
 
 
+const getByEngine = async (req, res) => {
+  try {
+    const engine = req.params.engine;
+    console.log(engine)
+    const row = await model.findOne({ engineSerial: engine });
+
+    if (!row) {
+      return res.status(404).json({ message: "Engine not found" });
+    }
+
+    res.json(row);
+
+  } catch (err) {
+    console.error("getByEngine error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+module.exports = { getByEngine };
+
+
+
 module.exports = {
-  updateById, getRows, getDistinctEngineSerials
+  updateById, getRows, getDistinctEngineSerials, getByEngine
 };  

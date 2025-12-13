@@ -7,14 +7,20 @@ import { SelectField, AutocompleteField, InputField, DateField } from '../FormFi
 import { FieldsRow, FieldsRowTwo, FullWidthField } from '../../styles/styledComponents';
 import { hatakStatusOptions, hatakTypeOptions, manoiyaOptions, tipulTypeOptions, zadikOptions } from '../../../../assets';
 import { useEngineSerials } from '../../../../contexts/EngineSerialContext';
+import { useCallback } from 'react';
 
 const StepRashi = ({
   formData,
   errors,
   onChange,
+  handleEngineBlur
 }) => {
 
-  const { enginesList, loading, error, fetchEngineSerials } = useEngineSerials()
+  const { enginesList, loading, error, fetchEngineSerials, engineExists } = useEngineSerials()
+
+
+
+
 
 
   return (
@@ -61,6 +67,7 @@ const StepRashi = ({
               options={enginesList} // Pass existing engine serials here if you have them
               value={formData.engineSerial}
               onChange={onChange}
+              onBlur={handleEngineBlur}
               required
               error={errors.engineSerial}
               freeSolo={true}

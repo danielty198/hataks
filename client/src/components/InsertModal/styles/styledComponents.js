@@ -93,13 +93,19 @@ export const FormCardStyled = styled(Paper)(() => ({
   boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
 }));
 
-export const ActionButtonStyled = styled(Button)(() => ({
+export const ActionButtonStyled = styled(Button)(({ theme }) => ({
   borderRadius: 12,
   padding: '12px 28px',
   fontWeight: 600,
   textTransform: 'none',
   fontSize: '0.95rem',
   minWidth: 130,
+  '&.Mui-disabled': {
+    opacity: 0.6,
+    background: 'linear-gradient(135deg, #bdbdbd 0%, #e0e0e0 100%)',
+    color: '#757575',
+    boxShadow: 'none',
+  },
 }));
 
 export const CloseButton = styled(IconButton)(() => ({

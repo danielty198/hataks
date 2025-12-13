@@ -7,13 +7,6 @@ import { FilterPanel, TemplateSelector } from "../../components/RepairsFilters";
 import InsertModal from "../../components/InsertModal/InsertModal";
 
 // Move OUTSIDE component - these never change
-const selectOptions = {
-  manoiya: [],
-  hatakType: [],
-  hatakStatus: [],
-  waitingHHType: [],
-};
-
 const ROUTE = "repairs";
 
 const columnsConfig = [
@@ -154,7 +147,7 @@ export default function RepairsPage() {
     const hasChanges = Object.keys(newRow).some(key => newRow[key] !== oldRow[key]);
 
     if (!hasChanges) {
-      // return oldRow; // No changes, return old row
+      return oldRow; // No changes, return old row
     }
 
     // Check if hatakStatus was changed to the value that requires waitingHHType
@@ -367,6 +360,7 @@ export default function RepairsPage() {
         onClose={() => { setOpen(false); setEditData() }}
         onSubmit={handleSubmit}
         editData={editData}
+        setEditData={setEditData}
         route={ROUTE}
         onSuccess={handleInsertSuccess}
       />

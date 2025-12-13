@@ -6,7 +6,7 @@ const RepairSchema = new mongoose.Schema({
   sendingDivision: String,
   sendingBrigade: String,
   sendingBattalion: String,
-  tipulType:String,
+  tipulType: String,
   zadik: String,
   cameHas: {
     // enum: ['שע"מ', 'שבר'], 
@@ -14,7 +14,7 @@ const RepairSchema = new mongoose.Schema({
   },
   reciveDate: String//Date
   ,
-  engineSerial: String,
+  engineSerial: { type: String, required: true, unique: true, },
   minseretSerial: String,
   hatakStatus: {
     type: String,
@@ -33,5 +33,5 @@ const RepairSchema = new mongoose.Schema({
   intended: String,
 
 }, { timestamps: true });
-
+RepairSchema.index({ engineSerial: 1 })
 module.exports = mongoose.model('Repair', RepairSchema);

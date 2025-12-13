@@ -7,6 +7,7 @@ const CrudOperations = require("../crudOperations");
 const crud = new CrudOperations(repairsModel);
 
 router.get("/", controller.getRows);
+router.get('/getByEngine/:engine' ,controller.getByEngine)
 router.get('/getEngines', controller.getDistinctEngineSerials)
 router.get("/:id", crud.getById);
 router.post("/", crud.create);

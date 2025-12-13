@@ -39,8 +39,13 @@ export const EngineSerialProvider = ({ children }) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+
+    const engineExists = (engine) => {
+        fetchEngineSerials()
+        return enginesList.includes(engine)
+    }
     return (
-        <EngineSerialContext.Provider value={{ enginesList, loading, error, fetchEngineSerials }}>
+        <EngineSerialContext.Provider value={{ enginesList, loading, error, fetchEngineSerials, engineExists }}>
             {children}
         </EngineSerialContext.Provider>
     );

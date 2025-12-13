@@ -11,28 +11,27 @@ import StepYechida from './components/steps/StepYechida';
 import StepAcher from './components/steps/StepAcher';
 
 import { StyledDialog, StyledDialogTitle } from './styles/styledComponents';
-import { colors, steps, getDefaultFormData, waitingHHTypeRequiredString } from '../../assets';
+import { colors, steps, getDefaultFormData, waitingHHTypeRequiredString, baseUrl } from '../../assets';
 import { useEngineSerials } from '../../contexts/EngineSerialContext';
 
 const InsertModal = ({
   open,
   onClose,
   onSubmit,
+  setEditData,
   editData = null,
-  waitingHHTypeOptions = [],
-  zadikOptions = [],
-  brigadeOptions = [],
-  battalionOptions = [],
 }) => {
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState(getDefaultFormData());
   const [errors, setErrors] = useState({});
-  const { enginesList, loading, error , fetchEngineSerials } = useEngineSerials()
+  const [rashiNextButtonDisable, setRashiNextButtonDisable] = useState(false)
+  const { enginesList, loading, error, fetchEngineSerials, engineExists } = useEngineSerials()
 
   const isEditMode = useMemo(() => editData !== null, [editData]);
 
   // Reset form when modal opens
   useEffect(() => {
+    console.log('asdasdasda')
     if (open) {
       if (editData) {
         setFormData({
@@ -50,7 +49,7 @@ const InsertModal = ({
   }, [open, editData]);
 
   const handleChange = useCallback((field, value) => {
-    if (field === 'engineSerial' && value.length > 0) {
+    if (field === 'engineSerial' && (value === 0 || value) && value.length > 0) {
       const lastChar = value[value.length - 1];
       if (!/[0-9]/.test(lastChar)) {
         return;
@@ -58,7 +57,7 @@ const InsertModal = ({
     }
     setFormData(prev => ({ ...prev, [field]: value }));
     setErrors(prev => {
-      if (prev[field]) {
+      if (prev[field]?.error) {
         const newErrors = { ...prev };
         delete newErrors[field];
         return newErrors;
@@ -70,13 +69,13 @@ const InsertModal = ({
   const validateStep = useCallback((step) => {
     const newErrors = {};
     if (step === 0) {
-      if (!formData.manoiya) newErrors.manoiya = true;
-      if (!formData.hatakType) newErrors.hatakType = true;
-      if (!formData.engineSerial) newErrors.engineSerial = true;
-      if (!formData.hatakStatus) newErrors.hatakStatus = true;
-      if (!formData.tipulType) newErrors.tipulType = true;
-      if (!formData.problem) newErrors.problem = true;
-      if (!formData.reciveDate) newErrors.reciveDate = true;
+      if (!formData.manoiya) newErrors.manoiya = { error: true, msg: 'שדה חובה' };
+      if (!formData.hatakType) newErrors.hatakType = { error: true, msg: 'שדה חובה' };
+      if (!formData.engineSerial) newErrors.engineSerial = { error: true, msg: 'שדה חובה' };
+      if (!formData.hatakStatus) newErrors.hatakStatus = { error: true, msg: 'שדה חובה' };
+      if (!formData.tipulType) newErrors.tipulType = { error: true, msg: 'שדה חובה' };
+      if (!formData.problem) newErrors.problem = { error: true, msg: 'שדה חובה' };
+      if (!formData.reciveDate) newErrors.reciveDate = { error: true, msg: 'שדה חובה' };
     }
 
     // Validate step 2 (StepAcher) - check if waitingHHType is required
@@ -84,7 +83,7 @@ const InsertModal = ({
     if (step === 2) {
       if (formData.hatakStatus === waitingHHTypeRequiredString) {
         if (!formData.waitingHHType || formData.waitingHHType.length === 0) {
-          newErrors.waitingHHType = true;
+          newErrors.waitingHHType = { error: true, msg: 'שדה חובה - נא לבחור סיבת המתנה' };
         }
       }
     }
@@ -116,6 +115,46 @@ const InsertModal = ({
     }
   }, [activeStep, formData, isEditMode, onClose, onSubmit, validateStep]);
 
+
+
+
+  const handleEngineBlur = useCallback((field, value, options) => {
+    if (field === 'engineSerial' && value) {
+
+      const exists = engineExists(value)
+      console.log(exists)
+      if (exists) {
+        const stay = window.confirm('מנוע זה כבר קיים במערכת האם לטעון נתונים על המנוע הזה?')
+        if (!stay) {
+          setRashiNextButtonDisable(true)
+          setErrors(prev => ({ ...prev, engineSerial: { error: true, msg: 'לא ניתן להוסיף מספר מנוע קיים' } }))
+        } else {
+          fetch(`${baseUrl}/api/repairs/getByEngine/${value}`)
+            .then(res => {
+              if (!res.ok) {
+                throw new Error(`Status: ${res.status}`);
+              }
+              return res.json();
+            })
+            .then(data => {
+              setEditData(data)
+              // do something with data
+            })
+            .catch(err => {
+              console.error("Fetch error:", err);
+            })
+            .finally(() => {
+              console.log("Request finished");
+            });
+
+        }
+      } else {
+        setRashiNextButtonDisable(false)
+      }
+    }
+  }, []);
+
+
   const dialogTitle = useMemo(() => isEditMode ? 'עריכת רשומה' : 'הוספת רשומה חדשה', [isEditMode]);
 
   const stepDescription = useMemo(
@@ -128,6 +167,7 @@ const InsertModal = ({
       case 0:
         return (
           <StepRashi
+            handleEngineBlur={handleEngineBlur}
             formData={formData}
             errors={errors}
             onChange={handleChange}
@@ -197,6 +237,7 @@ const InsertModal = ({
         }}
       >
         <ActionButtons
+          rashiNextButtonDisable={rashiNextButtonDisable}
           activeStep={activeStep}
           onClose={onClose}
           onBack={handleBack}

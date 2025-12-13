@@ -11,7 +11,7 @@ const SelectFieldComponent = ({ name, label, options, value, onChange, required,
   if (multiple) {
     return (
       <FieldWrapper>
-        <FormControl fullWidth variant="outlined" required={required} error={error}>
+        <FormControl fullWidth variant="outlined" required={required} error={error?.error}>
           <InputLabel id={`${name}-label`}>{label}</InputLabel>
           <Select
             labelId={`${name}-label`}
@@ -44,7 +44,7 @@ const SelectFieldComponent = ({ name, label, options, value, onChange, required,
               </MenuItem>
             ))}
           </Select>
-          {error && <FormHelperText>שדה חובה</FormHelperText>}
+          {error?.error && <FormHelperText>{error.msg}</FormHelperText>}
         </FormControl>
       </FieldWrapper>
     );
@@ -63,8 +63,8 @@ const SelectFieldComponent = ({ name, label, options, value, onChange, required,
         onChange={(e) => onChange(name, e.target.value)}
         variant="outlined"
         required={required}
-        error={error}
-        helperText={error ? 'שדה חובה' : ''}
+        error={error?.error}
+        helperText={error?.msg || ''}
         SelectProps={{ native: true }}
         sx={inputStyles}
       >
@@ -84,7 +84,7 @@ export const SelectField = React.memo(SelectFieldComponent);
 // ---------------------------
 // AutocompleteField
 // ---------------------------
-const AutocompleteFieldComponent = ({ name, label, options, value, onChange, freeSolo = false, required, error }) => (
+const AutocompleteFieldComponent = ({ name, label, options, value, onBlur, onChange, freeSolo = false, required, error }) => (
   <FieldWrapper>
     <Autocomplete
       options={options}
@@ -103,8 +103,13 @@ const AutocompleteFieldComponent = ({ name, label, options, value, onChange, fre
           id={name}
           variant="outlined"
           required={required}
-          error={error}
-          helperText={error ? 'שדה חובה' : ''}
+          onBlur={(e) => {
+            if (onBlur) {
+              onBlur(name, e.target.value, options);  // Pass name, value, and options
+            }
+          }}
+          error={error?.error}
+          helperText={error?.msg || ''}
           sx={inputStyles}
         />
       )}
@@ -133,8 +138,8 @@ const InputFieldComponent = ({ name, label, value, onChange, required, error, mu
       onChange={(e) => onChange(name, e.target.value)}
       variant="outlined"
       required={required}
-      error={error}
-      helperText={error ? 'שדה חובה' : ''}
+      error={error?.error}
+      helperText={error?.msg || ''}
       multiline={multiline}
       rows={multiline ? 4 : 1}
       sx={multiline ? multilineInputStyles : inputStyles}
@@ -160,8 +165,8 @@ const DateFieldComponent = ({ name, label, value, onChange, required, error }) =
           variant: 'outlined',
           fullWidth: true,
           required,
-          error,
-          helperText: error ? 'שדה חובה' : '',
+          error: error?.error,
+          helperText: error?.msg || '',
           sx: inputStyles,
         },
       }}
