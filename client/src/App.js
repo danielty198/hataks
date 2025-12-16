@@ -6,9 +6,10 @@ import Repairs from "./pages/Repairs/Repairs";
 import BI from "./pages/BI";
 import '@fontsource/assistant/400.css';
 import '@fontsource/assistant/500.css';
+import { EngineSerialProvider } from "./contexts/EngineSerialContext";
 function App() {
   return (
-    <Box sx={{ width: "100vw", display: "flex",justifyContent:'center', height: "100vh",  }}>
+    <Box sx={{ width: "100vw", display: "flex", justifyContent: 'center', height: "100vh", }}>
 
       <Sidebar />
 
@@ -22,14 +23,14 @@ function App() {
           display: "flex",     // to center inner content
           justifyContent: "center",
 
-          position:'relative',
+          position: 'relative',
         }}
       >
 
-          <Routes>
-            <Route path="/bi" element={<BI />} />
-            <Route path="/repairs" element={<Repairs />} />
-          </Routes>
+        <Routes>
+          <Route path="/bi" element={<BI />} />
+          <Route path="/hataks" element={<EngineSerialProvider><Repairs /></EngineSerialProvider>} />
+        </Routes>
 
       </Box>
     </Box>

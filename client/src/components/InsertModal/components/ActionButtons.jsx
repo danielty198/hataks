@@ -4,9 +4,9 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import SaveIcon from '@mui/icons-material/Save';
 import { ActionButtonStyled } from '../styles/styledComponents';
-import { colors, steps } from '../constants';
+import { colors, steps } from '../../../assets';
 
-const ActionButtons = ({ activeStep, onClose, onBack, onNext, onSubmit, isEditMode }) => (
+const ActionButtons = ({ activeStep, onClose, onBack, onNext, onSubmit, isEditMode, rashiNextButtonDisable }) => (
   <>
     <ActionButtonStyled
       onClick={onClose}
@@ -24,7 +24,7 @@ const ActionButtons = ({ activeStep, onClose, onBack, onNext, onSubmit, isEditMo
     >
       ביטול
     </ActionButtonStyled>
-{console.log('actionButtons')}
+    {console.log('actionButtons')}
     <Box sx={{ display: 'flex', gap: 2 }}>
       {activeStep > 0 && (
         <ActionButtonStyled
@@ -50,6 +50,7 @@ const ActionButtons = ({ activeStep, onClose, onBack, onNext, onSubmit, isEditMo
         <ActionButtonStyled
           variant="contained"
           onClick={onNext}
+          disabled={activeStep=== 0 && rashiNextButtonDisable}
           endIcon={<ArrowBackIcon />}
           sx={{
             background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryLight} 100%)`,

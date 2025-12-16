@@ -5,17 +5,20 @@ import BuildIcon from '@mui/icons-material/Build';
 import FormCard from '../FormCard';
 import { SelectField, AutocompleteField, InputField, DateField } from '../FormFields';
 import { FieldsRow, FieldsRowTwo, FullWidthField } from '../../styles/styledComponents';
-import { tipulTypeOptions } from '../../constants';
+import { hatakStatusOptions, hatakTypeOptions, manoiyaOptions, tipulTypeOptions, zadikOptions } from '../../../../assets';
+import { useEngineSerials } from '../../../../contexts/EngineSerialContext';
+import { useCallback } from 'react';
 
 const StepRashi = ({
   formData,
   errors,
   onChange,
-  manoiyaOptions,
-  hatakTypeOptions,
-  hatakStatusOptions,
-  zadikOptions,
+  handleEngineBlur
 }) => {
+
+  const { enginesList, loading, error, fetchEngineSerials, engineExists } = useEngineSerials()
+
+
 
 
 
@@ -50,6 +53,7 @@ const StepRashi = ({
             <AutocompleteField
               name="zadik"
               label="צ' כלי"
+              freeSolo
               options={zadikOptions}
               value={formData.zadik}
               onChange={onChange}
@@ -57,13 +61,16 @@ const StepRashi = ({
           </FieldsRow>
 
           <FieldsRow>
-            <InputField
+            <AutocompleteField
               name="engineSerial"
               label="מספר מנוע"
+              options={enginesList} // Pass existing engine serials here if you have them
               value={formData.engineSerial}
               onChange={onChange}
+              onBlur={handleEngineBlur}
               required
               error={errors.engineSerial}
+              freeSolo={true}
             />
             <InputField
               name="minseretSerial"

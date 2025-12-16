@@ -1,4 +1,4 @@
-import { colors } from '../constants';
+import { colors } from '../../../assets';
 
 export const inputStyles = {
   '& .MuiOutlinedInput-root': {

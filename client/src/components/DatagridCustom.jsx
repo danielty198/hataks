@@ -8,10 +8,14 @@ import {
   Alert,
   IconButton,
   CircularProgress,
+  Select,
+  MenuItem,
+  Checkbox,
+  ListItemText,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-import HistoryIcon from '@mui/icons-material/History';
-import { baseUrl } from "../assets";
+import HistoryIcon from '@mui/icons-material/History'
+import { baseUrl, datagridcustomCellClassNames } from "../assets";
 
 export default function DatagridCustom({
   data,
@@ -110,77 +114,6 @@ export default function DatagridCustom({
   /* -------------------------------------------
    * CELL SAVE HANDLER
    * ------------------------------------------- */
-  // const handleRowUpdate = useCallback(
-  //   async (newRow, oldRow) => {
-  //     // Find all fields that changed
-  //     const changedFields = {};
-  //     Object.keys(newRow).forEach((key) => {
-  //       if (newRow[key] !== oldRow[key]) {
-  //         changedFields[key] = newRow[key];
-  //       }
-  //     });
-
-  //     // No changes
-  //     if (Object.keys(changedFields).length === 0) return oldRow;
-
-  //     const id = newRow._id;
-
-  //     setLoadingFlag("save", true);
-
-  //     try {
-  //       const res = await fetch(`${baseUrl}/api/${route}/${id}`, {
-  //         method: "PATCH",
-  //         headers: { "Content-Type": "application/json" },
-  //         body: JSON.stringify(changedFields),
-  //       });
-
-  //       if (!res.ok) throw new Error("Save failed");
-
-  //       // Update rows state
-  //       setRows((prev) =>
-  //         prev.map((r) => (r._id === id ? newRow : r))
-  //       );
-
-  //       showSnack("נשמר בהצלחה!", "success", {
-  //         undo: async () => {
-  //           try {
-  //             // Build the old fields to restore
-  //             const oldFields = {};
-  //             Object.keys(changedFields).forEach((key) => {
-  //               oldFields[key] = oldRow[key];
-  //             });
-
-  //             // Send fetch to undo changes in database
-  //             const undoRes = await fetch(`${baseUrl}/api/${route}/${id}`, {
-  //               method: "PATCH",
-  //               headers: { "Content-Type": "application/json" },
-  //               body: JSON.stringify(oldFields),
-  //             });
-
-  //             if (!undoRes.ok) throw new Error("Undo failed");
-
-  //             // Revert rows state
-  //             setRows((prev) =>
-  //               prev.map((r) => (r._id === id ? oldRow : r))
-  //             );
-
-  //             showSnack("שינויים השתחזרו בהצלחה", "success");
-  //           } catch (err) {
-  //             showSnack("שחזור שינויים נכשל", "error");
-  //           }
-  //         },
-  //       });
-
-  //       return newRow;
-  //     } catch (err) {
-  //       showSnack("שמירה נכשלה", "error");
-  //       return oldRow;
-  //     } finally {
-  //       setLoadingFlag("save", false);
-  //     }
-  //   },
-  //   [route, setLoadingFlag]
-  // );
 
   const handleProcessRowUpdateError = useCallback((error) => {
     console.error("Row update error:", error);
@@ -234,6 +167,52 @@ export default function DatagridCustom({
 
         if (c.isEdit) c.editable = true;
 
+        // Handle multiselect columns
+        if (c.isMultiSelect && c.valueOptions) {
+          c.renderEditCell = (params) => (
+            <Select
+              multiple
+              value={params.value || []}
+              onChange={(e) => {
+                params.api.setEditCellValue({
+                  id: params.id,
+                  field: params.field,
+                  value: e.target.value
+                });
+              }}
+              renderValue={(selected) => selected.join(', ')}
+              sx={{ width: '100%' }}
+            >
+              {c.valueOptions.map((option) => (
+                <MenuItem
+                  key={option}
+                  value={option}
+                  selected={(params.value || []).includes(option)}
+                  sx={{
+                    '&.Mui-selected': {
+                      backgroundColor: 'rgba(25, 118, 210, 0.2)',
+                    },
+                    '&.Mui-selected:hover': {
+                      backgroundColor: 'rgba(25, 118, 210, 0.3)',
+                    },
+                    '&:hover': {
+                      backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                    },
+                  }}
+                >
+                  {option}
+                </MenuItem>
+              ))}
+            </Select>
+          );
+          c.renderCell = (params) => {
+            const values = params.value || [];
+            return Array.isArray(values) ? values.join(', ') : values;
+          };
+        }
+
+
+
         // Handle date columns - convert string/timestamp to Date object
         if (c.type === "date" || c.type === "dateTime") {
           c.valueGetter = (value) => {
@@ -243,7 +222,7 @@ export default function DatagridCustom({
           };
         }
 
-        if (c.field === 'edit' || c.headerName === 'ערון') {
+        if (c.field === 'edit' || c.headerName === 'ערוך') {
           c.getActions = (params) => [
             <GridActionsCellItem
               key="edit"
@@ -266,6 +245,32 @@ export default function DatagridCustom({
             />,
           ];
         }
+        if (c.field === 'hatakStatus') {
+          c.cellClassName = (params) => {
+            const value = params.value;
+            if (!value) return '';
+
+
+
+            // כשיר (כל סוג) - ירוק
+            if (value.startsWith('כשיר')) return 'hatak-kosher';
+
+            // נופק - תורכיז
+            if (value === 'נופק') return 'hatak-nofek';
+
+            // בלאי - צהוב
+            if (value === 'בלאי') return 'hatak-balai';
+
+            // דרג ג' או ממתין ח"ח - כתום
+            if (value.startsWith('דרג ג\'') || value === 'ממתין ח"ח') return 'hatak-darag3';
+
+            // מושבת - אדום
+            if (value.startsWith('מושבת')) return 'hatak-mushbat';
+
+            return '';
+          };
+        }
+
 
         if (c.headerName === "history" || c.headerName === "היסטוריה") {
           c.type = "actions";
@@ -274,11 +279,10 @@ export default function DatagridCustom({
               key="history"
               icon={<HistoryIcon />}
               label="history"
-              onClick={() =>  c.action(params, true)}
+              onClick={() => c.action(params, true)}
             />,
           ];
         }
-
         if (!c.flex) c.flex = 1;
         if (!c.minWidth) c.minWidth = 100;
 
@@ -302,7 +306,7 @@ export default function DatagridCustom({
         loading={loading.getRows}
         disableSelectionOnClick
         getRowId={(row) => row._id}
-        sx={{ minHeight: "60%" }}
+        sx={{ minHeight: "60%", ...datagridcustomCellClassNames }}
         processRowUpdate={processRowUpdate}
         onProcessRowUpdateError={handleProcessRowUpdateError}
       />
@@ -323,7 +327,7 @@ export default function DatagridCustom({
             boxShadow: 1,
           }}
         >
-          <CircularProgress size={20} /> Saving...
+          <CircularProgress size={20} /> שומר...
         </Box>
       )}
 

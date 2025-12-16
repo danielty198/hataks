@@ -1,10 +1,11 @@
-const model = require('../models/Repairs');
+const { model } = require('../models/Repairs');
 const mongoose = require("mongoose");
-
+const historyModel = require('../models/Repairs_History')
+const { getChanges } = require('../Utils/getChanges')
 function buildMatchStage(filters) {
   const matchStage = {};
   const reservedKeys = ["_page", "_limit", "_sort", "_order"];
-  
+
   // Fields that should use partial text search
   const textSearchFields = ["problem", "notes", "description"];
 
@@ -58,75 +59,124 @@ function buildMatchStage(filters) {
 
 
 const getRows = async (req, res) => {
-    try {
-        const filters = req.query;
+  try {
+    const filters = req.query;
 
-        // Build match stage
-        const matchStage = buildMatchStage(filters);
+    // Build match stage
+    const matchStage = buildMatchStage(filters);
 
-        // Build pipeline
-        const pipeline = [];
+    // Build pipeline
+    const pipeline = [];
 
-        if (Object.keys(matchStage).length > 0) {
-            pipeline.push({ $match: matchStage });
-        }
-
-        // Sort by newest first
-        pipeline.push({ $sort: { _id: -1 } });
-
-        const results = await model.aggregate(pipeline).allowDiskUse(true);
-
-        // Return array directly to match your frontend expectation
-        res.json(results);
-    } catch (err) {
-        console.error("Aggregate error:", err);
-        res.status(500).json({ error: "Failed to fetch data" });
+    if (Object.keys(matchStage).length > 0) {
+      pipeline.push({ $match: matchStage });
     }
+
+    // Sort by newest first
+    pipeline.push({ $sort: { _id: -1 } });
+
+    const results = await model.aggregate(pipeline).allowDiskUse(true);
+
+    // Return array directly to match your frontend expectation
+    res.json(results);
+  } catch (err) {
+    console.error("Aggregate error:", err);
+    res.status(500).json({ error: "Failed to fetch data" });
+  }
 };
 
 const updateById = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const updates = req.body;
+  try {
+    const { id } = req.params;
+    const { updates, user } = req.body;
 
-        // Validate ObjectId
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-            return res.status(400).json({ error: "Invalid ID format" });
-        }
-
-        // Validate updates
-        if (!updates || Object.keys(updates).length === 0) {
-            return res.status(400).json({ error: "No fields to update" });
-        }
-
-        // Remove _id from updates
-        delete updates._id;
-
-
-        const result = await model.findByIdAndUpdate(
-            id,
-            { $set: updates },
-            { new: true }
-        );
-
-        if (!result) {
-            return res.status(404).json({ error: "Document not found" });
-        }
-
-        res.json({
-            success: true,
-            data: result
-        });
-    } catch (err) {
-        console.error("Update error:", err);
-        res.status(500).json({ error: "Failed to update" });
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      console.log('invalid id')
+      return res.status(400).json({ error: "Invalid ID format" });
     }
+    console.log(req.body)
+    console.log(updates)
+    // Validate updates
+    if (!updates || Object.keys(updates).length === 0) {
+      console.log('no update')
+      return res.status(400).json({ error: "No fields to update" });
+    }
+    const oldRepair = await model.findById(id).lean();
+    if (!oldRepair) {
+      return res.status(404).json({ message: 'Repair not found' });
+    }
+
+    const updatedRepair = await model.findByIdAndUpdate(
+      id,
+      updates,
+      { new: true }
+    ).lean();
+
+
+    const changes = getChanges(oldRepair, updatedRepair);
+    console.log(changes)
+
+    if (changes.length > 0) {
+      await historyModel.create({
+        repairId: id,
+        changedBy: 'daniel',
+        changes,
+        oldRepair: oldRepair,
+        newRepair: updatedRepair
+      });
+    }
+
+
+    res.json({
+      success: true,
+      data: updatedRepair
+    });
+  } catch (err) {
+    console.error("Update error:", err);
+    res.status(500).json({ error: "Failed to update" });
+  }
 }
 
 
 
+// Function to get all distinct engineSerial values from the Repair collection
+const getDistinctEngineSerials = async (req, res) => {
+  try {
+    // Fetch distinct engineSerial values
+    const engineSerials = await model.distinct('engineSerial');
+    // Return the result as JSON
+    res.json(engineSerials);
+  } catch (error) {
+    console.error('Error fetching distinct engineSerials:', error);
+    res.status(500).json({ error: 'Failed to fetch distinct engineSerials' });
+  }
+}
+
+
+
+const getByEngine = async (req, res) => {
+  try {
+    const engine = req.params.engine;
+    console.log(engine)
+    const row = await model.findOne({ engineSerial: engine });
+
+    if (!row) {
+      return res.status(404).json({ message: "Engine not found" });
+    }
+
+    res.json(row);
+
+  } catch (err) {
+    console.error("getByEngine error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+module.exports = { getByEngine };
+
 
 
 module.exports = {
-    updateById, getRows,
+  updateById, getRows, getDistinctEngineSerials, getByEngine
 };  

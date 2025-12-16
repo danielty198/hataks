@@ -1,2 +1,2 @@
 export { default } from './InsertModal';
-export * from './constants';
+export { steps } from '../../assets';

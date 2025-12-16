@@ -7,8 +7,7 @@ export default function Sidebar() {
 
   // 🔵 Sidebar configuration object
   const menuItems = [
-    { label: "תיקונים", path: "/repairs", icon: "🔧" },
-    { label: "חט'כים", path: "/hataks", icon: "⚙️" },
+    { label: "חטכים", path: "/hataks", icon: "🔧" },
     { label: "bi", path: "/bi", icon: "📊" },
   ];
 

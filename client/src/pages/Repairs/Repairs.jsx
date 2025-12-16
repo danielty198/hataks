@@ -1,19 +1,12 @@
 import React, { useState, useMemo, useEffect, useCallback, memo } from "react";
 import { Box, Typography, Button, Snackbar, Alert } from "@mui/material";
-import { baseUrl, hatakStatusOptions, hatakTypeOptions, intendedOptions, manoiyaOptions, ogdotOptions } from "../../assets";
+import { baseUrl, hatakStatusOptions, hatakTypeOptions, intendedOptions, manoiyaOptions, ogdotOptions, waitingHHTypeOptions, colors, waitingHHTypeRequiredString } from "../../assets";
 
 import DatagridCustom from "../../components/DatagridCustom";
 import { FilterPanel, TemplateSelector } from "../../components/RepairsFilters";
 import InsertModal from "../../components/InsertModal/InsertModal";
 
 // Move OUTSIDE component - these never change
-const selectOptions = {
-  manoiya: [],
-  hatakType: [],
-  hatakStatus: [],
-  waitingHHType: [],
-};
-
 const ROUTE = "repairs";
 
 const columnsConfig = [
@@ -29,7 +22,7 @@ const columnsConfig = [
   { field: "hatakStatus", headerName: 'סטטוס חט"כ', isEdit: true, type: "singleSelect", valueOptions: hatakStatusOptions },
   { field: 'tipulType', headerName: 'סוג טיפול', isEdit: true, type: "singleSelect", valueOptions: ['שבר', 'שע"מ'] },
   { field: "problem", headerName: "פירוט תקלה", isEdit: true, type: "string" },
-  { field: "waitingHHType", headerName: 'סוג ח"ח ממתין', isEdit: true, type: "singleSelect", valueOptions: selectOptions.waitingHHType },
+  { field: "waitingHHType", headerName: 'סוג ח"ח ממתין', isEdit: true, isMultiSelect: true, valueOptions: waitingHHTypeOptions },
   { field: "michlalNeed", headerName: "צריכת מכלל", isEdit: true, type: "string" },
   { field: "recivingDivision", headerName: "אוגדה מקבלת", isEdit: true, type: "singleSelect", valueOptions: ogdotOptions },
   { field: "recivingBrigade", headerName: "חטיבה מקבלת", isEdit: true, type: "string" },
@@ -150,6 +143,31 @@ export default function RepairsPage() {
 
   // Track row edits from the DataGrid
   const handleProcessRowUpdate = useCallback((newRow, oldRow) => {
+    // Check if there are actual changes
+
+    const hasChanges = Object.keys(newRow).some(key => newRow[key] !== oldRow[key]);
+
+    if (!hasChanges) {
+      return oldRow; // No changes, return old row
+    }
+
+    // Check if hatakStatus was changed to the value that requires waitingHHType
+    console.log(newRow.waitingHHType)
+    if (newRow.hatakStatus === waitingHHTypeRequiredString) {
+
+      if (!newRow.waitingHHType || (Array.isArray(newRow.waitingHHType) && ((newRow.waitingHHType.length === 0) || ((newRow.waitingHHType.length === 1) && (newRow.waitingHHType[0] === ''))))) {
+        // Show error snackbar
+        const errMsg = 'כאשר סטטוס חטכ הוא ממתין ל- ח"ח חייב לתת לסוג ח"ח ממתין ערך'
+        setSnackbar({
+          open: true,
+          message: errMsg,
+          severity: 'error'
+        });
+        throw Error(errMsg)
+        return oldRow; // Revert to old row
+      }
+    }
+
     // Check if this row is already in pending changes
     setPendingChanges(prev => {
       const existingIndex = prev.findIndex(r => r._id === newRow._id);
@@ -180,7 +198,7 @@ export default function RepairsPage() {
         const res = await fetch(`${baseUrl}/api/${ROUTE}/${row._id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(row),
+          body: JSON.stringify({updates:row}),
         });
 
         if (!res.ok) throw new Error(`Failed to update row ${row._id}`);
@@ -222,7 +240,7 @@ export default function RepairsPage() {
         res = await fetch(`${baseUrl}/api/${ROUTE}/${data._id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
+          body: JSON.stringify({ updates: data }),
         });
 
         if (!res.ok) throw new Error("נכשל עדכון שורה");
@@ -273,7 +291,7 @@ export default function RepairsPage() {
   }, []);
 
   const handleOpenHistory = () => {
-    
+
   }
 
   // ======================================================
@@ -285,7 +303,7 @@ export default function RepairsPage() {
         return { ...col, action: handleOpenEdit };
       }
       if (col.field === "history") {
-        return { ...col, action: handleOpenEdit };
+        return { ...col, action: handleOpenHistory };
       }
       return col;
     });
@@ -314,6 +332,12 @@ export default function RepairsPage() {
           id='saveChanges'
           onClick={handleSaveChanges}
           disabled={pendingChanges.length === 0}
+          sx={{
+            backgroundColor: colors.success,
+            '&:hover': {
+              backgroundColor: colors.successLight,
+            },
+          }}
         >
           שמירת שינויים {pendingChanges.length > 0 && `(${pendingChanges.length})`}
         </Button>
@@ -344,6 +368,7 @@ export default function RepairsPage() {
         onClose={() => { setOpen(false); setEditData() }}
         onSubmit={handleSubmit}
         editData={editData}
+        setEditData={setEditData}
         route={ROUTE}
         onSuccess={handleInsertSuccess}
       />
