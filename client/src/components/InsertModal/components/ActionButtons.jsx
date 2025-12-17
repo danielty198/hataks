@@ -24,7 +24,6 @@ const ActionButtons = ({ activeStep, onClose, onBack, onNext, onSubmit, isEditMo
     >
       ביטול
     </ActionButtonStyled>
-    {console.log('actionButtons')}
     <Box sx={{ display: 'flex', gap: 2 }}>
       {activeStep > 0 && (
         <ActionButtonStyled

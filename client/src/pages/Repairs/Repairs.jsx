@@ -5,6 +5,7 @@ import { baseUrl, hatakStatusOptions, hatakTypeOptions, intendedOptions, manoiya
 import DatagridCustom from "../../components/DatagridCustom";
 import { FilterPanel, TemplateSelector } from "../../components/RepairsFilters";
 import InsertModal from "../../components/InsertModal/InsertModal";
+import RepairHistoryDialog from "../../components/HistoryDialog/RepairHistoryDialog";
 
 // Move OUTSIDE component - these never change
 const ROUTE = "repairs";
@@ -66,7 +67,8 @@ export default function RepairsPage() {
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
   const [pendingChanges, setPendingChanges] = useState([]); // Track unsaved changes
-
+  const [openHistoryDialog, setOpenHistoryModal] = useState(false)
+  const [repairId, setRepairId] = useState()
   // Fetch data
   const fetchData = useCallback(async (appliedFilters = {}) => {
     try {
@@ -152,7 +154,7 @@ export default function RepairsPage() {
     }
 
     // Check if hatakStatus was changed to the value that requires waitingHHType
-    console.log(newRow.waitingHHType)
+
     if (newRow.hatakStatus === waitingHHTypeRequiredString) {
 
       if (!newRow.waitingHHType || (Array.isArray(newRow.waitingHHType) && ((newRow.waitingHHType.length === 0) || ((newRow.waitingHHType.length === 1) && (newRow.waitingHHType[0] === ''))))) {
@@ -198,7 +200,7 @@ export default function RepairsPage() {
         const res = await fetch(`${baseUrl}/api/${ROUTE}/${row._id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({updates:row}),
+          body: JSON.stringify({ updates: row }),
         });
 
         if (!res.ok) throw new Error(`Failed to update row ${row._id}`);
@@ -290,8 +292,14 @@ export default function RepairsPage() {
     setOpen(true);          // <-- open modal
   }, []);
 
-  const handleOpenHistory = () => {
+  const handleOpenHistory = (params) => {
 
+    setRepairId(params.id)
+    setOpenHistoryModal(true)
+  }
+  const handleCloseHistory = () => {
+    setOpenHistoryModal(false)
+    setRepairId(null)
   }
 
   // ======================================================
@@ -319,7 +327,6 @@ export default function RepairsPage() {
   const gridData = useMemo(() => rows, [rows]);
 
 
-  console.log('repairs')
 
   return (
     <Box sx={containerSx}>
@@ -351,7 +358,11 @@ export default function RepairsPage() {
           currentFilters={filters}
           currentVisibleColumns={visibleColumns}
         />
-
+        <RepairHistoryDialog
+          open={openHistoryDialog}
+          onClose={handleCloseHistory}
+          repairId={repairId}
+        />
         <FilterPanel
           columns={columnsConfig}
           filters={filters}

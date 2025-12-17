@@ -1,6 +1,6 @@
-export function getChanges(oldDoc, newDoc) {
+function getChanges(oldDoc, newDoc) {
   const changes = [];
-  console.log({ oldDoc, newDoc })
+
 
   for (const key of Object.keys(newDoc)) {
     if (['updatedAt', '__v'].includes(key)) continue;
@@ -18,3 +18,6 @@ export function getChanges(oldDoc, newDoc) {
 
   return changes;
 }
+
+
+module.exports = {getChanges}

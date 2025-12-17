@@ -33,7 +33,6 @@ const ColumnCheckbox = memo(function ColumnCheckbox({ field, headerName, checked
     />
   );
 });
-console.log('ColumnVisbility')
 function ColumnVisibility({ columns = [], visibleColumns = [], onVisibleColumnsChange }) {
   const [search, setSearch] = useState("");
 

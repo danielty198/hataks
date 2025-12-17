@@ -1,5 +1,43 @@
 const mongoose = require('mongoose');
-const {RepairSchema} = require('../models/Repairs')
+const { RepairSchema } = require('../models/Repairs')
+
+
+const repairObject = {
+  manoiya: String,
+  hatakType: String,
+  sendingDivision: String,
+  sendingBrigade: String,
+  sendingBattalion: String,
+  tipulType: String,
+  zadik: String,
+  cameHas: {
+    // enum: ['שע"מ', 'שבר'], 
+    type: String
+  },
+  reciveDate: String//Date
+  ,
+  engineSerial: { type: String, required: true, unique: true, },
+  minseretSerial: String,
+  hatakStatus: {
+    type: String,
+    //  enum: ['כשיר', 'בלאי']
+  },
+  problem: String,
+  waitingHHType: [],
+  michlalNeed: String,
+  recivingDivision: String,
+  recivingBrigade: String,
+  recivingBattalion: String,
+  startWorkingDate: String //Date
+  ,
+  forManoiya: String,
+  performenceExpectation: String,
+  intended: String,
+}
+
+
+
+
 const repairHistorySchema = new mongoose.Schema(
   {
     repairId: {
@@ -12,8 +50,8 @@ const repairHistorySchema = new mongoose.Schema(
       type: String, // userId / email / system
       required: true,
     },
-    oldRepair: RepairSchema,
-    newRepair: RepairSchema,
+    oldRepair: Object,
+    newRepair: Object,
     changes: [
       {
         field: {

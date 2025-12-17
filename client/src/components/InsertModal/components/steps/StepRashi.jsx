@@ -13,7 +13,8 @@ const StepRashi = ({
   formData,
   errors,
   onChange,
-  handleEngineBlur
+  handleEngineBlur,
+  editData,
 }) => {
 
   const { enginesList, loading, error, fetchEngineSerials, engineExists } = useEngineSerials()
@@ -68,6 +69,7 @@ const StepRashi = ({
               value={formData.engineSerial}
               onChange={onChange}
               onBlur={handleEngineBlur}
+              disabled={Boolean(editData)}
               required
               error={errors.engineSerial}
               freeSolo={true}

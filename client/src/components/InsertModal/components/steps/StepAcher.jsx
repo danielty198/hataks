@@ -13,8 +13,7 @@ const StepAcher = ({
 }) => {
   // Check if waitingHHType is required based on hatakStatus
   const isWaitingHHTypeRequired = formData.hatakStatus === waitingHHTypeRequiredString;
-  console.log(formData.hatakStatus)
-  console.log(isWaitingHHTypeRequired)
+
   return (
     <Fade in={true} timeout={400}>
       <Box>
@@ -24,7 +23,6 @@ const StepAcher = ({
           subtitle="מידע נוסף על הציוד והטיפול"
         >
           <FieldsRow>
-            {console.log('step acher')}
             <SelectField
               name="waitingHHType"
               label='ח"ח ממתין'

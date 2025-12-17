@@ -61,7 +61,6 @@ const FilterItem = memo(function FilterItem({ column, value, dateFrom, dateTo, o
     prev.column === next.column
   );
 });
-console.log('FilterPanel')
 
 // Memoized filter list component - only renders visible items
 const FilterList = memo(function FilterList({ columns, filters, onChange, onDateChange }) {

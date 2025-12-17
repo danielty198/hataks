@@ -95,8 +95,7 @@ const updateById = async (req, res) => {
       console.log('invalid id')
       return res.status(400).json({ error: "Invalid ID format" });
     }
-    console.log(req.body)
-    console.log(updates)
+
     // Validate updates
     if (!updates || Object.keys(updates).length === 0) {
       console.log('no update')
@@ -115,7 +114,6 @@ const updateById = async (req, res) => {
 
 
     const changes = getChanges(oldRepair, updatedRepair);
-    console.log(changes)
 
     if (changes.length > 0) {
       await historyModel.create({
@@ -158,7 +156,7 @@ const getDistinctEngineSerials = async (req, res) => {
 const getByEngine = async (req, res) => {
   try {
     const engine = req.params.engine;
-    console.log(engine)
+
     const row = await model.findOne({ engineSerial: engine });
 
     if (!row) {
@@ -173,10 +171,29 @@ const getByEngine = async (req, res) => {
   }
 };
 
-module.exports = { getByEngine };
 
+const getHistory = async (req, res) => {
+  try {
+    const { id } = req.params;
 
+    // Check if id is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid ID format' });
+    }
+
+    const history = await historyModel.find({repairId:id});
+
+    if (!history) {
+      return res.status(404).json({ message: 'לא קיים היסטוריה על חט"כ זה' });
+    }
+
+    res.json(history);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+}
 
 module.exports = {
-  updateById, getRows, getDistinctEngineSerials, getByEngine
+  updateById, getRows, getDistinctEngineSerials, getByEngine, getHistory
 };  

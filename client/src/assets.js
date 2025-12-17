@@ -3,9 +3,12 @@ import dayjs from "dayjs";
 
 export const SYSTEM = "OM_preprod"
 
-export const clientPort = 3007;
+export const clientPort = 3000;
 
 export const serverPort = 5000;
+export const USER_SERVICE_CLIENT_PORT = 3006
+export const USER_SERVICE_SERVER_PORT = 3005
+export const ASSETS_SERVICE_SERVER_PORT = 3011
 
 export const civil = true
 
@@ -88,7 +91,7 @@ export const michlalNeedOptions = ['מנוע', 'ממסרת', 'מנוע + ממס�
 export const performenceOptions = ['כן', 'לא'];
 
 export const waitingHHTypeRequiredString = 'ממתין ח"ח'
-export const zadikOptions = [1,2,3,4,5,6,6,7,8,9,9,0]
+export const zadikOptions = [1, 2, 3, 4, 5, 6, 6, 7, 8, 9, 9, 0]
 
 export const intendedOptions = [
   "פצ\"ן",
@@ -170,9 +173,20 @@ export const ogdotOptions = [
   "אחר"
 ];
 
+export const waitingHHTypeOptions = [
+  "בית צד ימין",
+  "בית צד שמאל",
+  "מכלול 25 מיקרון",
+  "משאבת הזרקה",
+  "יחידת ניתוק",
+  "ראש היגוי",
+  "אלטרנטור סימן 4",
+  "ערכת בלמים ס'4",
+  "מתנע",
+  "אטם חזיה",
+  "אחר"
+];
 
-
-export const waitingHHTypeOptions = [1, 2, 3, 4, 5, 6]
 
 
 

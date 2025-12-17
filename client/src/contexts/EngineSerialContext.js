@@ -23,7 +23,6 @@ export const EngineSerialProvider = ({ children }) => {
             }
 
             const data = await response.json();  // Parse the JSON response
-            console.log(data)
             // Ensure data is an array
             setEnginesList(data);  // If data is not an array, fallback to empty array
             setLoading(false);  // Set loading to false after data is fetched
@@ -40,8 +39,8 @@ export const EngineSerialProvider = ({ children }) => {
     }, []);
 
 
-    const engineExists = (engine) => {
-        fetchEngineSerials()
+    const engineExists = async (engine) => {
+        await fetchEngineSerials()
         return enginesList.includes(engine)
     }
     return (

@@ -31,7 +31,6 @@ const InsertModal = ({
 
   // Reset form when modal opens
   useEffect(() => {
-    console.log('asdasdasda')
     if (open) {
       if (editData) {
         setFormData({
@@ -79,7 +78,7 @@ const InsertModal = ({
     }
 
     // Validate step 2 (StepAcher) - check if waitingHHType is required
-    console.log(formData.waitingHHType)
+
     if (step === 2) {
       if (formData.hatakStatus === waitingHHTypeRequiredString) {
         if (!formData.waitingHHType || formData.waitingHHType.length === 0) {
@@ -103,7 +102,7 @@ const InsertModal = ({
   }, []);
 
   const handleSubmit = useCallback(() => {
-    console.log(validateStep(activeStep))
+
     if (validateStep(activeStep)) {
       const submitData = {
         ...formData,
@@ -118,10 +117,10 @@ const InsertModal = ({
 
 
 
-  const handleEngineBlur = useCallback((field, value, options) => {
+  const handleEngineBlur = useCallback(async (field, value, options) => {
     if (field === 'engineSerial' && value) {
 
-      const exists = engineExists(value)
+      const exists = await engineExists(value)
       console.log(exists)
       if (exists) {
         const stay = window.confirm('מנוע זה כבר קיים במערכת האם לטעון נתונים על המנוע הזה?')
@@ -169,6 +168,7 @@ const InsertModal = ({
           <StepRashi
             handleEngineBlur={handleEngineBlur}
             formData={formData}
+            editData={editData}
             errors={errors}
             onChange={handleChange}
           />

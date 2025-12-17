@@ -27,7 +27,6 @@ export default function DatagridCustom({
 
 
   useEffect(() => {
-    // console.log(rows)
   }, [rows])
   const [loading, setLoading] = useState({
     getRows: false,
@@ -290,7 +289,6 @@ export default function DatagridCustom({
       });
   }, [columns, visibleColumns, deleteRow]);
 
-  console.log('datagrid')
 
   return (
     <Box sx={{ width: "100%", height: "80%", position: "relative" }}>

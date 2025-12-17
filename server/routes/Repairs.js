@@ -1,14 +1,15 @@
 const express = require("express");
 const router = express.Router();
 const controller = require("../controllers/Repairs");
-const repairsModel = require("../models/Repairs");
+const { model } = require("../models/Repairs");
 const CrudOperations = require("../crudOperations");
 
-const crud = new CrudOperations(repairsModel);
+const crud = new CrudOperations(model);
 
 router.get("/", controller.getRows);
-router.get('/getByEngine/:engine' ,controller.getByEngine)
+router.get('/getByEngine/:engine', controller.getByEngine)
 router.get('/getEngines', controller.getDistinctEngineSerials)
+router.get('/getHistory/:id', controller.getHistory)
 router.get("/:id", crud.getById);
 router.post("/", crud.create);
 router.put("/:id", crud.update);

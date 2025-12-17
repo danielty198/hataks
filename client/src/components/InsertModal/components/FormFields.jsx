@@ -84,10 +84,11 @@ export const SelectField = React.memo(SelectFieldComponent);
 // ---------------------------
 // AutocompleteField
 // ---------------------------
-const AutocompleteFieldComponent = ({ name, label, options, value, onBlur, onChange, freeSolo = false, required, error }) => (
+const AutocompleteFieldComponent = ({ name, label, options, value, onBlur, onChange, freeSolo = false, required, error, disabled }) => (
   <FieldWrapper>
     <Autocomplete
       options={options}
+      disabled={disabled ? disabled : false}
       value={value || ''}
       onChange={(_, val) => onChange(name, val)}   // when you select an option 
       freeSolo={freeSolo}
@@ -103,6 +104,7 @@ const AutocompleteFieldComponent = ({ name, label, options, value, onBlur, onCha
           id={name}
           variant="outlined"
           required={required}
+          disabled={disabled ? disabled : false}
           onBlur={(e) => {
             if (onBlur) {
               onBlur(name, e.target.value, options);  // Pass name, value, and options
@@ -116,6 +118,14 @@ const AutocompleteFieldComponent = ({ name, label, options, value, onBlur, onCha
       sx={{
         '& .MuiOutlinedInput-root': {
           minHeight: '56px',
+        },
+        '&.Mui-disabled': {
+          pointerEvents: 'none',
+        },
+        '& .MuiOutlinedInput-root.Mui-disabled': {
+          '&:hover .MuiOutlinedInput-notchedOutline': {
+            borderColor: 'rgba(0, 0, 0, 0.26)', // Default disabled border color
+          },
         },
       }}
     />
@@ -176,5 +186,3 @@ const DateFieldComponent = ({ name, label, value, onChange, required, error }) =
 
 export const DateField = React.memo(DateFieldComponent);
 
-// Debug
-console.log('FormFields rendered');
