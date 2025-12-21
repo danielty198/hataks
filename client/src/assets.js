@@ -40,6 +40,16 @@ export const getDefaultFormData = () => {
   }
 };
 
+export const roles = [{
+  value:'viewer',
+  label:'צופה'
+},{
+  value:'manoiya',
+  label:'מנועייה'
+},{
+  value:'admin',
+  label:'מנהל'
+}]
 
 
 function generateRandomValueByType(type) {

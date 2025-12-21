@@ -9,6 +9,7 @@ export default function Sidebar() {
   const menuItems = [
     { label: "חטכים", path: "/hataks", icon: "🔧" },
     { label: "bi", path: "/bi", icon: "📊" },
+     { label: "ניהול משתמשים", path: "/users", icon: "👤" },
   ];
 
   return (
