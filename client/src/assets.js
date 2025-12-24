@@ -1,7 +1,7 @@
 
 import dayjs from "dayjs";
-
-export const SYSTEM = "OM_preprod"
+export const civil = true
+export const SYSTEM = civil ? 'demo' : "hataks"
 
 export const clientPort = 3000;
 
@@ -10,9 +10,10 @@ export const USER_SERVICE_CLIENT_PORT = 3006
 export const USER_SERVICE_SERVER_PORT = 3005
 export const ASSETS_SERVICE_SERVER_PORT = 3011
 
-export const civil = true
+
 
 export const baseUrl = clientPort === serverPort ? "" : (civil ? `http://localhost:${serverPort}` : `http://vm0099eged:${serverPort}`);
+export const userServiceUrl = clientPort === serverPort ? '' : (civil ? `http://localhost:3005` : `http://vm0099eged:3005`)
 
 export const getDefaultFormData = () => {
   return {
@@ -41,14 +42,14 @@ export const getDefaultFormData = () => {
 };
 
 export const roles = [{
-  value:'viewer',
-  label:'צופה'
-},{
-  value:'manoiya',
-  label:'מנועייה'
-},{
-  value:'admin',
-  label:'מנהל'
+  value: 'viewer',
+  label: 'צופה'
+}, {
+  value: 'manoiya',
+  label: 'מנועייה'
+}, {
+  value: 'admin',
+  label: 'מנהל'
 }]
 
 

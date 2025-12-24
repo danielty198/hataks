@@ -11,59 +11,44 @@ import {
     Box,
     Chip
 } from "@mui/material";
-import { baseUrl, roles } from "../../assets";
+import { baseUrl, roles, SYSTEM, userServiceUrl } from "../../assets";
 
-export default function UserInsertModal({ open, onClose, onSubmit, editData }) {
+export default function UserInsertModal({ open, onClose, onSubmit, editData, ROUTE }) {
     const [formData, setFormData] = useState({ pid: "", role: [] });
     const [pidOptions, setPidOptions] = useState([]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        if (editData) {
-            setFormData({
-                pid: editData.pid || "",
-                role: Array.isArray(editData.role) ? editData.role : [editData.role || "user"],
-            });
-        } else {
-            setFormData({ pid: "", role: [] });
-        }
-    }, [editData, open]);
+
+        setFormData({ pid: "", role: [] });
+
+    }, [open]);
 
     // Fetch PID options for autocomplete
     useEffect(() => {
         const fetchPidOptions = async () => {
             try {
-                const res = await fetch(`${baseUrl}/api/pids`);
-                const data = await res.json();
-                setPidOptions(data);
-            } catch (err) {
-                console.error("Failed to fetch PID options:", err);
+                const response = await fetch(
+                    `${userServiceUrl}/api/${ROUTE}/getPids?system=${SYSTEM}`
+                );
+
+                if (!response.ok) {
+                    throw new Error(`Request failed with status ${response.status}`);
+                }
+
+                const pidOptions = await response.json();
+                setPidOptions(pidOptions);
+            } catch (error) {
+                console.error("Error fetching PID options:", error);
             }
         };
-        if (open) {
-            fetchPidOptions();
-        }
-    }, [open]);
+
+        fetchPidOptions();
+    }, []);
+
 
     const handleChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
-    };
-
-    const handleRoleChange = (event) => {
-        const selectedValue = event.target.value[0];
-console.log(selectedValue)
-        setFormData(prev => {
-            const currentRoles = prev.role;
-
-            // Check if the value already exists in the array
-            if (currentRoles.includes(selectedValue)) {
-                // Remove it if it exists
-                return { ...prev, role: currentRoles.filter(role => role !== selectedValue) };
-            } else {
-                // Add it if it doesn't exist
-                return { ...prev, role: [...currentRoles, selectedValue] };
-            }
-        });
     };
 
     const handleSubmit = async () => {
@@ -90,6 +75,7 @@ console.log(selectedValue)
                         renderInput={(params) => (
                             <TextField
                                 {...params}
+                                onChange={(e,) => handleChange("pid", e.target.value)}
                                 label="שם משתמש"
                                 required
                                 fullWidth
@@ -101,7 +87,7 @@ console.log(selectedValue)
                         select
                         label="תפקיד"
                         value={formData.role}
-                        onChange={(e) => handleRoleChange(e)}
+                        onChange={(e) => handleChange('role', e.target.value)}
                         required
                         fullWidth
                         SelectProps={{
@@ -109,15 +95,15 @@ console.log(selectedValue)
                             renderValue: (selected) => (
                                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                     {selected.map((value) => {
-                                        const roleLabel = roles?.find(r => r.name === value)?.label;
-                                        return <Chip key={value} label={roleLabel} size="small" />;
+                                        const roleLabel = roles?.find(r => r.value === value)?.label;
+                                        return <Chip key={value} value={value} label={roleLabel} size="small" />;
                                     })}
                                 </Box>
                             ),
                         }}
                     >
                         {roles?.map(el => {
-                            return <MenuItem key={el.value} value={el.value}>{el.label}</MenuItem>
+                            return <MenuItem key={el.value} name={el.value} value={el.value}>{el.label}</MenuItem>
                         })}
                     </TextField>
                 </Box>
@@ -129,7 +115,7 @@ console.log(selectedValue)
                     variant="contained"
                     disabled={loading || !formData.pid || !formData.role.length}
                 >
-                    {editData ? "עדכן" : "הוסף"}
+                    הוסף
                 </Button>
             </DialogActions>
         </Dialog>

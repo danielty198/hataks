@@ -1,20 +1,37 @@
 import React, { useState, useMemo, useEffect, useCallback, memo } from "react";
 import { Box, Typography, Button, Snackbar, Alert } from "@mui/material";
-import { baseUrl, colors } from "../../assets";
+import { baseUrl, colors, roles, SYSTEM, userServiceUrl } from "../../assets";
 
 import DatagridCustom from "../../components/DatagridCustom";
 import UserInsertModal from "./UserInsertModal";
 
 // Move OUTSIDE component - these never change
-const ROUTE = "users";
+const ROUTE = "user";
 
 const columnsConfig = [
-  { field: "pid", headerName: "מספר אישי",  type: "string" },
-  { field: "email", headerName: "אימייל",  type: "string" },
-  { field: "role", headerName: "הרשאה", isEdit: true, type: "singleSelect", valueOptions: ["admin", "user", "manager"] },
+  { field: "pid", headerName: "מספר אישי", type: "string" },
+  { field: "email", headerName: "אימייל", type: "string" },
+  { field: "fName", headerName: "שם פרטי", type: "string" },
+  { field: "lName", headerName: "שם משפחה", type: "string" },
+  { 
+    field: "roles", 
+    headerName: "הרשאה", 
+    isEdit: true, 
+    isMultiSelect: true, 
+    valueOptions: roles.map(el => el.label),
+    // Add valueGetter to convert stored values to labels for display
+    valueGetter: (value) => {
+      if (!value) return [];
+      if (!Array.isArray(value)) return [];
+      // Convert value codes to labels
+      return value.map(val => {
+        const role = roles.find(r => r.value === val);
+        return role ? role.label : val;
+      });
+    }
+  },
 
   // ACTIONS (callback injected later)
-  { field: "edit", headerName: "ערוך", type: "actions" },
   { field: "delete", headerName: "מחק", type: "actions" },
 ];
 
@@ -47,7 +64,7 @@ export default function UserManagementPage() {
   // Fetch data
   const fetchData = useCallback(async () => {
     try {
-      const url = `${baseUrl}/api/${ROUTE}`;
+      const url = `${userServiceUrl}/api/${ROUTE}/allSystem?system=${SYSTEM}`;
       const res = await fetch(url);
       const data = await res.json();
       setRows(data);
@@ -100,6 +117,14 @@ export default function UserManagementPage() {
       return oldRow;
     }
 
+    // Convert labels back to values for storage
+    if (newRow.roles && Array.isArray(newRow.roles)) {
+      newRow.roles = newRow.roles.map(label => {
+        const role = roles.find(r => r.label === label);
+        return role ? role.value : label;
+      });
+    }
+
     // Check if this row is already in pending changes
     setPendingChanges(prev => {
       const existingIndex = prev.findIndex(r => r._id === newRow._id);
@@ -126,18 +151,31 @@ export default function UserManagementPage() {
     if (pendingChanges.length === 0) return;
 
     try {
-      const updatePromises = pendingChanges.map(async (row) => {
-        const res = await fetch(`${baseUrl}/api/${ROUTE}/${row._id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ updates: row }),
-        });
+      // Prepare all rows with proper format
+      const contentArray = pendingChanges.map(row => {
+        const rowToSave = { ...row };
+        
+        // Ensure roles are in value format
+        if (rowToSave.roles && Array.isArray(rowToSave.roles)) {
+          rowToSave.roles = rowToSave.roles.map(el => {
+            const role = roles.find(r => r.label === el || r.value === el);
+            return role ? role.value : el;
+          });
+        }
 
-        if (!res.ok) throw new Error(`Failed to update row ${row._id}`);
-        return await res.json();
+        return rowToSave;
       });
 
-      await Promise.all(updatePromises);
+      // Send all changes in a single request as an array
+      const res = await fetch(`${userServiceUrl}/api/${ROUTE}/updateUser?system=${SYSTEM}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: contentArray }),
+      });
+
+      if (!res.ok) throw new Error("Failed to update users");
+      
+      await res.json();
 
       setPendingChanges([]); // Clear pending changes
 
@@ -160,47 +198,29 @@ export default function UserManagementPage() {
   // ======================================================
   // ACTION HANDLER (edit / add)
   // ======================================================
-  const handleSubmit = useCallback(async (data, isEdit) => {
+  const handleAddUser = useCallback(async (data) => {
     try {
       let res;
       let updatedRecord;
+      const pid = data.pid
+      delete data.pid
 
-      if (isEdit) {
-        if (!data?._id) throw new Error("Missing record id for update");
+      res = await fetch(`${userServiceUrl}/api/${ROUTE}/addSystemSettings`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pid, system: SYSTEM, systemSettings: data }),
+      });
 
-        res = await fetch(`${baseUrl}/api/${ROUTE}/${data._id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ updates: data }),
-        });
+      if (!res.ok) throw new Error("נכשל הוספת משתמש");
+      updatedRecord = await res.json();
 
-        if (!res.ok) throw new Error("נכשל עדכון משתמש");
-        updatedRecord = await res.json();
-        setRows(prev => prev.map(r => (r._id === data._id ? updatedRecord.data : r)));
+      setRows(prev => [...prev, updatedRecord]);
 
-        setSnackbar({
-          open: true,
-          message: "המשתמש עודכן בהצלחה!",
-          severity: "success",
-        });
-      } else {
-        res = await fetch(`${baseUrl}/api/${ROUTE}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
-
-        if (!res.ok) throw new Error("נכשל הוספת משתמש");
-        updatedRecord = await res.json();
-
-        setRows(prev => [...prev, updatedRecord]);
-
-        setSnackbar({
-          open: true,
-          message: "המשתמש נוסף בהצלחה!",
-          severity: "success",
-        });
-      }
+      setSnackbar({
+        open: true,
+        message: "המשתמש נוסף בהצלחה!",
+        severity: "success",
+      });
 
       setOpen(false);
 
@@ -215,6 +235,46 @@ export default function UserManagementPage() {
     }
   }, []);
 
+  const deleteOne = useCallback(async (row) => {
+    const content = [row.row]
+    try {
+      const response = await fetch(
+        `${userServiceUrl}/api/${ROUTE}/deleteSystem?system=${SYSTEM}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ content }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      fetchData()
+      // Show success message
+      setSnackbar({
+        open: true,
+        message: 'Row deleted successfully',
+        severity: 'success'
+      });
+
+    } catch (error) {
+      console.error('Error deleting row:', error);
+
+      // Show error message
+      setSnackbar({
+        open: true,
+        message: `Failed to delete row: ${error.message}`,
+        severity: 'error'
+      });
+
+      throw error;
+    }
+  }, [fetchData])
+
   const handleOpenEdit = useCallback((rowData) => {
     setEditData(rowData.row);   // <-- set the row to edit
     setOpen(true);              // <-- open modal
@@ -225,12 +285,12 @@ export default function UserManagementPage() {
   // ======================================================
   const columnsWithActions = useMemo(() => {
     return columnsConfig.map(col => {
-      if (col.field === "edit") {
-        return { ...col, action: handleOpenEdit };
+      if (col.field === "delete") {
+        return { ...col, action: deleteOne };
       }
       return col;
     });
-  }, [handleOpenEdit]);
+  }, [deleteOne]);
 
   // visible columns
   const displayColumns = useMemo(() => {
@@ -266,8 +326,9 @@ export default function UserManagementPage() {
       <UserInsertModal
         open={open}
         onClose={() => { setOpen(false); setEditData() }}
-        onSubmit={handleSubmit}
+        onSubmit={handleAddUser}
         editData={editData}
+        ROUTE={ROUTE}
       />
 
       <MemoizedDataGrid
