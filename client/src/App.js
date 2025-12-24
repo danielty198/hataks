@@ -59,7 +59,6 @@ function App() {
           });
       }
     }
-    console.log('asdasd')
     handleUser()
   }, [user]);
 
