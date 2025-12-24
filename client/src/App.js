@@ -9,6 +9,8 @@ import '@fontsource/assistant/500.css';
 import { EngineSerialProvider } from "./contexts/EngineSerialContext";
 import { ASSETS_SERVICE_SERVER_PORT, clientPort, USER_SERVICE_CLIENT_PORT, USER_SERVICE_SERVER_PORT } from "./assets";
 import useUser from "./hooks/useUser";
+import UserManagement from './pages/UserManagement/UserManagement'
+import ProtectedRoute from "./utils/ProtectedRoute";
 function App() {
 
 
@@ -17,7 +19,7 @@ function App() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    
+
     const handleUser = async () => {
       const req = window.location.search;
       const id = req.slice(1).split("id=")[1];
@@ -87,8 +89,10 @@ function App() {
       >
 
         <Routes>
+          <Route path="/" element={<EngineSerialProvider><Repairs /></EngineSerialProvider>} />
           <Route path="/bi" element={<BI />} />
           <Route path="/hataks" element={<EngineSerialProvider><Repairs /></EngineSerialProvider>} />
+          <Route path="/users" element={<ProtectedRoute roleRequired='admin'><UserManagement /></ProtectedRoute>} />
         </Routes>
 
       </Box>

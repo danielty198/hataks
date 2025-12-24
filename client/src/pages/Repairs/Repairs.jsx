@@ -6,6 +6,7 @@ import DatagridCustom from "../../components/DatagridCustom";
 import { FilterPanel, TemplateSelector } from "../../components/RepairsFilters";
 import InsertModal from "../../components/InsertModal/InsertModal";
 import RepairHistoryDialog from "../../components/HistoryDialog/RepairHistoryDialog";
+import useUser from "../../hooks/useUser";
 
 // Move OUTSIDE component - these never change
 const ROUTE = "repairs";
@@ -18,7 +19,7 @@ const columnsConfig = [
   { field: "sendingBattalion", headerName: "גדוד מוסר", isEdit: true, type: "string" },
   { field: "zadik", headerName: "צ' של כלי", isEdit: true, type: "string" },
   { field: "reciveDate", headerName: "תאריך קבלה", isEdit: true, type: "date" },
-  { field: "engineSerial", headerName: "מספר מנוע", isEdit: true, type: "string" },
+  { field: "engineSerial", headerName: "מספר מנוע", isEdit: false, type: "string" },
   { field: "minseretSerial", headerName: "מספר ממסרת", isEdit: true, type: "string" },
   { field: "hatakStatus", headerName: 'סטטוס חט"כ', isEdit: true, type: "singleSelect", valueOptions: hatakStatusOptions },
   { field: 'tipulType', headerName: 'סוג טיפול', isEdit: true, type: "singleSelect", valueOptions: ['שבר', 'שע"מ'] },
@@ -69,6 +70,11 @@ export default function RepairsPage() {
   const [pendingChanges, setPendingChanges] = useState([]); // Track unsaved changes
   const [openHistoryDialog, setOpenHistoryModal] = useState(false)
   const [repairId, setRepairId] = useState()
+  const [user] = useUser()
+
+  const isAdmin = user?.roles && Array.isArray(user.roles) && user.roles.includes('admin');
+  const isViewer = user?.roles && Array.isArray(user.roles) && user.roles.length === 1 && user.roles[0] === 'viewer'
+  console.log({ isAdmin, isViewer })
   // Fetch data
   const fetchData = useCallback(async (appliedFilters = {}) => {
     try {
@@ -91,18 +97,14 @@ export default function RepairsPage() {
 
   // Fetch templates + data
   useEffect(() => {
-    const fetchTemplates = async () => {
-      try {
-        const res = await fetch(`${baseUrl}/api/users`);
-        const data = await res.json();
-        setTemplates(data.templates || []);
-      } catch (err) {
-        console.error("Failed to fetch templates:", err);
-      }
-    };
-    fetchTemplates();
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      setTemplates(user.templates)
+    }
+  }, [user.templates])
 
 
   const handleSelectTemplate = useCallback(async (templateId) => {
@@ -307,22 +309,38 @@ export default function RepairsPage() {
   // ======================================================
   const columnsWithActions = useMemo(() => {
     return columnsConfig.map(col => {
+      // Remove edit action callback if viewer
+      const newCol = { ...col };
+
+      // If viewer, disable editing on all editable columns
+      if (isViewer && newCol.isEdit) {
+        newCol.isEdit = false;
+      }
+      // Inject actions for admin / non-viewers
       if (col.field === "edit") {
-        return { ...col, action: handleOpenEdit };
+        newCol.action = !isViewer ? handleOpenEdit : undefined;
       }
       if (col.field === "history") {
-        return { ...col, action: handleOpenHistory };
+        newCol.action = handleOpenHistory;
       }
-      return col;
+      return newCol;
     });
-  }, [handleOpenEdit]);
+  }, [columnsConfig, isViewer]);
 
   // visible columns
   const displayColumns = useMemo(() => {
+
+
     return columnsWithActions.filter(
-      (col) => visibleColumns.includes(col.field) || col.type === "actions"
+      (col) => {
+        // Filter out delete column if not admin
+        if (col.field === "delete" && !isAdmin) return false;
+        if (col.field === 'edit' && isViewer) return false
+
+        return visibleColumns.includes(col.field) || col.type === "actions";
+      }
     );
-  }, [visibleColumns, columnsWithActions]);
+  }, [visibleColumns, columnsWithActions, user?.roles]);
 
   const gridData = useMemo(() => rows, [rows]);
 
@@ -333,21 +351,23 @@ export default function RepairsPage() {
       <Typography variant="h1" gutterBottom>חטכים</Typography>
 
       <Box sx={toolbarSx}>
-        <Button variant="contained" onClick={openModal}>הוספה</Button>
-        <Button
-          variant="contained"
-          id='saveChanges'
-          onClick={handleSaveChanges}
-          disabled={pendingChanges.length === 0}
-          sx={{
-            backgroundColor: colors.success,
-            '&:hover': {
-              backgroundColor: colors.successLight,
-            },
-          }}
-        >
-          שמירת שינויים {pendingChanges.length > 0 && `(${pendingChanges.length})`}
-        </Button>
+        {!isViewer && <>
+          <Button variant="contained" onClick={openModal} disabled={user?.roles}>הוספה</Button>
+          <Button
+            variant="contained"
+            id='saveChanges'
+            onClick={handleSaveChanges}
+            disabled={pendingChanges.length === 0}
+            sx={{
+              backgroundColor: colors.success,
+              '&:hover': {
+                backgroundColor: colors.successLight,
+              },
+            }}
+          >
+            שמירת שינויים {pendingChanges.length > 0 && `(${pendingChanges.length})`}
+          </Button>
+        </>}
 
         <TemplateSelector
           templates={templates}

@@ -18,7 +18,7 @@ import {
 import BookmarkIcon from "@mui/icons-material/Bookmark";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import { baseUrl } from "../../assets";
+import { baseUrl, SYSTEM, userServiceUrl } from "../../assets";
 
 export default function TemplateSelector({
   templates = [],
@@ -35,34 +35,40 @@ export default function TemplateSelector({
   const [newTemplateName, setNewTemplateName] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const handleSave = async () => {
+  const handleSave = async (user) => {
     if (!newTemplateName.trim()) return;
 
     setSaving(true);
+
+    // Create new template
     const newTemplate = {
-      id: Date.now().toString(),
       name: newTemplateName.trim(),
       filters: currentFilters,
       visibleColumns: currentVisibleColumns,
     };
 
     try {
-      // Save to MongoDB via API
-      await fetch(`${baseUrl}/api/users`, {
-        method: "POST",
+      // Merge with existing templates from frontend
+      const updatedTemplates = [...(user.templates || []), newTemplate];
+      const content = { ...user, templates: updatedTemplates }
+      // Send to updateUser API
+      await fetch(`${userServiceUrl}/api/user/updateUser?system=${SYSTEM}`, {
+        method: "PUT", // or POST depending on your API
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ template: newTemplate }),
+        body: JSON.stringify({ content }),
       });
 
       onSaveTemplate?.(newTemplate);
       setNewTemplateName("");
       setSaveDialogOpen(false);
     } catch (err) {
-      console.error("Failed to save template:", err);
+      console.error("Failed to update user templates:", err);
     } finally {
       setSaving(false);
     }
   };
+
+
   const handleDelete = async () => {
     if (!templateToDelete) return;
 
@@ -81,7 +87,7 @@ export default function TemplateSelector({
     }
   };
 
-  
+
 
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
