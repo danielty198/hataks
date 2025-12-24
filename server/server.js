@@ -20,14 +20,12 @@ app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
 const repairsRouter = require('./routes/Repairs');
-const hataksRouter = require('./routes/Hataks')
 
 
 
 // routes
 
 app.use('/api/repairs', repairsRouter);
-app.use('/api/hataks', hataksRouter)
 
 const PORT = process.env.PORT || 5000;
 mongoose.connect(process.env.MONGO_URI,)

@@ -6,11 +6,13 @@ import Repairs from "./pages/Repairs/Repairs";
 import BI from "./pages/BI";
 import '@fontsource/assistant/400.css';
 import '@fontsource/assistant/500.css';
-import { EngineSerialProvider } from "./contexts/EngineSerialContext";
 import { ASSETS_SERVICE_SERVER_PORT, clientPort, USER_SERVICE_CLIENT_PORT, USER_SERVICE_SERVER_PORT } from "./assets";
-import useUser from "./hooks/useUser";
+
 import UserManagement from './pages/UserManagement/UserManagement'
 import ProtectedRoute from "./utils/ProtectedRoute";
+import ProtectedUser from "./utils/ProtectedUser";
+import useUser from "./contexts/UserContext";
+import { DistinctValuesProvider } from "./contexts/DistinctValuesContext";
 function App() {
 
 
@@ -87,13 +89,15 @@ function App() {
           position: 'relative',
         }}
       >
+        <ProtectedUser user={user}>
+          <Routes>
+            <Route path="/" element={<DistinctValuesProvider><Repairs /></DistinctValuesProvider>} />
+            <Route path="/bi" element={<BI />} />
+            <Route path="/hataks" element={<DistinctValuesProvider><Repairs /></DistinctValuesProvider>} />
+            <Route path="/users" element={<ProtectedRoute roleRequired='admin'><UserManagement /></ProtectedRoute>} />
+          </Routes>
+        </ProtectedUser>
 
-        <Routes>
-          <Route path="/" element={<EngineSerialProvider><Repairs /></EngineSerialProvider>} />
-          <Route path="/bi" element={<BI />} />
-          <Route path="/hataks" element={<EngineSerialProvider><Repairs /></EngineSerialProvider>} />
-          <Route path="/users" element={<ProtectedRoute roleRequired='admin'><UserManagement /></ProtectedRoute>} />
-        </Routes>
 
       </Box>
     </Box>

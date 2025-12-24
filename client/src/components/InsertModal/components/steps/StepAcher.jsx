@@ -4,7 +4,7 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import FormCard from '../FormCard';
 import { SelectField, DateField } from '../FormFields';
 import { FieldsRow } from '../../styles/styledComponents';
-import { intendedOptions, manoiyaOptions, waitingHHTypeOptions, michlalNeedOptions, performenceOptions, waitingHHTypeRequiredString } from '../../../../assets';
+import { intendedOptions, manoiyaOptions, waitingHHTypeOptions, michlalNeedOptions, performenceExpectationOptions, waitingHHTypeRequiredString } from '../../../../assets';
 
 const StepAcher = ({
   formData,
@@ -59,7 +59,7 @@ const StepAcher = ({
             <SelectField
               name="performenceExpectation"
               label="צפי ביצוע"
-              options={performenceOptions}
+              options={performenceExpectationOptions}
               value={formData.performenceExpectation}
               onChange={onChange}
             />

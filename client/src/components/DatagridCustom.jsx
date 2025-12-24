@@ -16,7 +16,8 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete";
 import HistoryIcon from '@mui/icons-material/History'
 import { baseUrl, datagridcustomCellClassNames } from "../assets";
-import useUser from "../hooks/useUser";
+import useUser from "../contexts/UserContext";
+
 
 export default function DatagridCustom({
   data,
@@ -75,7 +76,7 @@ export default function DatagridCustom({
       )
       .map((c) => c.field)
   );
-   const [user] = useUser()
+  const [user] = useUser()
   const setLoadingFlag = useCallback(
     (key, value) => setLoading((prev) => ({ ...prev, [key]: value })),
     []
@@ -124,8 +125,8 @@ export default function DatagridCustom({
    * ------------------------------------------- */
   const deleteRow = useCallback(
     async (id) => {
-    const isAdmin = user?.roles && Array.isArray(user.roles) && user.roles.includes('admin');
-    if(!isAdmin)return alert('אין לך הרשאה למחוק שורה זאת')
+      const isAdmin = user?.roles && Array.isArray(user.roles) && user.roles.includes('admin');
+      if (!isAdmin) return alert('אין לך הרשאה למחוק שורה זאת')
       const confirm = window.confirm("האם אתה בטוח שברצונך למחוק שורה זו?");
       if (!confirm) return;
 

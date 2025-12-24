@@ -18,7 +18,8 @@ import {
 import BookmarkIcon from "@mui/icons-material/Bookmark";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import { baseUrl, SYSTEM, userServiceUrl } from "../../assets";
+import { SYSTEM, userServiceUrl } from "../../assets";
+import useUser from "../../contexts/UserContext";
 
 export default function TemplateSelector({
   templates = [],
@@ -28,66 +29,100 @@ export default function TemplateSelector({
   onDeleteTemplate,
   currentFilters,
   currentVisibleColumns,
+  setSnackbar,
 }) {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [templateToDelete, setTemplateToDelete] = useState(null);
   const [newTemplateName, setNewTemplateName] = useState("");
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [user, setUser] = useUser();
 
-  const handleSave = async (user) => {
+  const handleSave = async () => {
     if (!newTemplateName.trim()) return;
 
     setSaving(true);
 
-    // Create new template
     const newTemplate = {
+      id: Date.now().toString(),
       name: newTemplateName.trim(),
       filters: currentFilters,
       visibleColumns: currentVisibleColumns,
     };
 
     try {
-      // Merge with existing templates from frontend
       const updatedTemplates = [...(user.templates || []), newTemplate];
-      const content = { ...user, templates: updatedTemplates }
-      // Send to updateUser API
-      await fetch(`${userServiceUrl}/api/user/updateUser?system=${SYSTEM}`, {
-        method: "PUT", // or POST depending on your API
+      const content = [{ ...user, templates: updatedTemplates }];
+
+      const res = await fetch(`${userServiceUrl}/api/user/updateUser?system=${SYSTEM}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content }),
       });
 
+      if (!res.ok) throw new Error("Failed to save template");
+
+      setUser({ ...user, templates: updatedTemplates });
       onSaveTemplate?.(newTemplate);
       setNewTemplateName("");
       setSaveDialogOpen(false);
+
+      setSnackbar({
+        open: true,
+        message: "התבנית נשמרה בהצלחה!",
+        severity: "success",
+      });
     } catch (err) {
-      console.error("Failed to update user templates:", err);
+      console.error("Failed to save template:", err);
+      setSnackbar({
+        open: true,
+        message: "שגיאה בשמירת התבנית",
+        severity: "error",
+      });
     } finally {
       setSaving(false);
     }
   };
 
-
   const handleDelete = async () => {
-    if (!templateToDelete) return;
+    if (!templateToDelete || !user) return;
+
+    setDeleting(true);
 
     try {
-      await fetch(`${baseUrl}/api/users`, {
-        method: "DELETE",
+      const updatedTemplates = templates.filter((t) => t.id !== templateToDelete);
+      const content = [{ ...user, templates: updatedTemplates }];
+
+      const res = await fetch(`${userServiceUrl}/api/user/updateUser?system=${SYSTEM}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ templateId: templateToDelete }),
+        body: JSON.stringify({ content }),
       });
 
+      if (!res.ok) throw new Error("Failed to delete template");
+
+      setUser({ ...user, templates: updatedTemplates });
       onDeleteTemplate?.(templateToDelete);
       setTemplateToDelete(null);
       setDeleteDialogOpen(false);
+
+      setSnackbar({
+        open: true,
+        message: "התבנית נמחקה בהצלחה!",
+        severity: "success",
+      });
     } catch (err) {
       console.error("Failed to delete template:", err);
+      setSnackbar({
+        open: true,
+        message: "שגיאה במחיקת התבנית",
+        severity: "error",
+      });
+    } finally {
+      setDeleting(false);
     }
   };
-
-
 
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -180,8 +215,13 @@ export default function TemplateSelector({
         <DialogContent>האם אתה בטוח שברצונך למחוק את התבנית?</DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setDeleteDialogOpen(false)} sx={{ borderRadius: 2, color: "#13293D" }}>ביטול</Button>
-          <Button variant="contained" onClick={handleDelete} sx={{ borderRadius: 2, bgcolor: "#ff6b35", "&:hover": { bgcolor: "#e55a2b" } }}>
-            מחק
+          <Button
+            variant="contained"
+            onClick={handleDelete}
+            disabled={deleting}
+            sx={{ borderRadius: 2, bgcolor: "#ff6b35", "&:hover": { bgcolor: "#e55a2b" } }}
+          >
+            {deleting ? "מוחק..." : "מחק"}
           </Button>
         </DialogActions>
       </Dialog>

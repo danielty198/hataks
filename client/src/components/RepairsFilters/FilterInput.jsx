@@ -1,9 +1,21 @@
-import { memo, useState, useCallback, useMemo, useEffect } from "react";
-import { TextField, FormControl, InputLabel, Select, MenuItem, Stack } from "@mui/material";
+import { memo, useCallback, useMemo } from "react";
+import {
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Stack,
+  Chip,
+  Box,
+  Autocomplete,
+  OutlinedInput,
+  Checkbox,
+  ListItemText,
+} from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 
-// Stable sx objects - defined outside component to prevent recreation
 const selectSx = { borderRadius: 2 };
 const textFieldSx = { "& .MuiOutlinedInput-root": { borderRadius: 2 } };
 const datePickerSlotProps = {
@@ -14,67 +26,110 @@ const datePickerSlotProps = {
   },
 };
 
-// Simple text input with local state
-const TextInput = memo(function TextInput({ field, headerName, value, onChange }) {
-  const [localValue, setLocalValue] = useState(value || "");
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 6 + ITEM_PADDING_TOP,
+    },
+  },
+};
 
-  // Sync local state with prop value
-  useEffect(() => {
-    setLocalValue(value || "");
+const MultiSelectInput = memo(function MultiSelectInput({ field, headerName, value, valueOptions, onChange }) {
+  const selectedValues = useMemo(() => {
+    if (!value) return [];
+    if (Array.isArray(value)) return value;
+    return value.split(',').filter(Boolean);
   }, [value]);
 
   const handleChange = useCallback((e) => {
-    setLocalValue(e.target.value);
-  }, []);
-
-  const handleBlur = useCallback(() => {
-    onChange(field, localValue);
-  }, [onChange, field, localValue]);
-
-  const handleKeyDown = useCallback((e) => {
-    if (e.key === "Enter") {
-      onChange(field, localValue);
-    }
-  }, [onChange, field, localValue]);
-
-  return (
-    <TextField
-      fullWidth
-      size="small"
-      label={headerName}
-      value={localValue}
-      onChange={handleChange}
-      onBlur={handleBlur}
-      onKeyDown={handleKeyDown}
-      sx={textFieldSx}
-    />
-  );
-});
-
-// Select input
-const SelectInput = memo(function SelectInput({ field, headerName, value, valueOptions, onChange }) {
-  const handleChange = useCallback((e) => {
-    onChange(field, e.target.value);
+    const newValue = e.target.value;
+    onChange(field, Array.isArray(newValue) ? newValue.join(',') : newValue);
   }, [onChange, field]);
 
-  const menuItems = useMemo(() => [
-    <MenuItem key="all" value=""><em>הכל</em></MenuItem>,
-    ...valueOptions.map((option) => (
-      <MenuItem key={option} value={option}>{option}</MenuItem>
-    ))
-  ], [valueOptions]);
+  const handleDelete = useCallback((valueToDelete) => {
+    const newValues = selectedValues.filter((v) => v !== valueToDelete);
+    onChange(field, newValues.join(','));
+  }, [onChange, field, selectedValues]);
 
   return (
     <FormControl fullWidth size="small">
       <InputLabel>{headerName}</InputLabel>
-      <Select value={value || ""} onChange={handleChange} label={headerName} sx={selectSx}>
-        {menuItems}
+      <Select
+        multiple
+        value={selectedValues}
+        onChange={handleChange}
+        input={<OutlinedInput label={headerName} />}
+        renderValue={(selected) => (
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+            {selected.map((val) => (
+              <Chip
+                key={val}
+                label={val}
+                size="small"
+                onDelete={() => handleDelete(val)}
+                onMouseDown={(e) => e.stopPropagation()}
+              />
+            ))}
+          </Box>
+        )}
+        MenuProps={MenuProps}
+        sx={selectSx}
+      >
+        {valueOptions.map((option) => (
+          <MenuItem key={option} value={option}>
+            <Checkbox checked={selectedValues.includes(option)} size="small" />
+            <ListItemText primary={option} />
+          </MenuItem>
+        ))}
       </Select>
     </FormControl>
   );
 });
 
-// Single date picker
+const AutocompleteMultiInput = memo(function AutocompleteMultiInput({ field, headerName, value, onChange, options }) {
+  
+  const selectedValues = useMemo(() => {
+    if (!value) return [];
+    if (Array.isArray(value)) return value;
+    return value.split(',').filter(Boolean);
+  }, [value]);
+
+  const handleChange = useCallback((_, newValue) => {
+    onChange(field, newValue.join(','));
+  }, [onChange, field]);
+
+  return (
+    <Autocomplete
+      multiple
+      freeSolo
+      options={options}
+      value={selectedValues}
+      onChange={handleChange}
+      renderTags={(value, getTagProps) =>
+        value.map((option, index) => (
+          <Chip
+            {...getTagProps({ index })}
+            key={option}
+            label={option}
+            size="small"
+          />
+        ))
+      }
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          label={headerName}
+          size="small"
+          placeholder={options.length > 0 ? "בחר או הקלד" : "הקלד ולחץ Enter"}
+          sx={textFieldSx}
+        />
+      )}
+    />
+  );
+});
+
 const SingleDatePicker = memo(function SingleDatePicker({ field, label, value, type, onDateChange }) {
   const handleChange = useCallback((val) => {
     onDateChange(field, type, val);
@@ -93,7 +148,6 @@ const SingleDatePicker = memo(function SingleDatePicker({ field, label, value, t
   );
 });
 
-// Date range input
 const DateRangeInput = memo(function DateRangeInput({ field, headerName, dateFrom, dateTo, onDateChange }) {
   return (
     <Stack spacing={1}>
@@ -115,21 +169,9 @@ const DateRangeInput = memo(function DateRangeInput({ field, headerName, dateFro
   );
 });
 
-// Main component
-const FilterInput = memo(function FilterInput({ column, value, dateFrom, dateTo, onChange, onDateChange }) {
-  const { field, headerName, type, valueOptions } = column;
+const FilterInput = memo(function FilterInput({ column, value, dateFrom, dateTo, onChange, onDateChange, dynamicOptions }) {
+  const { field, headerName, type, valueOptions, isMultiSelect } = column;
 
-  if (type === "singleSelect" && valueOptions) {
-    return (
-      <SelectInput
-        field={field}
-        headerName={headerName}
-        value={value}
-        valueOptions={valueOptions}
-        onChange={onChange}
-      />
-    );
-  }
 
   if (type === "date") {
     return (
@@ -143,22 +185,27 @@ const FilterInput = memo(function FilterInput({ column, value, dateFrom, dateTo,
     );
   }
 
+  if ((type === "singleSelect" && valueOptions) || isMultiSelect) {
+    return (
+      <MultiSelectInput
+        field={field}
+        headerName={headerName}
+        value={value}
+        valueOptions={valueOptions}
+        onChange={onChange}
+      />
+    );
+  }
+
+  // ALL other fields use autocomplete
   return (
-    <TextInput
+    <AutocompleteMultiInput
       field={field}
       headerName={headerName}
       value={value}
       onChange={onChange}
+      options={dynamicOptions || []}
     />
-  );
-}, (prevProps, nextProps) => {
-  return (
-    prevProps.value === nextProps.value &&
-    prevProps.dateFrom === nextProps.dateFrom &&
-    prevProps.dateTo === nextProps.dateTo &&
-    prevProps.column.field === nextProps.column.field &&
-    prevProps.onChange === nextProps.onChange &&
-    prevProps.onDateChange === nextProps.onDateChange
   );
 });
 

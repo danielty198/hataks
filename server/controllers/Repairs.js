@@ -50,6 +50,13 @@ function buildMatchStage(filters) {
       return;
     }
 
+    // Handle comma-separated values (multi-select filters)
+    if (value.includes(',')) {
+      const values = value.split(',').map(v => v.trim());
+      matchStage[key] = { $in: values };
+      return;
+    }
+
     // Exact match for everything else
     matchStage[key] = value;
   });
@@ -84,6 +91,40 @@ const getRows = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch data" });
   }
 };
+
+const getDistinctValues = async (req, res) => {
+  try {
+
+
+
+    const validFields = [
+      "sendingBrigade",
+      "sendingBattalion",
+      "engineSerial",
+      "minseretSerial",
+      "recivingBrigade",
+      "recivingBattalion",
+    ];
+
+    // Fetch all distinct values in parallel
+    const results = await Promise.all(
+      validFields.map(async (field) => {
+        const values = await model.distinct(field);
+        return { field, values: values.filter(v => v != null && v !== '') };
+      })
+    );
+    // Convert to object format
+    const response = results.reduce((acc, { field, values }) => {
+      acc[field] = values;
+      return acc;
+    }, {});
+    res.json(response);
+  } catch (err) {
+    console.error("Error getting unique values:", err);
+    res.status(500).json({ error: "Failed to fetch unique values" });
+  }
+}
+
 
 const updateById = async (req, res) => {
   try {
@@ -181,7 +222,7 @@ const getHistory = async (req, res) => {
       return res.status(400).json({ message: 'Invalid ID format' });
     }
 
-    const history = await historyModel.find({repairId:id});
+    const history = await historyModel.find({ repairId: id });
 
     if (!history) {
       return res.status(404).json({ message: 'לא קיים היסטוריה על חט"כ זה' });
@@ -195,5 +236,5 @@ const getHistory = async (req, res) => {
 }
 
 module.exports = {
-  updateById, getRows, getDistinctEngineSerials, getByEngine, getHistory
+  updateById, getRows, getDistinctEngineSerials, getByEngine, getHistory, getDistinctValues
 };  

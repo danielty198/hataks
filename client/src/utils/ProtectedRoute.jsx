@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { Snackbar, Alert } from "@mui/material";
-import useUser from "../hooks/useUser";
+import useUser from "../contexts/UserContext";
+
 
 function ProtectedRoute({ children, roleRequired }) {
   const [user] = useUser();

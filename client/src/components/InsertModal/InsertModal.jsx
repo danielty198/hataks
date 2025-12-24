@@ -12,7 +12,8 @@ import StepAcher from './components/steps/StepAcher';
 
 import { StyledDialog, StyledDialogTitle } from './styles/styledComponents';
 import { colors, steps, getDefaultFormData, waitingHHTypeRequiredString, baseUrl } from '../../assets';
-import { useEngineSerials } from '../../contexts/EngineSerialContext';
+import { useDistinctValues } from '../../contexts/DistinctValuesContext';
+
 
 const InsertModal = ({
   open,
@@ -25,7 +26,7 @@ const InsertModal = ({
   const [formData, setFormData] = useState(getDefaultFormData());
   const [errors, setErrors] = useState({});
   const [rashiNextButtonDisable, setRashiNextButtonDisable] = useState(false)
-  const { enginesList, loading, error, fetchEngineSerials, engineExists } = useEngineSerials()
+  const { valueExists } = useDistinctValues()
 
   const isEditMode = useMemo(() => editData !== null, [editData]);
 
@@ -120,8 +121,8 @@ const InsertModal = ({
   const handleEngineBlur = useCallback(async (field, value, options) => {
     if (field === 'engineSerial' && value) {
 
-      const exists = await engineExists(value)
-      console.log(exists)
+      const exists = valueExists(field, value)
+
       if (exists) {
         const stay = window.confirm('מנוע זה כבר קיים במערכת האם לטעון נתונים על המנוע הזה?')
         if (!stay) {

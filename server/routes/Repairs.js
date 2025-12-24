@@ -10,6 +10,7 @@ router.get("/", controller.getRows);
 router.get('/getByEngine/:engine', controller.getByEngine)
 router.get('/getEngines', controller.getDistinctEngineSerials)
 router.get('/getHistory/:id', controller.getHistory)
+router.get('/unique',controller.getDistinctValues)
 router.get("/:id", crud.getById);
 router.post("/", crud.create);
 router.put("/:id", crud.update);

@@ -23,6 +23,7 @@ import '@fontsource/heebo/400.css';
 import '@fontsource/heebo/500.css';
 import '@fontsource/heebo/600.css';
 import '@fontsource/heebo/700.css';
+import { UserProvider } from './contexts/UserContext';
 
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
@@ -38,7 +39,9 @@ root.render(
     <ThemeProvider theme={theme}>
       <BrowserRouter>
         <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <App />
+          <UserProvider>
+            <App />
+          </UserProvider>
         </LocalizationProvider>
       </BrowserRouter>
     </ThemeProvider>

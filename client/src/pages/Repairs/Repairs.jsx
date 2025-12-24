@@ -1,12 +1,14 @@
 import React, { useState, useMemo, useEffect, useCallback, memo } from "react";
 import { Box, Typography, Button, Snackbar, Alert } from "@mui/material";
-import { baseUrl, hatakStatusOptions, hatakTypeOptions, intendedOptions, manoiyaOptions, ogdotOptions, waitingHHTypeOptions, colors, waitingHHTypeRequiredString } from "../../assets";
+import { baseUrl, hatakStatusOptions, hatakTypeOptions, intendedOptions, manoiyaOptions, ogdotOptions, waitingHHTypeOptions, colors, waitingHHTypeRequiredString, performenceExpectationOptions } from "../../assets";
 
 import DatagridCustom from "../../components/DatagridCustom";
 import { FilterPanel, TemplateSelector } from "../../components/RepairsFilters";
 import InsertModal from "../../components/InsertModal/InsertModal";
 import RepairHistoryDialog from "../../components/HistoryDialog/RepairHistoryDialog";
-import useUser from "../../hooks/useUser";
+import useUser from "../../contexts/UserContext";
+import { useDistinctValues } from "../../contexts/DistinctValuesContext";
+
 
 // Move OUTSIDE component - these never change
 const ROUTE = "repairs";
@@ -19,7 +21,7 @@ const columnsConfig = [
   { field: "sendingBattalion", headerName: "גדוד מוסר", isEdit: true, type: "string" },
   { field: "zadik", headerName: "צ' של כלי", isEdit: true, type: "string" },
   { field: "reciveDate", headerName: "תאריך קבלה", isEdit: true, type: "date" },
-  { field: "engineSerial", headerName: "מספר מנוע", isEdit: false, type: "string" },
+  { field: "engineSerial", headerName: "מספר מנוע", isEdit: false, },
   { field: "minseretSerial", headerName: "מספר ממסרת", isEdit: true, type: "string" },
   { field: "hatakStatus", headerName: 'סטטוס חט"כ', isEdit: true, type: "singleSelect", valueOptions: hatakStatusOptions },
   { field: 'tipulType', headerName: 'סוג טיפול', isEdit: true, type: "singleSelect", valueOptions: ['שבר', 'שע"מ'] },
@@ -30,10 +32,10 @@ const columnsConfig = [
   { field: "recivingBrigade", headerName: "חטיבה מקבלת", isEdit: true, type: "string" },
   { field: "recivingBattalion", headerName: "גדוד מקבל", isEdit: true, type: "string" },
   { field: "startWorkingDate", headerName: "תאריך לפקודה", isEdit: true, type: "date" },
-  { field: "forManoiya", headerName: "מנועיה לפקודה", isEdit: true, type: "string" },
-  { field: "performenceExpectation", headerName: "צפי ביצוע", isEdit: true, type: "string" },
+  { field: "forManoiya", headerName: "מנועיה לפקודה", isEdit: true, type: "string", type: "singleSelect", valueOptions: manoiyaOptions },
+  { field: "performenceExpectation", headerName: "צפי ביצוע", isEdit: true, type: "singleSelect", valueOptions: performenceExpectationOptions },
   { field: "intended", headerName: "מיועד ל?", isEdit: true, type: "singleSelect", valueOptions: intendedOptions },
-
+  { field: "updatedAt", headerName: "עודכן אחרון", isEdit: false, type: "date" },
   // ACTIONS (callback injected later)
   { field: "history", headerName: "היסטוריה", type: "actions" },
   { field: "edit", headerName: "ערוך", type: "actions" },
@@ -71,10 +73,10 @@ export default function RepairsPage() {
   const [openHistoryDialog, setOpenHistoryModal] = useState(false)
   const [repairId, setRepairId] = useState()
   const [user] = useUser()
-
+  const LAST_TEMPLATE_KEY = 'lastTemplateId';
   const isAdmin = user?.roles && Array.isArray(user.roles) && user.roles.includes('admin');
   const isViewer = user?.roles && Array.isArray(user.roles) && user.roles.length === 1 && user.roles[0] === 'viewer'
-  console.log({ isAdmin, isViewer })
+  const { fetchDistinctValues } = useDistinctValues();
   // Fetch data
   const fetchData = useCallback(async (appliedFilters = {}) => {
     try {
@@ -95,20 +97,43 @@ export default function RepairsPage() {
     }
   }, []);
 
+
   // Fetch templates + data
   useEffect(() => {
     fetchData();
   }, []);
 
+
+  // Load templates from user
   useEffect(() => {
-    if (user) {
-      setTemplates(user.templates)
+    if (user?.templates) {
+      setTemplates(user.templates);
+
+      // After templates are set, check localStorage for last used template
+      const lastTemplateId = localStorage.getItem(LAST_TEMPLATE_KEY);
+      if (lastTemplateId) {
+        const lastTemplate = user.templates.find((t) => t.id === lastTemplateId);
+        if (lastTemplate) {
+          setSelectedTemplate(lastTemplate.id);
+          setFilters(lastTemplate.filters || {});
+          setVisibleColumns(lastTemplate.visibleColumns || defaultVisibleColumns);
+          fetchData(lastTemplate.filters || {});
+        }
+      }
     }
-  }, [user.templates])
+  }, [user?.templates]);
 
 
   const handleSelectTemplate = useCallback(async (templateId) => {
     setSelectedTemplate(templateId);
+
+    // Save to localStorage
+    if (templateId) {
+      localStorage.setItem(LAST_TEMPLATE_KEY, templateId);
+    } else {
+      localStorage.removeItem(LAST_TEMPLATE_KEY);
+    }
+
     if (!templateId) return;
 
     const template = templates.find((t) => t.id === templateId);
@@ -116,7 +141,6 @@ export default function RepairsPage() {
 
     setFilters(template.filters);
     setVisibleColumns(template.visibleColumns);
-
     await fetchData(template.filters);
   }, [templates, fetchData]);
 
@@ -127,8 +151,15 @@ export default function RepairsPage() {
 
   const handleDeleteTemplate = useCallback((templateId) => {
     setTemplates((prev) => prev.filter((t) => t.id !== templateId));
-    if (selectedTemplate === templateId) setSelectedTemplate("");
-  }, [selectedTemplate]);
+
+    if (selectedTemplate === templateId) {
+      setSelectedTemplate("");
+      setFilters({});
+      setVisibleColumns(defaultVisibleColumns);
+      fetchData({});
+      localStorage.removeItem(LAST_TEMPLATE_KEY);
+    }
+  }, [selectedTemplate, fetchData]);
 
   const openModal = useCallback(() => setOpen(true), []);
 
@@ -167,7 +198,7 @@ export default function RepairsPage() {
           message: errMsg,
           severity: 'error'
         });
-        throw Error(errMsg)
+
         return oldRow; // Revert to old row
       }
     }
@@ -218,6 +249,7 @@ export default function RepairsPage() {
         message: `${pendingChanges.length} שינויים נשמרו בהצלחה!`,
         severity: "success",
       });
+      fetchDistinctValues()
 
     } catch (err) {
       console.error("Failed to save changes:", err);
@@ -228,6 +260,20 @@ export default function RepairsPage() {
       });
     }
   }, [pendingChanges]);
+
+  const handleCancelChanges = useCallback(() => {
+    if (pendingChanges.length === 0) return;
+
+    // Refetch original data to revert changes
+    fetchData(filters);
+    setPendingChanges([]);
+
+    setSnackbar({
+      open: true,
+      message: "השינויים בוטלו",
+      severity: "info",
+    });
+  }, [pendingChanges, filters, fetchData]);
 
   // ======================================================
   // ACTION HANDLER (edit / add)
@@ -256,6 +302,7 @@ export default function RepairsPage() {
           message: "הרשומה עודכנה בהצלחה!",
           severity: "success",
         });
+        fetchDistinctValues()
       } else {
         res = await fetch(`${baseUrl}/api/${ROUTE}`, {
           method: "POST",
@@ -276,7 +323,7 @@ export default function RepairsPage() {
       }
 
       setOpen(false);
-
+      fetchDistinctValues()
     } catch (err) {
       console.error(err);
 
@@ -351,13 +398,13 @@ export default function RepairsPage() {
       <Typography variant="h1" gutterBottom>חטכים</Typography>
 
       <Box sx={toolbarSx}>
-        {!isViewer && <>
-          <Button variant="contained" onClick={openModal} disabled={user?.roles}>הוספה</Button>
+        {user && !isViewer && <>
+          <Button variant="contained" onClick={openModal} disabled={isViewer}>הוספה</Button>
           <Button
             variant="contained"
             id='saveChanges'
             onClick={handleSaveChanges}
-            disabled={pendingChanges.length === 0}
+            disabled={pendingChanges.length === 0 || isViewer}
             sx={{
               backgroundColor: colors.success,
               '&:hover': {
@@ -366,6 +413,21 @@ export default function RepairsPage() {
             }}
           >
             שמירת שינויים {pendingChanges.length > 0 && `(${pendingChanges.length})`}
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleCancelChanges}
+            disabled={pendingChanges.length === 0}
+            sx={{
+              backgroundColor: '#d32f2f',
+              color: '#fff',
+              '&:hover': {
+                backgroundColor: '#b71c1c',
+              },
+
+            }}
+          >
+            ביטול שינויים
           </Button>
         </>}
 
@@ -377,6 +439,7 @@ export default function RepairsPage() {
           onDeleteTemplate={handleDeleteTemplate}
           currentFilters={filters}
           currentVisibleColumns={visibleColumns}
+          setSnackbar={setSnackbar}
         />
         <RepairHistoryDialog
           open={openHistoryDialog}

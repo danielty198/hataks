@@ -17,8 +17,10 @@ import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import ColumnVisibility from "./ColumnVisibility";
 import FilterInput from "./FilterInput";
-import { baseUrl } from "../../assets";
+import { baseUrl, FILTERS_AUTOCOMPLETE_FIELDS } from "../../assets";
+
 import "dayjs/locale/he";
+import { useDistinctValues } from "../../contexts/DistinctValuesContext";
 
 // Stable sx objects - defined outside to prevent recreation
 const buttonSx = {
@@ -42,7 +44,7 @@ const clearBtnSx = { color: "#ff6b35" };
 const closeIconSx = { color: "#fff" };
 
 // Memoized single filter item - prevents unnecessary re-renders
-const FilterItem = memo(function FilterItem({ column, value, dateFrom, dateTo, onChange, onDateChange }) {
+const FilterItem = memo(function FilterItem({ column, value, dateFrom, dateTo, onChange, onDateChange, dynamicOptions }) {
   return (
     <FilterInput
       column={column}
@@ -51,6 +53,7 @@ const FilterItem = memo(function FilterItem({ column, value, dateFrom, dateTo, o
       dateTo={dateTo}
       onChange={onChange}
       onDateChange={onDateChange}
+      dynamicOptions={dynamicOptions}
     />
   );
 }, (prev, next) => {
@@ -58,12 +61,13 @@ const FilterItem = memo(function FilterItem({ column, value, dateFrom, dateTo, o
     prev.value === next.value &&
     prev.dateFrom === next.dateFrom &&
     prev.dateTo === next.dateTo &&
-    prev.column === next.column
+    prev.column === next.column &&
+    prev.dynamicOptions === next.dynamicOptions
   );
 });
 
 // Memoized filter list component - only renders visible items
-const FilterList = memo(function FilterList({ columns, filters, onChange, onDateChange }) {
+const FilterList = memo(function FilterList({ columns, filters, onChange, onDateChange, getValuesForField }) {
   return (
     <Stack spacing={2}>
       {columns.map((column) => (
@@ -75,13 +79,15 @@ const FilterList = memo(function FilterList({ columns, filters, onChange, onDate
           dateTo={filters[`${column.field}_to`]}
           onChange={onChange}
           onDateChange={onDateChange}
+          dynamicOptions={getValuesForField(column.field)}
         />
       ))}
     </Stack>
   );
 }, (prev, next) => {
-  // Only re-render if filters object reference changed
-  return prev.filters === next.filters && prev.columns === next.columns;
+  return prev.filters === next.filters &&
+    prev.columns === next.columns &&
+    prev.getValuesForField === next.getValuesForField;
 });
 
 function FilterPanel({
@@ -97,15 +103,21 @@ function FilterPanel({
   const [localVisibleColumns, setLocalVisibleColumns] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const filterableColumns = useMemo(() => 
+  // Use the context instead of local state
+  const { getValuesForField,  loading: distinctLoading } = useDistinctValues();
+
+  const filterableColumns = useMemo(() =>
     columns.filter((col) => col.type !== "actions" && col.headerName !== "מחק"),
     [columns]
   );
 
-  const defaultVisibleColumns = useMemo(() => 
+  const defaultVisibleColumns = useMemo(() =>
     filterableColumns.map((c) => c.field),
     [filterableColumns]
   );
+
+  // Fetch distinct values for filter fields when component mounts
+
 
   // Sync when drawer opens
   useEffect(() => {
@@ -115,16 +127,15 @@ function FilterPanel({
     }
   }, [drawerOpen, filters, visibleColumns, defaultVisibleColumns]);
 
-  const activeFiltersCount = useMemo(() => 
+  const activeFiltersCount = useMemo(() =>
     Object.values(localFilters).filter((v) => v !== "" && v !== null && v !== undefined).length,
     [localFilters]
   );
 
-  const hiddenColumnsCount = useMemo(() => 
+  const hiddenColumnsCount = useMemo(() =>
     filterableColumns.length - localVisibleColumns.length,
     [filterableColumns.length, localVisibleColumns.length]
   );
-  
 
   const badgeCount = activeFiltersCount;
 
@@ -162,7 +173,6 @@ function FilterPanel({
           params.append(key, value);
         }
       });
-
       const queryString = params.toString();
       const url = queryString ? `${baseUrl}/api/repairs?${queryString}` : `${baseUrl}/api/repairs`;
 
@@ -202,10 +212,10 @@ function FilterPanel({
           <Box sx={contentSx}>
             {/* Column Visibility */}
             <Box sx={sectionSx}>
-              <ColumnVisibility 
-                columns={columns} 
-                visibleColumns={localVisibleColumns} 
-                onVisibleColumnsChange={setLocalVisibleColumns} 
+              <ColumnVisibility
+                columns={columns}
+                visibleColumns={localVisibleColumns}
+                onVisibleColumnsChange={setLocalVisibleColumns}
               />
             </Box>
 
@@ -224,6 +234,7 @@ function FilterPanel({
                 filters={localFilters}
                 onChange={handleFilterChange}
                 onDateChange={handleDateChange}
+                getValuesForField={getValuesForField}
               />
             </Box>
           </Box>
@@ -233,7 +244,7 @@ function FilterPanel({
             <Button variant="outlined" startIcon={<RestartAltIcon />} onClick={handleReset} sx={resetBtnSx}>
               איפוס
             </Button>
-            <Button variant="contained" startIcon={<SearchIcon />} onClick={handleApply} disabled={loading} sx={applyBtnSx}>
+            <Button variant="contained" startIcon={<SearchIcon />} onClick={handleApply} disabled={loading || distinctLoading} sx={applyBtnSx}>
               {loading ? "טוען..." : "החל סינון"}
             </Button>
           </Box>

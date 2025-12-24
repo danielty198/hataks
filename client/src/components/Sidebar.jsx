@@ -1,7 +1,8 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, List, ListItem, ListItemIcon, ListItemText, Typography } from "@mui/material";
-import useUser from "../hooks/useUser";
+import useUser from "../contexts/UserContext";
+
 
 export default function Sidebar() {
   const navigate = useNavigate();
@@ -31,7 +32,7 @@ export default function Sidebar() {
   const visibleItems = menuItems.filter(item => {
     // No roles defined → public
     if (!item.roles ||  item.roles.length === 0) return true;
-    console.log(user)
+
     // Not logged in
     if (!user?.roles) return false;
 

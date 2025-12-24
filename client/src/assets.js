@@ -88,7 +88,14 @@ export function generateData(columns, count = 10) {
   return rows;
 }
 
-
+export const FILTERS_AUTOCOMPLETE_FIELDS = [
+  "sendingBrigade",
+  "sendingBattalion",
+  "engineSerial",
+  "minseretSerial",
+  "recivingBrigade",
+  "recivingBattalion",
+];
 
 
 export const steps = [
@@ -99,10 +106,12 @@ export const steps = [
 
 export const tipulTypeOptions = ['שבר', 'שע"מ'];
 export const michlalNeedOptions = ['מנוע', 'ממסרת', 'מנוע + ממסרת'];
-export const performenceOptions = ['כן', 'לא'];
+
 
 export const waitingHHTypeRequiredString = 'ממתין ח"ח'
 export const zadikOptions = [1, 2, 3, 4, 5, 6, 6, 7, 8, 9, 9, 0]
+
+export const performenceExpectationOptions = ["כן", "לא", "עדיין בעבודה"]
 
 export const intendedOptions = [
   "פצ\"ן",

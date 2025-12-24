@@ -6,8 +6,9 @@ import FormCard from '../FormCard';
 import { SelectField, AutocompleteField, InputField, DateField } from '../FormFields';
 import { FieldsRow, FieldsRowTwo, FullWidthField } from '../../styles/styledComponents';
 import { hatakStatusOptions, hatakTypeOptions, manoiyaOptions, tipulTypeOptions, zadikOptions } from '../../../../assets';
-import { useEngineSerials } from '../../../../contexts/EngineSerialContext';
+
 import { useCallback } from 'react';
+import { useDistinctValues } from '../../../../contexts/DistinctValuesContext';
 
 const StepRashi = ({
   formData,
@@ -17,7 +18,7 @@ const StepRashi = ({
   editData,
 }) => {
 
-  const { enginesList, loading, error, fetchEngineSerials, engineExists } = useEngineSerials()
+  const { distinctValues } = useDistinctValues()
 
 
 
@@ -65,7 +66,7 @@ const StepRashi = ({
             <AutocompleteField
               name="engineSerial"
               label="מספר מנוע"
-              options={enginesList} // Pass existing engine serials here if you have them
+              options={distinctValues.engineSerial} // Pass existing engine serials here if you have them
               value={formData.engineSerial}
               onChange={onChange}
               onBlur={handleEngineBlur}
