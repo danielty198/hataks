@@ -1,18 +1,22 @@
-import React from 'react';
-import { Fade, Box } from '@mui/material';
-import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
-import FormCard from '../FormCard';
-import { SelectField, DateField } from '../FormFields';
-import { FieldsRow } from '../../styles/styledComponents';
-import { intendedOptions, manoiyaOptions, waitingHHTypeOptions, michlalNeedOptions, performenceExpectationOptions, waitingHHTypeRequiredString } from '../../../../assets';
+import React from "react";
+import { Fade, Box } from "@mui/material";
+import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
+import FormCard from "../FormCard";
+import { SelectField, DateField, InputField } from "../FormFields";
+import { FieldsRow } from "../../styles/styledComponents";
+import {
+  intendedOptions,
+  manoiyaOptions,
+  waitingHHTypeOptions,
+  michlalNeedOptions,
+  performenceExpectationOptions,
+  waitingHHTypeRequiredString,
+} from "../../../../assets";
 
-const StepAcher = ({
-  formData,
-  errors = {},
-  onChange,
-}) => {
+const StepAcher = ({ formData, errors = {}, onChange }) => {
   // Check if waitingHHType is required based on hatakStatus
-  const isWaitingHHTypeRequired = formData.hatakStatus === waitingHHTypeRequiredString;
+  const isWaitingHHTypeRequired =
+    formData.hatakStatus === waitingHHTypeRequiredString;
 
   return (
     <Fade in={true} timeout={400}>
@@ -33,6 +37,14 @@ const StepAcher = ({
               error={errors.waitingHHType}
               required={isWaitingHHTypeRequired}
             />
+            <InputField
+              name="detailsHH"
+              options={[]}
+              label="פירוט חח"
+              value={formData.detailsHH || ""}
+              onChange={onChange}
+              disable={formData.waitingHHType?.includes("אחר") ? false : true}
+            />
             <SelectField
               name="michlalNeed"
               label="צריכת מכלל"
@@ -46,9 +58,7 @@ const StepAcher = ({
               value={formData.startWorkingDate}
               onChange={onChange}
             />
-          </FieldsRow>
 
-          <FieldsRow>
             <SelectField
               name="forManoiya"
               label="מנועיה לפקודה"
@@ -56,12 +66,21 @@ const StepAcher = ({
               value={formData.forManoiya}
               onChange={onChange}
             />
+
             <SelectField
               name="performenceExpectation"
               label="צפי ביצוע"
               options={performenceExpectationOptions}
               value={formData.performenceExpectation}
               onChange={onChange}
+            />
+            <InputField
+              name="detailsOfNonCompliance"
+              label="פירוט אי עמידה"
+              options={[]}
+              value={formData.detailsOfNonCompliance || ""}
+              onChange={onChange}
+              disable={formData.performenceExpectation === "לא" ? false : true}
             />
             <SelectField
               name="intended"
