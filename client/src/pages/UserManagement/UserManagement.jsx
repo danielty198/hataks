@@ -13,11 +13,11 @@ const columnsConfig = [
   { field: "email", headerName: "אימייל", type: "string" },
   { field: "fName", headerName: "שם פרטי", type: "string" },
   { field: "lName", headerName: "שם משפחה", type: "string" },
-  { 
-    field: "roles", 
-    headerName: "הרשאה", 
-    isEdit: true, 
-    isMultiSelect: true, 
+  {
+    field: "roles",
+    headerName: "הרשאה",
+    isEdit: true,
+    isMultiSelect: true,
     valueOptions: roles.map(el => el.label),
     // Add valueGetter to convert stored values to labels for display
     valueGetter: (value) => {
@@ -154,7 +154,7 @@ export default function UserManagementPage() {
       // Prepare all rows with proper format
       const contentArray = pendingChanges.map(row => {
         const rowToSave = { ...row };
-        
+
         // Ensure roles are in value format
         if (rowToSave.roles && Array.isArray(rowToSave.roles)) {
           rowToSave.roles = rowToSave.roles.map(el => {
@@ -174,7 +174,7 @@ export default function UserManagementPage() {
       });
 
       if (!res.ok) throw new Error("Failed to update users");
-      
+
       await res.json();
 
       setPendingChanges([]); // Clear pending changes
@@ -201,7 +201,6 @@ export default function UserManagementPage() {
   const handleAddUser = useCallback(async (data) => {
     try {
       let res;
-      let updatedRecord;
       const pid = data.pid
       delete data.pid
 
@@ -212,10 +211,8 @@ export default function UserManagementPage() {
       });
 
       if (!res.ok) throw new Error("נכשל הוספת משתמש");
-      updatedRecord = await res.json();
 
-      setRows(prev => [...prev, updatedRecord]);
-
+      fetchData()
       setSnackbar({
         open: true,
         message: "המשתמש נוסף בהצלחה!",

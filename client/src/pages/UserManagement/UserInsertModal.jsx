@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import { baseUrl, roles, SYSTEM, userServiceUrl } from "../../assets";
 
-export default function UserInsertModal({ open, onClose, onSubmit, editData, ROUTE }) {
+export default function UserInsertModal({ open, onClose, onSubmit, editData, ROUTE, rows }) {
     const [formData, setFormData] = useState({ pid: "", role: [] });
     const [pidOptions, setPidOptions] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -25,27 +25,25 @@ export default function UserInsertModal({ open, onClose, onSubmit, editData, ROU
     }, [open]);
 
     // Fetch PID options for autocomplete
-    useEffect(() => {
-        const fetchPidOptions = async () => {
-            try {
-                const response = await fetch(
-                    `${userServiceUrl}/api/${ROUTE}/getPids?system=${SYSTEM}`
-                );
+    const fetchPidOptions = async () => {
+        try {
+            const response = await fetch(
+                `${userServiceUrl}/api/${ROUTE}/getPids?system=${SYSTEM}`
+            );
 
-                if (!response.ok) {
-                    throw new Error(`Request failed with status ${response.status}`);
-                }
-
-                const pidOptions = await response.json();
-                setPidOptions(pidOptions);
-            } catch (error) {
-                console.error("Error fetching PID options:", error);
+            if (!response.ok) {
+                throw new Error(`Request failed with status ${response.status}`);
             }
-        };
 
+            const pidOptions = await response.json();
+            setPidOptions(pidOptions);
+        } catch (error) {
+            console.error("Error fetching PID options:", error);
+        }
+    };
+    useEffect(() => {
         fetchPidOptions();
-    }, []);
-
+    }, [rows])
 
     const handleChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));

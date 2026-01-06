@@ -12,7 +12,7 @@ const RepairSchema = new mongoose.Schema({
     // enum: ['שע"מ', 'שבר'], 
     type: String
   },
-  reciveDate: String//Date
+  reciveDate: Date//Date
   ,
   engineSerial: { type: String, required: true, unique: true, },
   minseretSerial: String,
@@ -26,7 +26,7 @@ const RepairSchema = new mongoose.Schema({
   recivingDivision: String,
   recivingBrigade: String,
   recivingBattalion: String,
-  startWorkingDate: String //Date
+  startWorkingDate: Date //Date
   ,
   forManoiya: String,
   performenceExpectation: String,

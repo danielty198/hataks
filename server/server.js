@@ -21,11 +21,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const repairsRouter = require('./routes/Repairs');
 
-
+const zadikRouter = require('./routes/ZadikList')
 
 // routes
 
 app.use('/api/repairs', repairsRouter);
+// app.use('/api/zadik',)
 
 const PORT = process.env.PORT || 5000;
 mongoose.connect(process.env.MONGO_URI,)

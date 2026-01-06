@@ -2,6 +2,9 @@ const { model } = require('../models/Repairs');
 const mongoose = require("mongoose");
 const historyModel = require('../models/Repairs_History')
 const { getChanges } = require('../Utils/getChanges')
+
+
+
 function buildMatchStage(filters) {
   const matchStage = {};
   const reservedKeys = ["_page", "_limit", "_sort", "_order"];
@@ -16,19 +19,23 @@ function buildMatchStage(filters) {
 
     if (value === "" || value === undefined || value === null) return;
 
-    // Date range: field_from
+    // Date range: field_from (start of day)
     if (key.endsWith("_from")) {
       const field = key.replace("_from", "");
       if (!matchStage[field]) matchStage[field] = {};
-      matchStage[field].$gte = new Date(value);
+      const date = new Date(value);
+      date.setHours(0, 0, 0, 0); // Start of day
+      matchStage[field].$gte = date;
       return;
     }
 
-    // Date range: field_to
+    // Date range: field_to (end of day)
     if (key.endsWith("_to")) {
       const field = key.replace("_to", "");
       if (!matchStage[field]) matchStage[field] = {};
-      matchStage[field].$lte = new Date(value);
+      const date = new Date(value);
+      date.setHours(23, 59, 59, 999); // End of day
+      matchStage[field].$lte = date;
       return;
     }
 
@@ -68,10 +75,11 @@ function buildMatchStage(filters) {
 const getRows = async (req, res) => {
   try {
     const filters = req.query;
-
+    console.log(filters)
     // Build match stage
+    console.log('-----------------------------------------------------------------------------')
     const matchStage = buildMatchStage(filters);
-
+    console.log(matchStage)
     // Build pipeline
     const pipeline = [];
 
