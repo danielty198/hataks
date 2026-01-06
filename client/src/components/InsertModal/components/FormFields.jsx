@@ -137,7 +137,7 @@ export const AutocompleteField = React.memo(AutocompleteFieldComponent);
 // ---------------------------
 // InputField
 // ---------------------------
-const InputFieldComponent = ({ name, label, value, onChange, required, error, multiline }) => (
+const InputFieldComponent = ({ name, label, value, onChange, required, error, multiline,disable }) => (
   <FieldWrapper>
     <TextField
       fullWidth
@@ -152,6 +152,7 @@ const InputFieldComponent = ({ name, label, value, onChange, required, error, mu
       helperText={error?.msg || ''}
       multiline={multiline}
       rows={multiline ? 4 : 1}
+      disabled={disable}
       sx={multiline ? multilineInputStyles : inputStyles}
     />
   </FieldWrapper>

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DataGrid, GridActionsCellItem } from "@mui/x-data-grid";
 import CloseIcon from "@mui/icons-material/Close";
-import EditIcon from '@mui/icons-material/Edit';
+import EditIcon from "@mui/icons-material/Edit";
 import {
   Box,
   Snackbar,
@@ -14,10 +14,13 @@ import {
   ListItemText,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-import HistoryIcon from '@mui/icons-material/History'
-import { baseUrl, datagridcustomCellClassNames } from "../assets";
+import HistoryIcon from "@mui/icons-material/History";
+import {
+  baseUrl,
+  datagridcustomCellClassNames,
+  waitingHHTypeOptions,
+} from "../assets";
 import useUser from "../contexts/UserContext";
-
 
 export default function DatagridCustom({
   data,
@@ -27,9 +30,7 @@ export default function DatagridCustom({
 }) {
   const [rows, setRows] = useState([]);
 
-
-  useEffect(() => {
-  }, [rows])
+  useEffect(() => {}, [rows]);
   const [loading, setLoading] = useState({
     getRows: false,
     save: false,
@@ -50,13 +51,12 @@ export default function DatagridCustom({
     }
   }, [data]);
 
-
   const showSnack = (message, severity = "success", undo = null) => {
     setSnack({ open: true, message, severity, undo });
   };
 
   const closeSnack = (event, reason) => {
-    if (reason === 'clickaway') return; // optional: prevent closing on clickaway
+    if (reason === "clickaway") return; // optional: prevent closing on clickaway
     setSnack((prev) => ({ ...prev, open: false }));
   };
 
@@ -76,7 +76,7 @@ export default function DatagridCustom({
       )
       .map((c) => c.field)
   );
-  const [user] = useUser()
+  const [user] = useUser();
   const setLoadingFlag = useCallback(
     (key, value) => setLoading((prev) => ({ ...prev, [key]: value })),
     []
@@ -125,8 +125,11 @@ export default function DatagridCustom({
    * ------------------------------------------- */
   const deleteRow = useCallback(
     async (id) => {
-      const isAdmin = user?.roles && Array.isArray(user.roles) && user.roles.includes('admin');
-      if (!isAdmin) return alert('אין לך הרשאה למחוק שורה זאת')
+      const isAdmin =
+        user?.roles &&
+        Array.isArray(user.roles) &&
+        user.roles.includes("admin");
+      if (!isAdmin) return alert("אין לך הרשאה למחוק שורה זאת");
       const confirm = window.confirm("האם אתה בטוח שברצונך למחוק שורה זו?");
       if (!confirm) return;
 
@@ -148,7 +151,6 @@ export default function DatagridCustom({
     [rows]
   );
 
-
   /* -------------------------------------------
    * COLUMNS PROCESS
    * ------------------------------------------- */
@@ -166,8 +168,25 @@ export default function DatagridCustom({
       })
       .map((col) => {
         const c = { ...col };
-
         if (c.isEdit) c.editable = true;
+
+        if (c.field === "detailsOfNonCompliance") {
+          c.editable = true; // Set to true so DataGrid knows it CAN be edited
+          c.isCellEditable = (params) => {
+            const performanceValue = params.row.performenceExpectation;
+            return performanceValue === "לא";
+          };
+        }
+        if (c.field === "detailsHH") {
+          c.editable = true; // Let DataGrid know it can be editable
+          c.isCellEditable = (params) => {
+            const waitingHHType = params.row.waitingHHType;
+            return (
+              Array.isArray(waitingHHType) && waitingHHType.includes("אחר")
+            );
+          };
+          console.log(c);
+        }
 
         // Handle multiselect columns
         if (c.isMultiSelect && c.valueOptions) {
@@ -179,11 +198,11 @@ export default function DatagridCustom({
                 params.api.setEditCellValue({
                   id: params.id,
                   field: params.field,
-                  value: e.target.value
+                  value: e.target.value,
                 });
               }}
-              renderValue={(selected) => selected.join(', ')}
-              sx={{ width: '100%' }}
+              renderValue={(selected) => selected.join(", ")}
+              sx={{ width: "100%" }}
             >
               {c.valueOptions.map((option) => (
                 <MenuItem
@@ -191,14 +210,14 @@ export default function DatagridCustom({
                   value={option}
                   selected={(params.value || []).includes(option)}
                   sx={{
-                    '&.Mui-selected': {
-                      backgroundColor: 'rgba(25, 118, 210, 0.2)',
+                    "&.Mui-selected": {
+                      backgroundColor: "rgba(25, 118, 210, 0.2)",
                     },
-                    '&.Mui-selected:hover': {
-                      backgroundColor: 'rgba(25, 118, 210, 0.3)',
+                    "&.Mui-selected:hover": {
+                      backgroundColor: "rgba(25, 118, 210, 0.3)",
                     },
-                    '&:hover': {
-                      backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                    "&:hover": {
+                      backgroundColor: "rgba(0, 0, 0, 0.04)",
                     },
                   }}
                 >
@@ -209,11 +228,9 @@ export default function DatagridCustom({
           );
           c.renderCell = (params) => {
             const values = params.value || [];
-            return Array.isArray(values) ? values.join(', ') : values;
+            return Array.isArray(values) ? values.join(", ") : values;
           };
         }
-
-
 
         // Handle date columns - convert string/timestamp to Date object
         if (c.type === "date" || c.type === "dateTime") {
@@ -224,7 +241,7 @@ export default function DatagridCustom({
           };
         }
 
-        if (c.field === 'edit' || c.headerName === 'ערוך') {
+        if (c.field === "edit" || c.headerName === "ערוך") {
           c.getActions = (params) => [
             <GridActionsCellItem
               key="edit"
@@ -243,36 +260,36 @@ export default function DatagridCustom({
               key="delete"
               icon={<DeleteIcon />}
               label="Delete"
-              onClick={() => c.action ? c.action(params) : deleteRow(params.id)}
+              onClick={() =>
+                c.action ? c.action(params) : deleteRow(params.id)
+              }
             />,
           ];
         }
-        if (c.field === 'hatakStatus') {
+        if (c.field === "hatakStatus") {
           c.cellClassName = (params) => {
             const value = params.value;
-            if (!value) return '';
-
-
+            if (!value) return "";
 
             // כשיר (כל סוג) - ירוק
-            if (value.startsWith('כשיר')) return 'hatak-kosher';
+            if (value.startsWith("כשיר")) return "hatak-kosher";
 
             // נופק - תורכיז
-            if (value === 'נופק') return 'hatak-nofek';
+            if (value === "נופק") return "hatak-nofek";
 
             // בלאי - צהוב
-            if (value === 'בלאי') return 'hatak-balai';
+            if (value === "בלאי") return "hatak-balai";
 
             // דרג ג' או ממתין ח"ח - כתום
-            if (value.startsWith('דרג ג\'') || value === 'ממתין ח"ח') return 'hatak-darag3';
+            if (value.startsWith("דרג ג'") || value === 'ממתין ח"ח')
+              return "hatak-darag3";
 
             // מושבת - אדום
-            if (value.startsWith('מושבת')) return 'hatak-mushbat';
+            if (value.startsWith("מושבת")) return "hatak-mushbat";
 
-            return '';
+            return "";
           };
         }
-
 
         if (c.headerName === "history" || c.headerName === "היסטוריה") {
           c.type = "actions";
@@ -290,8 +307,7 @@ export default function DatagridCustom({
 
         return c;
       });
-  }, [columns, visibleColumns, deleteRow]);
-
+  }, [columns, visibleColumns, deleteRow, rows]);
 
   return (
     <Box sx={{ width: "100%", height: "80%", position: "relative" }}>
@@ -300,6 +316,7 @@ export default function DatagridCustom({
       )}
 
       <DataGrid
+        //key={rows.map(r => `${r._id}-${r.waitingHHType?.join(',')}-${r.performenceExpectation}`).join('|')}
         rows={rows}
         columns={processedColumns}
         pageSize={5}
@@ -357,11 +374,7 @@ export default function DatagridCustom({
                   Undo
                 </IconButton>
               )}
-              <IconButton
-                color="inherit"
-                size="small"
-                onClick={closeSnack}
-              >
+              <IconButton color="inherit" size="small" onClick={closeSnack}>
                 <CloseIcon fontSize="small" />
               </IconButton>
             </>

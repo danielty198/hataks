@@ -19,52 +19,54 @@ function App() {
 
   const [user, setUser] = useUser();
   const navigate = useNavigate();
+useEffect(()=> {
+setUser({roles:['admin'],templates:[]})
+},[])
+  // useEffect(() => {
 
-  useEffect(() => {
-
-    const handleUser = async () => {
-      const req = window.location.search;
-      const id = req.slice(1).split("id=")[1];
+  //   const handleUser = async () => {
+  //     const req = window.location.search;
+  //     const id = req.slice(1).split("id=")[1];
 
 
-      const getUserFromId = async () => {
-        const response = await fetch(`http://localhost:${USER_SERVICE_SERVER_PORT}/api/user/findOneById/${id}?port=${clientPort}`);
-        const data = await response.json();
-        const user = data.user;
-        return user;
-      };
+  //     const getUserFromId = async () => {
+  //       const response = await fetch(`http://localhost:${USER_SERVICE_SERVER_PORT}/api/user/findOneById/${id}?port=${clientPort}`);
+  //       const data = await response.json();
+  //       const user = data.user;
+  //       return user;
+  //     };
 
-      if (id && !user) {
-        setUser(await getUserFromId());
-      }
+  //     if (id && !user) {
+  //       setUser(await getUserFromId());
+  //     }
 
-      if (id && user) {
-        const idUser = await getUserFromId();
-        fetch(`http://localhost:${ASSETS_SERVICE_SERVER_PORT}/api/assets/twoObjectsAreEqual`, {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ obj1: idUser, obj2: user })
-        })
-          .then((res) => res.json())
-          .then((data) => {
-            if (!data.payload) {
-              setUser(idUser);
-            }
-            // window.location.href = window.location.origin
-            navigate("/")
-          });
-      }
+  //     if (id && user) {
+  //       const idUser = await getUserFromId();
+  //       fetch(`http://localhost:${ASSETS_SERVICE_SERVER_PORT}/api/assets/twoObjectsAreEqual`, {
+  //         method: "POST",
+  //         headers: { "content-type": "application/json" },
+  //         body: JSON.stringify({ obj1: idUser, obj2: user })
+  //       })
+  //         .then((res) => res.json())
+  //         .then((data) => {
+  //           if (!data.payload) {
+  //             setUser(idUser);
+  //           }
+  //           // window.location.href = window.location.origin
+  //           navigate("/")
+  //         });
+  //     }
 
-      if (!id && user === null) {
-        fetch(`http://localhost:${ASSETS_SERVICE_SERVER_PORT}/api/assets/encodeDecodePort/${clientPort}`)
-          .then((res) => res.json())
-          .then((data) => {
-            window.location.href = `http://localhost:${USER_SERVICE_CLIENT_PORT}/login?PORT=${data.port}`;
-          });
-      }
-    }
-    handleUser()
-  }, [user]);
+  //     if (!id && user === null) {
+  //       fetch(`http://localhost:${ASSETS_SERVICE_SERVER_PORT}/api/assets/encodeDecodePort/${clientPort}`)
+  //         .then((res) => res.json())
+  //         .then((data) => {
+  //           window.location.href = `http://localhost:${USER_SERVICE_CLIENT_PORT}/login?PORT=${data.port}`;
+  //         });
+  //     }
+  //   }
+  //   handleUser()
+  // }, [user]);
 
 
 

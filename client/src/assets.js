@@ -33,10 +33,12 @@ export const getDefaultFormData = () => {
     recivingBrigade: null,
     recivingBattalion: null,
     waitingHHType: '',
+    detailsHH: '',
     michlalNeed: '',
     startWorkingDate: null,
     forManoiya: '',
     performenceExpectation: '',
+    detailsOfNonCompliance:'',
     intended: '',
   }
 };

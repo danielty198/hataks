@@ -22,6 +22,7 @@ const RepairSchema = new mongoose.Schema({
   },
   problem: String,
   waitingHHType: [],
+  detailsHH: String,// פירוט חח
   michlalNeed: String,
   recivingDivision: String,
   recivingBrigade: String,
@@ -30,6 +31,7 @@ const RepairSchema = new mongoose.Schema({
   ,
   forManoiya: String,
   performenceExpectation: String,
+  detailsOfNonCompliance: String, // פירוט אי עמידה
   intended: String,
 
 }, { timestamps: true });
