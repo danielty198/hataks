@@ -30,7 +30,7 @@ export default function DatagridCustom({
 }) {
   const [rows, setRows] = useState([]);
 
-  useEffect(() => {}, [rows]);
+  useEffect(() => { }, [rows]);
   const [loading, setLoading] = useState({
     getRows: false,
     save: false,
@@ -185,7 +185,6 @@ export default function DatagridCustom({
               Array.isArray(waitingHHType) && waitingHHType.includes("אחר")
             );
           };
-          console.log(c);
         }
 
         // Handle multiselect columns
@@ -227,6 +226,7 @@ export default function DatagridCustom({
             </Select>
           );
           c.renderCell = (params) => {
+            console.log(params)
             const values = params.value || [];
             return Array.isArray(values) ? values.join(", ") : values;
           };

@@ -69,7 +69,7 @@ const StepRashi = ({
               options={distinctValues.engineSerial} // Pass existing engine serials here if you have them
               value={formData.engineSerial}
               onChange={onChange}
-              onBlur={handleEngineBlur}
+              handleBlur={handleEngineBlur}
               disabled={Boolean(editData)}
               required
               error={errors.engineSerial}

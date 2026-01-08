@@ -326,6 +326,7 @@ export default function UserManagementPage() {
         onSubmit={handleAddUser}
         editData={editData}
         ROUTE={ROUTE}
+        rows={rows}
       />
 
       <MemoizedDataGrid

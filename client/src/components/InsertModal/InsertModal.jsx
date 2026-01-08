@@ -26,9 +26,15 @@ const InsertModal = ({
   const [formData, setFormData] = useState(getDefaultFormData());
   const [errors, setErrors] = useState({});
   const [rashiNextButtonDisable, setRashiNextButtonDisable] = useState(false)
-  const { valueExists } = useDistinctValues()
+  const { valueExists, distinctValues } = useDistinctValues()
 
   const isEditMode = useMemo(() => editData !== null, [editData]);
+
+
+  useEffect(() => {
+    console.log(distinctValues)
+  }, [])
+
 
   // Reset form when modal opens
   useEffect(() => {
@@ -118,11 +124,11 @@ const InsertModal = ({
 
 
 
-  const handleEngineBlur = useCallback(async (field, value, options) => {
+  const handleEngineBlur = useCallback((field, value, options) => {
+
     if (field === 'engineSerial' && value) {
 
       const exists = valueExists(field, value)
-
       if (exists) {
         const stay = window.confirm('מנוע זה כבר קיים במערכת האם לטעון נתונים על המנוע הזה?')
         if (!stay) {

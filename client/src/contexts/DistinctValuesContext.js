@@ -37,6 +37,7 @@ export const DistinctValuesProvider = ({ children }) => {
             }
 
             const data = await response.json();
+            console.log(data)
             setDistinctValues(prev => ({ ...prev, ...data }));
             setLoading(false);
         } catch (err) {
@@ -46,14 +47,10 @@ export const DistinctValuesProvider = ({ children }) => {
     }, []);
 
     // Check if a value exists in a specific field
-    const valueExists = (field, value) => {
-        return distinctValues[field]?.includes(value) ?? false;
-    };
+    const valueExists = (field, value) => distinctValues[field]?.includes(value) ?? false;
 
     // Get values for a specific field
-    const getValuesForField = (field) => {
-        return distinctValues[field] || [];
-    };
+    const getValuesForField = (field) => distinctValues[field] || [];
 
     return (
         <DistinctValuesContext.Provider value={{

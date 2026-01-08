@@ -41,6 +41,7 @@ export default function UserInsertModal({ open, onClose, onSubmit, editData, ROU
             console.error("Error fetching PID options:", error);
         }
     };
+
     useEffect(() => {
         fetchPidOptions();
     }, [rows])
@@ -85,7 +86,7 @@ export default function UserInsertModal({ open, onClose, onSubmit, editData, ROU
                         select
                         label="תפקיד"
                         value={formData.role}
-                        onChange={(e) => handleChange('role', e.target.value)}
+                        onChange={(e) => handleChange('roles', e.target.value)}
                         required
                         fullWidth
                         SelectProps={{

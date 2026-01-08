@@ -84,7 +84,7 @@ export const SelectField = React.memo(SelectFieldComponent);
 // ---------------------------
 // AutocompleteField
 // ---------------------------
-const AutocompleteFieldComponent = ({ name, label, options, value, onBlur, onChange, freeSolo = false, required, error, disabled }) => (
+const AutocompleteFieldComponent = ({ name, label, options, value, handleBlur, onChange, freeSolo = false, required, error, disabled }) => (
   <FieldWrapper>
     <Autocomplete
       options={options}
@@ -106,8 +106,8 @@ const AutocompleteFieldComponent = ({ name, label, options, value, onBlur, onCha
           required={required}
           disabled={disabled ? disabled : false}
           onBlur={(e) => {
-            if (onBlur) {
-              onBlur(name, e.target.value, options);  // Pass name, value, and options
+            if (handleBlur) {
+              handleBlur(name, e.target.value, options);  // Pass name, value, and options
             }
           }}
           error={error?.error}

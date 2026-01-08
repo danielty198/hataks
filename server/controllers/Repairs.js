@@ -75,11 +75,10 @@ function buildMatchStage(filters) {
 const getRows = async (req, res) => {
   try {
     const filters = req.query;
-    console.log(filters)
+
     // Build match stage
-    console.log('-----------------------------------------------------------------------------')
     const matchStage = buildMatchStage(filters);
-    console.log(matchStage)
+
     // Build pipeline
     const pipeline = [];
 
@@ -100,37 +99,31 @@ const getRows = async (req, res) => {
   }
 };
 
-const getDistinctValues = async (req, res) => {
-  try {
+const getDistinctValues = async (req, res) => { 
+  try { 
+    const validFields = [ 
+      "sendingBrigade", 
+      "sendingBattalion", 
+      "engineSerial", 
+      "minseretSerial", 
+      "recivingBrigade", 
+      "recivingBattalion", 
+    ]; 
 
+    const response = {};
+    
+    // Sequential execution - one at a time
+    for (const field of validFields) {
+      const values = await model.distinct(field);
+      console.log(values)
+      response[field] = values.filter(v => v != null && v !== '');
+    }
 
-
-    const validFields = [
-      "sendingBrigade",
-      "sendingBattalion",
-      "engineSerial",
-      "minseretSerial",
-      "recivingBrigade",
-      "recivingBattalion",
-    ];
-
-    // Fetch all distinct values in parallel
-    const results = await Promise.all(
-      validFields.map(async (field) => {
-        const values = await model.distinct(field);
-        return { field, values: values.filter(v => v != null && v !== '') };
-      })
-    );
-    // Convert to object format
-    const response = results.reduce((acc, { field, values }) => {
-      acc[field] = values;
-      return acc;
-    }, {});
     res.json(response);
-  } catch (err) {
-    console.error("Error getting unique values:", err);
-    res.status(500).json({ error: "Failed to fetch unique values" });
-  }
+  } catch (err) { 
+    console.error("Error getting unique values:", err); 
+    res.status(500).json({ error: "Failed to fetch unique values" }); 
+  } 
 }
 
 
