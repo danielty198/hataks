@@ -8,10 +8,10 @@ const RepairSchema = new mongoose.Schema({
   sendingBattalion: String,
   tipulType: String,
   zadik: String,
-  cameHas: {
-    // enum: ['שע"מ', 'שבר'], 
-    type: String
-  },
+  // cameHas: {
+  //   // enum: ['שע"מ', 'שבר'], 
+  //   type: String
+  // },
   reciveDate: Date//Date
   ,
   engineSerial: { type: String, required: true, unique: true, },
@@ -33,7 +33,7 @@ const RepairSchema = new mongoose.Schema({
   performenceExpectation: String,
   detailsOfNonCompliance: String, // פירוט אי עמידה
   intended: String,
-
+  addeBy:{fullName:String, pid:String}
 }, { timestamps: true });
 RepairSchema.index({ engineSerial: 1 })
 module.exports = { model: mongoose.model('Repair', RepairSchema), RepairSchema: RepairSchema }

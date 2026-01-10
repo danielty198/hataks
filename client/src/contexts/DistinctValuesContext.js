@@ -37,7 +37,6 @@ export const DistinctValuesProvider = ({ children }) => {
             }
 
             const data = await response.json();
-            console.log(data)
             setDistinctValues(prev => ({ ...prev, ...data }));
             setLoading(false);
         } catch (err) {
@@ -67,6 +66,4 @@ export const DistinctValuesProvider = ({ children }) => {
 };
 
 // Custom hook
-export const useDistinctValues = () => {
-    return useContext(DistinctValuesContext);
-};
+export const useDistinctValues = () => useContext(DistinctValuesContext);

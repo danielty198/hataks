@@ -99,31 +99,30 @@ const getRows = async (req, res) => {
   }
 };
 
-const getDistinctValues = async (req, res) => { 
-  try { 
-    const validFields = [ 
-      "sendingBrigade", 
-      "sendingBattalion", 
-      "engineSerial", 
-      "minseretSerial", 
-      "recivingBrigade", 
-      "recivingBattalion", 
-    ]; 
+const getDistinctValues = async (req, res) => {
+  try {
+    const validFields = [
+      "sendingBrigade",
+      "sendingBattalion",
+      "engineSerial",
+      "minseretSerial",
+      "recivingBrigade",
+      "recivingBattalion",
+    ];
 
     const response = {};
-    
+
     // Sequential execution - one at a time
     for (const field of validFields) {
       const values = await model.distinct(field);
-      console.log(values)
+
       response[field] = values.filter(v => v != null && v !== '');
     }
-
     res.json(response);
-  } catch (err) { 
-    console.error("Error getting unique values:", err); 
-    res.status(500).json({ error: "Failed to fetch unique values" }); 
-  } 
+  } catch (err) {
+    console.error("Error getting unique values:", err);
+    res.status(500).json({ error: "Failed to fetch unique values" });
+  }
 }
 
 
@@ -134,39 +133,48 @@ const updateById = async (req, res) => {
 
     // Validate ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      console.log('invalid id')
+      console.log('invalid id');
       return res.status(400).json({ error: "Invalid ID format" });
     }
 
     // Validate updates
     if (!updates || Object.keys(updates).length === 0) {
-      console.log('no update')
+      console.log('no update');
       return res.status(400).json({ error: "No fields to update" });
     }
+
     const oldRepair = await model.findById(id).lean();
     if (!oldRepair) {
       return res.status(404).json({ message: 'Repair not found' });
     }
 
+    // Add addedBy info to updates
+    const updatesWithUser = {
+      ...updates,
+      addedBy: {
+        fullName: user.fullName,
+        pid: user.pid
+      }
+    };
+
     const updatedRepair = await model.findByIdAndUpdate(
       id,
-      updates,
+      updatesWithUser,
       { new: true }
     ).lean();
 
-
+    // Get changes for history logging
     const changes = getChanges(oldRepair, updatedRepair);
 
     if (changes.length > 0) {
       await historyModel.create({
         repairId: id,
-        changedBy: 'daniel',
+        changedBy: { fullName: user.fullName, pid: user.pid },
         changes,
         oldRepair: oldRepair,
         newRepair: updatedRepair
       });
     }
-
 
     res.json({
       success: true,
@@ -176,7 +184,8 @@ const updateById = async (req, res) => {
     console.error("Update error:", err);
     res.status(500).json({ error: "Failed to update" });
   }
-}
+};
+
 
 
 
@@ -217,7 +226,7 @@ const getByEngine = async (req, res) => {
 const getHistory = async (req, res) => {
   try {
     const { id } = req.params;
-
+    console.log(id)
     // Check if id is a valid ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: 'Invalid ID format' });

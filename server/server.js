@@ -20,12 +20,15 @@ app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
 const repairsRouter = require('./routes/Repairs');
-
+const biRouter = require('./routes/biRoutes')
+const testRouter = require('./routes/testRoutes')
 const zadikRouter = require('./routes/ZadikList')
 
 // routes
 
 app.use('/api/repairs', repairsRouter);
+app.use('/api/bi', biRouter)
+app.use('/api/test', testRouter)
 // app.use('/api/zadik',)
 
 const PORT = process.env.PORT || 5000;

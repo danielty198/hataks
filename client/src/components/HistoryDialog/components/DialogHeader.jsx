@@ -6,7 +6,7 @@ import {
   Refresh as RefreshIcon,
 } from '@mui/icons-material';
 
-const DialogHeader = ({ repairId, loading, onRefresh, onClose }) => {
+const DialogHeader = ({ currentEngineHistory, loading, onRefresh, onClose }) => {
   return (
     <DialogTitle
       sx={{
@@ -24,9 +24,9 @@ const DialogHeader = ({ repairId, loading, onRefresh, onClose }) => {
           <Typography variant="h6" fontWeight={600}>
             היסטוריית שינויים
           </Typography>
-          {repairId && (
+          {currentEngineHistory && (
             <Typography variant="caption" color="text.secondary">
-              תיקון #{repairId.slice(-6).toUpperCase()}
+              {`היסטוריית מנוע ${currentEngineHistory}`}
             </Typography>
           )}
         </Box>

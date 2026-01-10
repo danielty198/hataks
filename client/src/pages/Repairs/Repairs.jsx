@@ -24,136 +24,30 @@ import { useDistinctValues } from "../../contexts/DistinctValuesContext";
 const ROUTE = "repairs";
 
 const columnsConfig = [
-  {
-    field: "manoiya",
-    headerName: "מנועיה",
-    isEdit: true,
-    type: "singleSelect",
-    valueOptions: manoiyaOptions,
-  },
-  {
-    field: "hatakType",
-    headerName: 'סוג חט"כ',
-    isEdit: true,
-    type: "singleSelect",
-    valueOptions: hatakTypeOptions,
-  },
-  {
-    field: "sendingDivision",
-    headerName: "אוגדה מוסרת",
-    isEdit: true,
-    type: "singleSelect",
-    valueOptions: ogdotOptions,
-  },
-  {
-    field: "sendingBrigade",
-    headerName: "חטיבה מוסרת",
-    isEdit: true,
-    type: "string",
-  },
-  {
-    field: "sendingBattalion",
-    headerName: "גדוד מוסר",
-    isEdit: true,
-    type: "string",
-  },
+  { field: "manoiya", headerName: "מנועיה", isEdit: true, type: "singleSelect", valueOptions: manoiyaOptions },
+  { field: "hatakType", headerName: 'סוג חט"כ', isEdit: true, type: "singleSelect", valueOptions: hatakTypeOptions },
+  { field: "sendingDivision", headerName: "אוגדה מוסרת", isEdit: true, type: "singleSelect", valueOptions: ogdotOptions },
+  { field: "sendingBrigade", headerName: "חטיבה מוסרת", isEdit: true, type: "string" },
+  { field: "sendingBattalion", headerName: "גדוד מוסר", isEdit: true, type: "string" },
   { field: "zadik", headerName: "צ' של כלי", isEdit: true, type: "string" },
   { field: "reciveDate", headerName: "תאריך קבלה", isEdit: true, type: "date" },
   { field: "engineSerial", headerName: "מספר מנוע", isEdit: false },
-  {
-    field: "minseretSerial",
-    headerName: "מספר ממסרת",
-    isEdit: true,
-    type: "string",
-  },
-  {
-    field: "hatakStatus",
-    headerName: 'סטטוס חט"כ',
-    isEdit: true,
-    type: "singleSelect",
-    valueOptions: hatakStatusOptions,
-  },
-  {
-    field: "tipulType",
-    headerName: "סוג טיפול",
-    isEdit: true,
-    type: "singleSelect",
-    valueOptions: ["שבר", 'שע"מ'],
-  },
+  { field: "minseretSerial", headerName: "מספר ממסרת", isEdit: true, type: "string" },
+  { field: "hatakStatus", headerName: 'סטטוס חט"כ', isEdit: true, type: "singleSelect", valueOptions: hatakStatusOptions },
+  { field: "tipulType", headerName: "סוג טיפול", isEdit: true, type: "singleSelect", valueOptions: ["שבר", 'שע"מ'] },
   { field: "problem", headerName: "פירוט תקלה", isEdit: true, type: "string" },
-  {
-    field: "waitingHHType",
-    headerName: 'סוג ח"ח ממתין',
-    isEdit: true,
-    isMultiSelect: true,
-    valueOptions: waitingHHTypeOptions,
-  },
-  { field: "detailsHH", headerName: 'פירוט ח"ח', type: "string" },
-  {
-    field: "michlalNeed",
-    headerName: "צריכת מכלל",
-    isEdit: true,
-    type: "string",
-  },
-  {
-    field: "recivingDivision",
-    headerName: "אוגדה מקבלת",
-    isEdit: true,
-    type: "singleSelect",
-    valueOptions: ogdotOptions,
-  },
-  {
-    field: "recivingBrigade",
-    headerName: "חטיבה מקבלת",
-    isEdit: true,
-    type: "string",
-  },
-  {
-    field: "recivingBattalion",
-    headerName: "גדוד מקבל",
-    isEdit: true,
-    type: "string",
-  },
-  {
-    field: "startWorkingDate",
-    headerName: "תאריך לפקודה",
-    isEdit: true,
-    type: "date",
-  },
-  {
-    field: "forManoiya",
-    headerName: "מנועיה לפקודה",
-    isEdit: true,
-    type: "singleSelect",
-    valueOptions: manoiyaOptions,
-  },
-  {
-    field: "performenceExpectation",
-    headerName: "צפי ביצוע",
-    isEdit: true,
-    type: "singleSelect",
-    valueOptions: performenceExpectationOptions,
-  },
-  {
-    field: "detailsOfNonCompliance",
-    headerName: "פירוט אי עמידה",
-    isEdit: true,
-    type: "string",
-  },
-  {
-    field: "intended",
-    headerName: "מיועד ל?",
-    isEdit: true,
-    type: "singleSelect",
-    valueOptions: intendedOptions,
-  },
-  {
-    field: "updatedAt",
-    headerName: "עודכן אחרון",
-    isEdit: false,
-    type: "date",
-  },
-  // ACTIONS (callback injected later)
+  { field: "waitingHHType", headerName: 'סוג ח"ח ממתין', isEdit: true, isMultiSelect: true, valueOptions: waitingHHTypeOptions },
+  { field: "detailsHH", headerName: 'פירוט ח"ח', isEdit: true, type: "string" },
+  { field: "michlalNeed", headerName: "צריכת מכלל", isEdit: true, type: "string" },
+  { field: "recivingDivision", headerName: "אוגדה מקבלת", isEdit: true, type: "singleSelect", valueOptions: ogdotOptions },
+  { field: "recivingBrigade", headerName: "חטיבה מקבלת", isEdit: true, type: "string" },
+  { field: "recivingBattalion", headerName: "גדוד מקבל", isEdit: true, type: "string" },
+  { field: "startWorkingDate", headerName: "תאריך לפקודה", isEdit: true, type: "date" },
+  { field: "forManoiya", headerName: "מנועיה לפקודה", isEdit: true, type: "singleSelect", valueOptions: manoiyaOptions },
+  { field: "performenceExpectation", headerName: "צפי ביצוע", isEdit: true, type: "singleSelect", valueOptions: performenceExpectationOptions },
+  { field: "detailsOfNonCompliance", headerName: "פירוט אי עמידה", isEdit: true, type: "string" },
+  { field: "intended", headerName: "מיועד ל?", isEdit: true, type: "singleSelect", valueOptions: intendedOptions },
+  { field: "updatedAt", headerName: "עודכן אחרון", isEdit: false, type: "date" },
   { field: "history", headerName: "היסטוריה", type: "actions" },
   { field: "edit", headerName: "ערוך", type: "actions" },
   { field: "delete", headerName: "מחק", type: "actions" },
@@ -205,6 +99,7 @@ export default function RepairsPage() {
   const [pendingChanges, setPendingChanges] = useState([]); // Track unsaved changes
   const [openHistoryDialog, setOpenHistoryModal] = useState(false);
   const [repairId, setRepairId] = useState();
+  const [currentEngineHistory, setCurrentEngineHistory] = useState()
   const [user] = useUser();
   const LAST_TEMPLATE_KEY = "lastTemplateId";
   const isAdmin =
@@ -330,54 +225,52 @@ export default function RepairsPage() {
     const hasChanges = Object.keys(newRow).some(
       (key) => newRow[key] !== oldRow[key]
     );
-    console.log(newRow);
-    console.log(oldRow);
     if (!hasChanges) {
       return oldRow; // No changes, return old row
     }
     // const waitingHHChanged = JSON.stringify(newRow.waitingHHType) !== JSON.stringify(oldRow.waitingHHType);
- if (newRow.waitingHHType.includes("אחר")) {
+    if (newRow.waitingHHType.includes("אחר")) {
       setSnackbar({
         open: true,
         message: 'סוג ח"ח ממתין כולל "אחר" - עכשיו ניתן לערוך את שדה פירוט ח"ח',
         severity: "info",
       });
-    } 
-    else {
-        setSnackbar({
-          open: true,
-          message: 'סוג ח"ח ממתין לא כולל "אחר" - שדה פירוט ח"ח נוקה ונעול',
-          severity: "warning",
-        });
-      
     }
-      const performanceChanged = newRow.performenceExpectation !== oldRow.performenceExpectation;
-
-   if (performanceChanged) {
-    if (newRow.performenceExpectation === "לא") {
+    else {
       setSnackbar({
         open: true,
-        message: 'צפי ביצוע הוא "לא" - עכשיו ניתן לערוך את שדה פירוט אי עמידה',
-        severity: "info",
+        message: 'סוג ח"ח ממתין לא כולל "אחר" - שדה פירוט ח"ח נוקה ונעול',
+        severity: "warning",
       });
-    } else {
-      if (oldRow.detailsOfNonCompliance) {
-        newRow.detailsOfNonCompliance = "";
+
+    }
+    const performanceChanged = newRow.performenceExpectation !== oldRow.performenceExpectation;
+
+    if (performanceChanged) {
+      if (newRow.performenceExpectation === "לא") {
         setSnackbar({
           open: true,
-          message: 'צפי ביצוע אינו "לא" - שדה פירוט אי עמידה נוקה ונעול',
-          severity: "warning",
-        });
-      } else {
-        setSnackbar({
-          open: true,
-          message: 'צפי ביצוע אינו "לא" - שדה פירוט אי עמידה נעול',
+          message: 'צפי ביצוע הוא "לא" - עכשיו ניתן לערוך את שדה פירוט אי עמידה',
           severity: "info",
         });
+      } else {
+        if (oldRow.detailsOfNonCompliance) {
+          newRow.detailsOfNonCompliance = "";
+          setSnackbar({
+            open: true,
+            message: 'צפי ביצוע אינו "לא" - שדה פירוט אי עמידה נוקה ונעול',
+            severity: "warning",
+          });
+        } else {
+          setSnackbar({
+            open: true,
+            message: 'צפי ביצוע אינו "לא" - שדה פירוט אי עמידה נעול',
+            severity: "info",
+          });
+        }
       }
     }
-  }
-  
+
     // Check if hatakStatus was changed to the value that requires waitingHHType
 
     if (newRow.hatakStatus === waitingHHTypeRequiredString) {
@@ -431,7 +324,7 @@ export default function RepairsPage() {
         const res = await fetch(`${baseUrl}/api/${ROUTE}/${row._id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ updates: row }),
+          body: JSON.stringify({ updates: row, user: user }),
         });
 
         if (!res.ok) throw new Error(`Failed to update row ${row._id}`);
@@ -486,7 +379,7 @@ export default function RepairsPage() {
         res = await fetch(`${baseUrl}/api/${ROUTE}/${data._id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ updates: data }),
+          body: JSON.stringify({ updates: data, user:user }),
         });
 
         if (!res.ok) throw new Error("נכשל עדכון שורה");
@@ -540,10 +433,12 @@ export default function RepairsPage() {
 
   const handleOpenHistory = (params) => {
     setRepairId(params.id);
+    setCurrentEngineHistory(params.row.engineSerial)
     setOpenHistoryModal(true);
   };
   const handleCloseHistory = () => {
     setOpenHistoryModal(false);
+    setCurrentEngineHistory(null)
     setRepairId(null);
   };
 
@@ -641,6 +536,7 @@ export default function RepairsPage() {
           open={openHistoryDialog}
           onClose={handleCloseHistory}
           repairId={repairId}
+          currentEngineHistory={currentEngineHistory}
         />
         <FilterPanel
           columns={columnsConfig}

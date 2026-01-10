@@ -30,12 +30,6 @@ const InsertModal = ({
 
   const isEditMode = useMemo(() => editData !== null, [editData]);
 
-
-  useEffect(() => {
-    console.log(distinctValues)
-  }, [])
-
-
   // Reset form when modal opens
   useEffect(() => {
     if (open) {
@@ -129,6 +123,8 @@ const InsertModal = ({
     if (field === 'engineSerial' && value) {
 
       const exists = valueExists(field, value)
+
+      
       if (exists) {
         const stay = window.confirm('מנוע זה כבר קיים במערכת האם לטעון נתונים על המנוע הזה?')
         if (!stay) {
@@ -155,10 +151,11 @@ const InsertModal = ({
 
         }
       } else {
+
         setRashiNextButtonDisable(false)
       }
     }
-  }, []);
+  }, [distinctValues]);
 
 
   const dialogTitle = useMemo(() => isEditMode ? 'עריכת רשומה' : 'הוספת רשומה חדשה', [isEditMode]);

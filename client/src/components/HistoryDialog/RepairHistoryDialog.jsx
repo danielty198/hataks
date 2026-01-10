@@ -1,40 +1,58 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Dialog, DialogContent } from '@mui/material';
 import useRepairHistory from './useRepairHistory';
+import { useDistinctValues } from '../../contexts/DistinctValuesContext';
 import {
-  getAvailableDates,
-  filterHistoryByDate,
+  getAvailableFilterOptions,
+  getInitialFilters,
+  filterHistory,
   groupHistoryByDate,
 } from './utils';
 
 // Components
 import DialogHeader from './components/DialogHeader';
-import DateFilter from './components/DateFilter';
+import HistoryFilters from './components/HistoryFilters';
 import Timeline from './components/Timeline';
 import EmptyState from './components/EmptyState';
 import LoadingState from './components/LoadingState';
 import ErrorState from './components/ErrorState';
 
-const RepairHistoryDialog = ({ open, onClose, repairId }) => {
-  const [selectedDate, setSelectedDate] = useState('all');
+const RepairHistoryDialog = ({ open, onClose, repairId, currentEngineHistory }) => {
+  const [filters, setFilters] = useState(getInitialFilters());
   const { historyData, loading, error, refetch } = useRepairHistory(repairId, open);
+  
+  // Get distinct values from context for dynamic filter options
+  const { distinctValues } = useDistinctValues();
 
-  // Reset date filter when dialog closes
+  // Reset filters when dialog closes
   React.useEffect(() => {
     if (!open) {
-      setSelectedDate('all');
+      setFilters(getInitialFilters());
     }
   }, [open]);
 
+  // Handle filter change
+  const handleFilterChange = useCallback((field, values) => {
+    setFilters((prev) => ({
+      ...prev,
+      [field]: values,
+    }));
+  }, []);
+
+  // Clear all filters
+  const handleClearAllFilters = useCallback(() => {
+    setFilters(getInitialFilters());
+  }, []);
+
   // Memoized computations
-  const availableDates = useMemo(
-    () => getAvailableDates(historyData),
-    [historyData]
+  const availableOptions = useMemo(
+    () => getAvailableFilterOptions(historyData, distinctValues),
+    [historyData, distinctValues]
   );
 
   const filteredHistory = useMemo(
-    () => filterHistoryByDate(historyData, selectedDate),
-    [historyData, selectedDate]
+    () => filterHistory(historyData, filters),
+    [historyData, filters]
   );
 
   const groupedHistory = useMemo(
@@ -59,34 +77,36 @@ const RepairHistoryDialog = ({ open, onClose, repairId }) => {
     return <Timeline groupedHistory={groupedHistory} />;
   };
 
-  const showDateFilter = !loading && !error && historyData.length > 0;
+  const showFilters = !loading && !error && historyData.length > 0;
 
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth="sm"
+      maxWidth="md"
       fullWidth
       PaperProps={{
         sx: {
           borderRadius: 3,
-          maxHeight: '85vh',
+          maxHeight: '90vh',
         },
       }}
     >
       <DialogHeader
-        repairId={repairId}
+        currentEngineHistory={currentEngineHistory}
         loading={loading}
         onRefresh={refetch}
         onClose={onClose}
       />
 
-      {showDateFilter && (
-        <DateFilter
-          selectedDate={selectedDate}
-          onChange={setSelectedDate}
-          availableDates={availableDates}
+      {showFilters && (
+        <HistoryFilters
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onClearAllFilters={handleClearAllFilters}
+          availableOptions={availableOptions}
           totalCount={historyData.length}
+          filteredCount={filteredHistory.length}
         />
       )}
 

@@ -170,22 +170,6 @@ export default function DatagridCustom({
         const c = { ...col };
         if (c.isEdit) c.editable = true;
 
-        if (c.field === "detailsOfNonCompliance") {
-          c.editable = true; // Set to true so DataGrid knows it CAN be edited
-          c.isCellEditable = (params) => {
-            const performanceValue = params.row.performenceExpectation;
-            return performanceValue === "לא";
-          };
-        }
-        if (c.field === "detailsHH") {
-          c.editable = true; // Let DataGrid know it can be editable
-          c.isCellEditable = (params) => {
-            const waitingHHType = params.row.waitingHHType;
-            return (
-              Array.isArray(waitingHHType) && waitingHHType.includes("אחר")
-            );
-          };
-        }
 
         // Handle multiselect columns
         if (c.isMultiSelect && c.valueOptions) {
@@ -226,7 +210,6 @@ export default function DatagridCustom({
             </Select>
           );
           c.renderCell = (params) => {
-            console.log(params)
             const values = params.value || [];
             return Array.isArray(values) ? values.join(", ") : values;
           };
@@ -324,6 +307,30 @@ export default function DatagridCustom({
         loading={loading.getRows}
         disableSelectionOnClick
         getRowId={(row) => row._id}
+        isCellEditable={(params) => {
+          // First, check if the column is editable at all
+          const column = processedColumns.find((col) => col.field === params.field);
+          const isColumnEditable = column?.editable ?? false;
+
+          // If column is not editable, return false immediately
+          if (!isColumnEditable) {
+            return false;
+          }
+
+          // detailsOfNonCompliance - only editable when performenceExpectation === 'לא'
+          if (params.field === "detailsOfNonCompliance") {
+            return params.row.performenceExpectation === "לא";
+          }
+
+          // detailsHH - only editable when waitingHHType includes 'אחר'
+          if (params.field === "detailsHH") {
+            const waitingHHType = params.row.waitingHHType;
+            return Array.isArray(waitingHHType) && waitingHHType.includes("אחר");
+          }
+
+          // For all other editable columns, allow editing
+          return true;
+        }}
         sx={{ minHeight: "60%", ...datagridcustomCellClassNames }}
         processRowUpdate={processRowUpdate}
         onProcessRowUpdateError={handleProcessRowUpdateError}
