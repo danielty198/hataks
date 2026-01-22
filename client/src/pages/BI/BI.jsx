@@ -18,7 +18,7 @@ const DEFAULT_HATAK_TYPES = [
 ];
 
 const BIPage = () => {
-  const [viewMode, setViewMode] = useState('pies');
+  const [viewMode, setViewMode] = useState('table');
   const [selectedManoiya, setSelectedManoiya] = useState([]);
   const [pieTypes, setPieTypes] = useState(DEFAULT_HATAK_TYPES);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -108,10 +108,12 @@ const BIPage = () => {
       {/* Controls */}
       <Paper sx={{ p: 2, mb: 3, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
         <ViewToggle value={viewMode} onChange={setViewMode} />
-        <ManoiyaFilter value={selectedManoiya} onChange={setSelectedManoiya} />
-        <Typography variant="body2" color="text.secondary">
-          סה"כ: {totalCount} רשומות
-        </Typography>
+        {viewMode === 'pies' && <>
+          <ManoiyaFilter value={selectedManoiya} onChange={setSelectedManoiya} />
+          <Typography variant="body2" color="text.secondary">
+            סה"כ: {totalCount} רשומות
+          </Typography>
+        </>}
       </Paper>
 
       {/* Loading */}

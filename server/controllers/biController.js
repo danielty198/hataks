@@ -18,7 +18,6 @@ const PASTEL_COLORS = [
 exports.getPieData = async (req, res) => {
   try {
     let { hatakTypes, manoiya } = req.query;
-    console.log({ hatakTypes, manoiya })
 
     // Ensure hatakTypes is an array
     if (!hatakTypes ||hatakTypes.includes('הכל') ) {

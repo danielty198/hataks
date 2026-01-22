@@ -18,6 +18,7 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import ColumnVisibility from "./ColumnVisibility";
 import FilterInput from "./FilterInput";
 import { baseUrl, FILTERS_AUTOCOMPLETE_FIELDS } from "../../assets";
+import { useSearchParams } from "react-router-dom";
 
 import "dayjs/locale/he";
 import { useDistinctValues } from "../../contexts/DistinctValuesContext";
@@ -67,7 +68,7 @@ const FilterItem = memo(function FilterItem({ column, value, dateFrom, dateTo, o
 });
 
 // Memoized filter list component - only renders visible items
-const FilterList = memo(function FilterList({ columns, filters, onChange, onDateChange, getValuesForField }) {
+const FilterList = memo(function FilterList({ columns, filters, onChange, onDateChange, getValuesForField, }) {
   return (
     <Stack spacing={2}>
       {columns.map((column) => (
@@ -97,14 +98,17 @@ function FilterPanel({
   onFiltersChange,
   onVisibleColumnsChange,
   onDataLoaded,
+  fetchData,
+  onFiltersApplied, // NEW PROP - Add this
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [localFilters, setLocalFilters] = useState({});
   const [localVisibleColumns, setLocalVisibleColumns] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Use the context instead of local state
-  const { getValuesForField,  loading: distinctLoading } = useDistinctValues();
+  const { getValuesForField, loading: distinctLoading } = useDistinctValues();
 
   const filterableColumns = useMemo(() =>
     columns.filter((col) => col.type !== "actions" && col.headerName !== "מחק"),
@@ -116,8 +120,26 @@ function FilterPanel({
     [filterableColumns]
   );
 
-  // Fetch distinct values for filter fields when component mounts
+  // Load filters from URL on mount
+  useEffect(() => {
+    const filtersFromUrl = {};
+    for (const [key, value] of searchParams.entries()) {
+      // Skip pagination params
+      if (key !== 'page' && key !== 'pageSize') {
+        // Check if this value contains comma (multi-select stored as comma-separated)
+        if (value.includes(',')) {
+          filtersFromUrl[key] = value.split(',');
+        } else {
+          filtersFromUrl[key] = value;
+        }
+      }
+    }
 
+    if (Object.keys(filtersFromUrl).length > 0) {
+      setLocalFilters(filtersFromUrl);
+      onFiltersChange?.(filtersFromUrl);
+    }
+  }, []); // Only on mount
 
   // Sync when drawer opens
   useEffect(() => {
@@ -128,7 +150,10 @@ function FilterPanel({
   }, [drawerOpen, filters, visibleColumns, defaultVisibleColumns]);
 
   const activeFiltersCount = useMemo(() =>
-    Object.values(localFilters).filter((v) => v !== "" && v !== null && v !== undefined).length,
+    Object.values(localFilters).filter((v) => {
+      if (Array.isArray(v)) return v.length > 0;
+      return v !== "" && v !== null && v !== undefined;
+    }).length,
     [localFilters]
   );
 
@@ -161,38 +186,62 @@ function FilterPanel({
   const handleReset = useCallback(() => {
     setLocalFilters({});
     setLocalVisibleColumns(defaultVisibleColumns);
-  }, [defaultVisibleColumns]);
+
+    // Clear filters from URL but keep pagination
+    const params = new URLSearchParams(searchParams);
+    const page = params.get('page');
+    const pageSize = params.get('pageSize');
+
+    const newParams = new URLSearchParams();
+    if (page) newParams.set('page', page);
+    if (pageSize) newParams.set('pageSize', pageSize);
+
+    setSearchParams(newParams, { replace: true });
+  }, [defaultVisibleColumns, searchParams, setSearchParams]);
 
   const handleApply = useCallback(async () => {
     console.log('starting filter apply');
     setLoading(true);
     try {
-      const params = new URLSearchParams();
+      // Trigger pagination reset in parent
+      onFiltersApplied?.();
+
+      // Update URL with filters and reset page to 1
+      const params = new URLSearchParams(searchParams);
+      const pageSize = params.get('pageSize') || '15';
+
+      const newParams = new URLSearchParams();
+      newParams.set('page', '1');
+      newParams.set('pageSize', pageSize);
+
       Object.entries(localFilters).forEach(([key, value]) => {
         if (value !== "" && value !== null && value !== undefined) {
-          params.append(key, value);
+          if (Array.isArray(value)) {
+            if (value.length > 0) {
+              newParams.set(key, value.join(','));
+            }
+          } else {
+            newParams.set(key, value);
+          }
         }
       });
-      const queryString = params.toString();
-      const url = queryString ? `${baseUrl}/api/repairs?${queryString}` : `${baseUrl}/api/repairs`;
 
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+      setSearchParams(newParams, { replace: true });
 
-      const data = await res.json();
+      await fetchData(localFilters);
 
       onFiltersChange?.(localFilters);
       onVisibleColumnsChange?.(localVisibleColumns);
-      console.log('filter apply done, data loaded:', data);
-      onDataLoaded?.(data);
+
+      console.log('filter apply done, data loaded');
       setDrawerOpen(false);
     } catch (err) {
       console.error("Filter fetch error:", err);
     } finally {
       setLoading(false);
     }
-  }, [localFilters, localVisibleColumns, onFiltersChange, onVisibleColumnsChange, onDataLoaded]);
-
+  }, [localFilters, localVisibleColumns, fetchData, onFiltersChange, onVisibleColumnsChange, onFiltersApplied, searchParams, setSearchParams]);
+  
   return (
     <>
       <Button variant="contained" startIcon={<TuneIcon />} onClick={openDrawer} sx={buttonSx}>

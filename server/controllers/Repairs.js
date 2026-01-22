@@ -7,7 +7,7 @@ const { getChanges } = require('../Utils/getChanges')
 
 function buildMatchStage(filters) {
   const matchStage = {};
-  const reservedKeys = ["_page", "_limit", "_sort", "_order"];
+  const reservedKeys = ["_page", "_limit", "_sort", "_order", "pageSize", "page"];
 
   // Fields that should use partial text search
   const textSearchFields = ["problem", "notes", "description"];
@@ -24,7 +24,7 @@ function buildMatchStage(filters) {
       const field = key.replace("_from", "");
       if (!matchStage[field]) matchStage[field] = {};
       const date = new Date(value);
-      date.setHours(0, 0, 0, 0); // Start of day
+      date.setHours(0, 0, 0, 0);
       matchStage[field].$gte = date;
       return;
     }
@@ -34,7 +34,7 @@ function buildMatchStage(filters) {
       const field = key.replace("_to", "");
       if (!matchStage[field]) matchStage[field] = {};
       const date = new Date(value);
-      date.setHours(23, 59, 59, 999); // End of day
+      date.setHours(23, 59, 59, 999);
       matchStage[field].$lte = date;
       return;
     }
@@ -58,7 +58,7 @@ function buildMatchStage(filters) {
     }
 
     // Handle comma-separated values (multi-select filters)
-    if (value.includes(',')) {
+    if (typeof value === 'string' && value.includes(',')) {
       const values = value.split(',').map(v => v.trim());
       matchStage[key] = { $in: values };
       return;
@@ -71,15 +71,19 @@ function buildMatchStage(filters) {
   return matchStage;
 }
 
-
 const getRows = async (req, res) => {
   try {
     const filters = req.query;
+    // Extract pagination parameters
+    const pageSize = parseInt(filters.pageSize) || 10;
+    const page = parseInt(filters.page) || 0;
+    const skip = page * pageSize;
 
     // Build match stage
     const matchStage = buildMatchStage(filters);
 
-    // Build pipeline
+    // Use facet to run count and data queries in parallel within one aggregation
+
     const pipeline = [];
 
     if (Object.keys(matchStage).length > 0) {
@@ -89,10 +93,31 @@ const getRows = async (req, res) => {
     // Sort by newest first
     pipeline.push({ $sort: { _id: -1 } });
 
-    const results = await model.aggregate(pipeline).allowDiskUse(true);
+    // Use $facet to get both count and paginated data in one query
+    pipeline.push({
+      $facet: {
+        metadata: [{ $count: "total" }],
+        data: [
+          { $skip: skip },
+          { $limit: pageSize }
+        ]
+      }
+    });
 
-    // Return array directly to match your frontend expectation
-    res.json(results);
+    const [result] = await model.aggregate(pipeline).allowDiskUse(true);
+ 
+
+    const rowsCount = result.metadata.length > 0 ? result.metadata[0].total : 0;
+    const data = result.data;
+
+    // Return paginated response with filtered count
+
+    res.json({
+      data: data,
+      rowsCount: rowsCount,
+      page: page,
+      pageSize: pageSize
+    });
   } catch (err) {
     console.error("Aggregate error:", err);
     res.status(500).json({ error: "Failed to fetch data" });

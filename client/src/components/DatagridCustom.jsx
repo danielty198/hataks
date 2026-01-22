@@ -27,15 +27,12 @@ export default function DatagridCustom({
   columns,
   route,
   processRowUpdate,
+  paginationOff,
+  loading, 
+  setLoading,
 }) {
   const [rows, setRows] = useState([]);
 
-  useEffect(() => { }, [rows]);
-  const [loading, setLoading] = useState({
-    getRows: false,
-    save: false,
-    delete: false,
-  });
 
   const [snack, setSnack] = useState({
     open: false,
@@ -305,6 +302,8 @@ export default function DatagridCustom({
         pageSize={5}
         rowsPerPageOptions={[5]}
         loading={loading.getRows}
+        pagination={paginationOff}
+        hideFooter={paginationOff}
         disableSelectionOnClick
         getRowId={(row) => row._id}
         isCellEditable={(params) => {

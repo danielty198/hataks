@@ -12,13 +12,14 @@ import {
   waitingHHTypeRequiredString,
   performenceExpectationOptions,
 } from "../../assets";
-
+import { useNavigate, useLocation } from 'react-router-dom';
 import DatagridCustom from "../../components/DatagridCustom";
 import { FilterPanel, TemplateSelector } from "../../components/RepairsFilters";
 import InsertModal from "../../components/InsertModal/InsertModal";
 import RepairHistoryDialog from "../../components/HistoryDialog/RepairHistoryDialog";
 import useUser from "../../contexts/UserContext";
 import { useDistinctValues } from "../../contexts/DistinctValuesContext";
+import CustomPagination from "../../components/CustomPagination";
 
 // Move OUTSIDE component - these never change
 const ROUTE = "repairs";
@@ -72,6 +73,9 @@ const MemoizedDataGrid = memo(function MemoizedDataGrid({
   columns,
   route,
   onProcessRowUpdate,
+  paginationOff,
+  rowsLoading,
+  setRowsLoading
 }) {
   return (
     <DatagridCustom
@@ -79,6 +83,11 @@ const MemoizedDataGrid = memo(function MemoizedDataGrid({
       columns={columns}
       route={route}
       processRowUpdate={onProcessRowUpdate}
+      paginationOff
+      rowsLoading={rowsLoading}
+      setRowsLoading={setRowsLoading}
+      loading={rowsLoading}
+      setLoading={setRowsLoading}
     />
   );
 });
@@ -86,6 +95,7 @@ const MemoizedDataGrid = memo(function MemoizedDataGrid({
 export default function RepairsPage() {
   const [open, setOpen] = useState(false);
   const [rows, setRows] = useState([]);
+  const [rowsCount, setRowsCount] = useState(0);
   const [editData, setEditData] = useState();
   const [filters, setFilters] = useState({});
   const [visibleColumns, setVisibleColumns] = useState(defaultVisibleColumns);
@@ -96,10 +106,17 @@ export default function RepairsPage() {
     message: "",
     severity: "success",
   });
+  const [rowsLoading, setRowsLoading] = useState({
+    getRows: false,
+    save: false,
+    delete: false,
+  });
   const [pendingChanges, setPendingChanges] = useState([]); // Track unsaved changes
   const [openHistoryDialog, setOpenHistoryModal] = useState(false);
   const [repairId, setRepairId] = useState();
-  const [currentEngineHistory, setCurrentEngineHistory] = useState()
+  const [currentEngineHistory, setCurrentEngineHistory] = useState();
+  const [triggerPaginationReset, setTriggerPaginationReset] = useState(false);
+  const navigate = useNavigate();
   const [user] = useUser();
   const LAST_TEMPLATE_KEY = "lastTemplateId";
   const isAdmin =
@@ -110,31 +127,42 @@ export default function RepairsPage() {
     user.roles.length === 1 &&
     user.roles[0] === "viewer";
   const { fetchDistinctValues } = useDistinctValues();
-  // Fetch data
-  const fetchData = useCallback(async (appliedFilters = {}) => {
+
+  // Fetch data function for CustomPagination
+  const handleFetchData = useCallback(async (page, pageSize) => {
+    setRowsLoading(prev => ({ ...prev, getRows: true }))
     try {
+      
       const params = new URLSearchParams();
-      Object.entries(appliedFilters).forEach(([key, value]) => {
+
+      // Add pagination params
+      params.append('pageSize', pageSize);
+      params.append('page', page);
+
+      // Add filter params
+      Object.entries(filters).forEach(([key, value]) => {
         if (value !== "" && value !== null && value !== undefined) {
           params.append(key, value);
         }
       });
 
       const queryString = params.toString();
-      const url = queryString
-        ? `${baseUrl}/api/repairs?${queryString}`
-        : `${baseUrl}/api/repairs`;
+      const url = `${baseUrl}/api/repairs?${queryString}`;
       const res = await fetch(url);
-      const data = await res.json();
+
+      const { data, rowsCount } = await res.json();
+
       setRows(data);
+      setRowsCount(rowsCount);
     } catch (err) {
       console.error("Failed to fetch data:", err);
     }
-  }, []);
+    setRowsLoading(prev => ({ ...prev, getRows: false }))
+  }, [filters]);
 
-  // Fetch templates + data
+  // Fetch templates + initial data
   useEffect(() => {
-    fetchData();
+    handleFetchData(0, 15); // Initial fetch with default pagination
   }, []);
 
   // Load templates from user
@@ -154,7 +182,6 @@ export default function RepairsPage() {
           setVisibleColumns(
             lastTemplate.visibleColumns || defaultVisibleColumns
           );
-          fetchData(lastTemplate.filters || {});
         }
       }
     }
@@ -178,9 +205,8 @@ export default function RepairsPage() {
 
       setFilters(template.filters);
       setVisibleColumns(template.visibleColumns);
-      await fetchData(template.filters);
     },
-    [templates, fetchData]
+    [templates]
   );
 
   const handleSaveTemplate = useCallback((newTemplate) => {
@@ -196,11 +222,10 @@ export default function RepairsPage() {
         setSelectedTemplate("");
         setFilters({});
         setVisibleColumns(defaultVisibleColumns);
-        fetchData({});
         localStorage.removeItem(LAST_TEMPLATE_KEY);
       }
     },
-    [selectedTemplate, fetchData]
+    [selectedTemplate]
   );
 
   const openModal = useCallback(() => setOpen(true), []);
@@ -211,8 +236,7 @@ export default function RepairsPage() {
       message: "הרשומה נוספה בהצלחה!",
       severity: "success",
     });
-    await fetchData(filters);
-  }, [filters, fetchData]);
+  }, []);
 
   const handleCloseSnackbar = useCallback(() => {
     setSnackbar((prev) => ({ ...prev, open: false }));
@@ -221,14 +245,13 @@ export default function RepairsPage() {
   // Track row edits from the DataGrid
   const handleProcessRowUpdate = useCallback((newRow, oldRow) => {
     // Check if there are actual changes
-
     const hasChanges = Object.keys(newRow).some(
       (key) => newRow[key] !== oldRow[key]
     );
     if (!hasChanges) {
       return oldRow; // No changes, return old row
     }
-    // const waitingHHChanged = JSON.stringify(newRow.waitingHHType) !== JSON.stringify(oldRow.waitingHHType);
+
     if (newRow.waitingHHType.includes("אחר")) {
       setSnackbar({
         open: true,
@@ -242,7 +265,6 @@ export default function RepairsPage() {
         message: 'סוג ח"ח ממתין לא כולל "אחר" - שדה פירוט ח"ח נוקה ונעול',
         severity: "warning",
       });
-
     }
     const performanceChanged = newRow.performenceExpectation !== oldRow.performenceExpectation;
 
@@ -272,7 +294,6 @@ export default function RepairsPage() {
     }
 
     // Check if hatakStatus was changed to the value that requires waitingHHType
-
     if (newRow.hatakStatus === waitingHHTypeRequiredString) {
       if (
         !newRow.waitingHHType ||
@@ -349,13 +370,12 @@ export default function RepairsPage() {
         severity: "error",
       });
     }
-  }, [pendingChanges]);
+  }, [pendingChanges, user]);
 
   const handleCancelChanges = useCallback(() => {
     if (pendingChanges.length === 0) return;
 
     // Refetch original data to revert changes
-    fetchData(filters);
     setPendingChanges([]);
 
     setSnackbar({
@@ -363,7 +383,7 @@ export default function RepairsPage() {
       message: "השינויים בוטלו",
       severity: "info",
     });
-  }, [pendingChanges, filters, fetchData]);
+  }, [pendingChanges]);
 
   // ======================================================
   // ACTION HANDLER (edit / add)
@@ -379,7 +399,7 @@ export default function RepairsPage() {
         res = await fetch(`${baseUrl}/api/${ROUTE}/${data._id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ updates: data, user:user }),
+          body: JSON.stringify({ updates: data, user: user }),
         });
 
         if (!res.ok) throw new Error("נכשל עדכון שורה");
@@ -424,7 +444,7 @@ export default function RepairsPage() {
         severity: "error",
       });
     }
-  }, []);
+  }, [user]);
 
   const handleOpenEdit = useCallback((rowData) => {
     setEditData(rowData.row); // <-- set the row to edit
@@ -433,14 +453,22 @@ export default function RepairsPage() {
 
   const handleOpenHistory = (params) => {
     setRepairId(params.id);
-    setCurrentEngineHistory(params.row.engineSerial)
+    setCurrentEngineHistory(params.row.engineSerial);
     setOpenHistoryModal(true);
   };
   const handleCloseHistory = () => {
     setOpenHistoryModal(false);
-    setCurrentEngineHistory(null)
+    setCurrentEngineHistory(null);
     setRepairId(null);
   };
+  const handleFiltersApplied = useCallback(() => {
+    setTriggerPaginationReset(true);
+  }, []);
+
+  // Callback when pagination reset is complete
+  const handlePaginationResetComplete = useCallback(() => {
+    setTriggerPaginationReset(false);
+  }, []);
 
   // ======================================================
   // inject handleSubmit into columnsConfig
@@ -463,7 +491,7 @@ export default function RepairsPage() {
       }
       return newCol;
     });
-  }, [columnsConfig, isViewer]);
+  }, [isViewer, handleOpenEdit]);
 
   // visible columns
   const displayColumns = useMemo(() => {
@@ -474,7 +502,7 @@ export default function RepairsPage() {
 
       return visibleColumns.includes(col.field) || col.type === "actions";
     });
-  }, [visibleColumns, columnsWithActions, user?.roles]);
+  }, [visibleColumns, columnsWithActions, isAdmin, isViewer]);
 
   const gridData = useMemo(() => rows, [rows]);
 
@@ -545,6 +573,18 @@ export default function RepairsPage() {
           onFiltersChange={setFilters}
           onVisibleColumnsChange={setVisibleColumns}
           onDataLoaded={setRows}
+          fetchData={handleFetchData}
+          onFiltersApplied={handleFiltersApplied} // NEW PROP
+        />
+        <CustomPagination
+          rowsCount={rowsCount}
+          onFetchData={handleFetchData}
+          initialPageSize={15}
+          showPageSize={true}
+          pageSizeOptions={[10, 15, 25, 50, 100]}
+          debounceDelay={300}
+          resetToPage1={triggerPaginationReset} // NEW PROP
+          onResetComplete={handlePaginationResetComplete} // NEW PROP
         />
       </Box>
 
@@ -561,13 +601,17 @@ export default function RepairsPage() {
         route={ROUTE}
         onSuccess={handleInsertSuccess}
       />
-
       <MemoizedDataGrid
         data={gridData}
         columns={displayColumns}
         route={ROUTE}
         onProcessRowUpdate={handleProcessRowUpdate}
+        paginationOff
+        rowsLoading={rowsLoading}
+        setRowsLoading={setRowsLoading}
       />
+
+
 
       <Snackbar
         open={snackbar.open}

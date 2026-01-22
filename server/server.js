@@ -11,10 +11,7 @@ app.use(cors());
 
 
 
-// app.get('/',(req,res)=> {
-// console.log('asdasdas')
-// res.json({msg:'recived'}) 
-// })
+
 
 
 app.use(express.static(path.join(__dirname, 'public')));

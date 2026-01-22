@@ -4,16 +4,15 @@ import { manoiyaOptions, hatakStatusOptions, hatakTypeOptions } from '../../../a
 import { STATUS_COLOR_MAP } from '../constants';
 
 const ComplexTable = ({ tableData }) => {
-  const manoiyaColumns = [...manoiyaOptions, 'sum'];
+  const manoiyaColumns = ['sum', ...manoiyaOptions];
 
   return (
-    <Paper sx={{ overflow: 'auto', maxHeight: '70vh' }}>
+    <Paper sx={{ overflow: 'auto', maxHeight: '70vh', width: '80vw', maxWidth: '80vw' }}>
       <Box
         component="table"
         sx={{
-          width: '100%',
+          width: 'max-content',
           borderCollapse: 'collapse',
-          minWidth: 1200,
           direction: 'rtl',
           '& th, & td': {
             border: '1px solid',
@@ -26,22 +25,7 @@ const ComplexTable = ({ tableData }) => {
         {/* Header Row 1 - מנועיה */}
         <Box component="thead">
           <Box component="tr">
-            <Box
-              component="th"
-              rowSpan={2}
-              sx={{
-                bgcolor: 'primary.main',
-                color: 'white',
-                fontWeight: 700,
-                minWidth: 100,
-                position: 'sticky',
-                right: 0,
-                zIndex: 3,
-              }}
-            >
-              סוג חט"כ
-            </Box>
-            {manoiyaColumns.map((manoiya) => (
+            {manoiyaColumns.map((manoiya, index) => (
               <Box
                 key={manoiya}
                 component="th"
@@ -51,17 +35,34 @@ const ComplexTable = ({ tableData }) => {
                   color: 'white',
                   fontWeight: 700,
                   textAlign: 'center',
+                  border: '1px solid black',
                 }}
               >
                 {manoiya === 'sum' ? 'סה"כ' : manoiya}
               </Box>
             ))}
+            <Box
+              component="th"
+              rowSpan={2}
+              sx={{
+                bgcolor: 'primary.main',
+                color: 'white',
+                fontWeight: 700,
+                minWidth: 100,
+                position: 'sticky',
+                left: 0,
+                zIndex: 3,
+                verticalAlign: 'top',
+              }}
+            >
+              סוג חט"כ
+            </Box>
           </Box>
 
           {/* Header Row 2 - סטטוסים */}
           <Box component="tr">
-            {manoiyaColumns.map((manoiya) =>
-              hatakStatusOptions.map((status) => (
+            {manoiyaColumns.map((manoiya, manoiyaIndex) =>
+              hatakStatusOptions.map((status, statusIndex) => (
                 <Box
                   key={`${manoiya}-${status}`}
                   component="th"
@@ -72,6 +73,7 @@ const ComplexTable = ({ tableData }) => {
                     minWidth: 50,
                     fontSize: '0.65rem',
                     whiteSpace: 'nowrap',
+                    borderRight: statusIndex === hatakStatusOptions.length - 1 && manoiyaIndex < manoiyaColumns.length - 1 ? '3px solid white' : undefined,
                   }}
                 >
                   {status}
@@ -89,20 +91,8 @@ const ComplexTable = ({ tableData }) => {
               component="tr"
               sx={{ bgcolor: rowIndex % 2 === 0 ? 'grey.50' : 'white' }}
             >
-              <Box
-                component="td"
-                sx={{
-                  fontWeight: 600,
-                  position: 'sticky',
-                  right: 0,
-                  bgcolor: rowIndex % 2 === 0 ? 'grey.50' : 'white',
-                  zIndex: 1,
-                }}
-              >
-                {hatakType}
-              </Box>
-              {manoiyaColumns.map((manoiya) =>
-                hatakStatusOptions.map((status) => {
+              {manoiyaColumns.map((manoiya, manoiyaIndex) =>
+                hatakStatusOptions.map((status, statusIndex) => {
                   const value = tableData[hatakType]?.[manoiya]?.[status] || 0;
                   return (
                     <Box
@@ -112,6 +102,7 @@ const ComplexTable = ({ tableData }) => {
                         textAlign: 'center',
                         bgcolor: value > 0 ? `${STATUS_COLOR_MAP[status]}40` : 'transparent',
                         fontWeight: value > 0 ? 600 : 400,
+                        borderRight: statusIndex === hatakStatusOptions.length - 1 && manoiyaIndex < manoiyaColumns.length - 1 ? '3px solid #ccc' : undefined,
                       }}
                     >
                       {value || '-'}
@@ -119,6 +110,18 @@ const ComplexTable = ({ tableData }) => {
                   );
                 })
               )}
+              <Box
+                component="td"
+                sx={{
+                  fontWeight: 600,
+                  position: 'sticky',
+                  left: 0,
+                  bgcolor: rowIndex % 2 === 0 ? 'grey.50' : 'white',
+                  zIndex: 1,
+                }}
+              >
+                {hatakType}
+              </Box>
             </Box>
           ))}
         </Box>
@@ -126,20 +129,8 @@ const ComplexTable = ({ tableData }) => {
         {/* Total Row */}
         <Box component="tfoot">
           <Box component="tr" sx={{ bgcolor: 'grey.200' }}>
-            <Box
-              component="td"
-              sx={{
-                fontWeight: 700,
-                position: 'sticky',
-                right: 0,
-                bgcolor: 'grey.200',
-                zIndex: 1,
-              }}
-            >
-              סה"כ
-            </Box>
-            {manoiyaColumns.map((manoiya) =>
-              hatakStatusOptions.map((status) => {
+            {manoiyaColumns.map((manoiya, manoiyaIndex) =>
+              hatakStatusOptions.map((status, statusIndex) => {
                 const total = hatakTypeOptions.reduce((sum, hatakType) => {
                   return sum + (tableData[hatakType]?.[manoiya]?.[status] || 0);
                 }, 0);
@@ -151,6 +142,7 @@ const ComplexTable = ({ tableData }) => {
                       textAlign: 'center',
                       fontWeight: 700,
                       bgcolor: total > 0 ? `${STATUS_COLOR_MAP[status]}60` : 'grey.200',
+                      borderRight: statusIndex === hatakStatusOptions.length - 1 && manoiyaIndex < manoiyaColumns.length - 1 ? '3px solid #999' : undefined,
                     }}
                   >
                     {total || '-'}
@@ -158,6 +150,18 @@ const ComplexTable = ({ tableData }) => {
                 );
               })
             )}
+            <Box
+              component="td"
+              sx={{
+                fontWeight: 700,
+                position: 'sticky',
+                left: 0,
+                bgcolor: 'grey.200',
+                zIndex: 1,
+              }}
+            >
+              סה"כ
+            </Box>
           </Box>
         </Box>
       </Box>
