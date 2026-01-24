@@ -45,7 +45,19 @@ const clearBtnSx = { color: "#ff6b35" };
 const closeIconSx = { color: "#fff" };
 
 // Memoized single filter item - prevents unnecessary re-renders
-const FilterItem = memo(function FilterItem({ column, value, dateFrom, dateTo, onChange, onDateChange, dynamicOptions }) {
+const FilterItem = memo(function FilterItem({
+  column,
+  value,
+  dateFrom,
+  dateTo,
+  onChange,
+  onDateChange,
+  dynamicOptions,
+  onOptionsOpen,
+  onOptionsInputChange,
+  onOptionsLoadMore,
+  optionsLoading,
+}) {
   return (
     <FilterInput
       column={column}
@@ -55,6 +67,10 @@ const FilterItem = memo(function FilterItem({ column, value, dateFrom, dateTo, o
       onChange={onChange}
       onDateChange={onDateChange}
       dynamicOptions={dynamicOptions}
+      onOptionsOpen={onOptionsOpen}
+      onOptionsInputChange={onOptionsInputChange}
+      onOptionsLoadMore={onOptionsLoadMore}
+      optionsLoading={optionsLoading}
     />
   );
 }, (prev, next) => {
@@ -63,12 +79,23 @@ const FilterItem = memo(function FilterItem({ column, value, dateFrom, dateTo, o
     prev.dateFrom === next.dateFrom &&
     prev.dateTo === next.dateTo &&
     prev.column === next.column &&
-    prev.dynamicOptions === next.dynamicOptions
+    prev.dynamicOptions === next.dynamicOptions &&
+    prev.optionsLoading === next.optionsLoading
   );
 });
 
 // Memoized filter list component - only renders visible items
-const FilterList = memo(function FilterList({ columns, filters, onChange, onDateChange, getValuesForField, }) {
+const FilterList = memo(function FilterList({
+  columns,
+  filters,
+  onChange,
+  onDateChange,
+  getValuesForField,
+  ensureFirstPage,
+  onFieldInputChange,
+  loadMore,
+  loadingForField,
+}) {
   return (
     <Stack spacing={2}>
       {columns.map((column) => (
@@ -81,6 +108,10 @@ const FilterList = memo(function FilterList({ columns, filters, onChange, onDate
           onChange={onChange}
           onDateChange={onDateChange}
           dynamicOptions={getValuesForField(column.field)}
+          onOptionsOpen={() => ensureFirstPage(column.field)}
+          onOptionsInputChange={(val) => onFieldInputChange(column.field, val)}
+          onOptionsLoadMore={() => loadMore(column.field)}
+          optionsLoading={loadingForField(column.field)}
         />
       ))}
     </Stack>
@@ -88,7 +119,11 @@ const FilterList = memo(function FilterList({ columns, filters, onChange, onDate
 }, (prev, next) => {
   return prev.filters === next.filters &&
     prev.columns === next.columns &&
-    prev.getValuesForField === next.getValuesForField;
+    prev.getValuesForField === next.getValuesForField &&
+    prev.ensureFirstPage === next.ensureFirstPage &&
+    prev.onFieldInputChange === next.onFieldInputChange &&
+    prev.loadMore === next.loadMore &&
+    prev.loadingForField === next.loadingForField;
 });
 
 function FilterPanel({
@@ -107,8 +142,19 @@ function FilterPanel({
   const [loading, setLoading] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Use the context instead of local state
-  const { getValuesForField, loading: distinctLoading } = useDistinctValues();
+  // Scoped distinct-values store for filters (separate from insert modal)
+  const {
+    getValuesForField,
+    loadingForField,
+    ensureFirstPage,
+    onFieldInputChange,
+    loadMore,
+  } = useDistinctValues("repairsFilters");
+
+  const distinctLoading = useMemo(
+    () => FILTERS_AUTOCOMPLETE_FIELDS.some((f) => loadingForField(f)),
+    [loadingForField]
+  );
 
   const filterableColumns = useMemo(() =>
     columns.filter((col) => col.type !== "actions" && col.headerName !== "מחק"),
@@ -284,6 +330,10 @@ function FilterPanel({
                 onChange={handleFilterChange}
                 onDateChange={handleDateChange}
                 getValuesForField={getValuesForField}
+                ensureFirstPage={ensureFirstPage}
+                onFieldInputChange={onFieldInputChange}
+                loadMore={loadMore}
+                loadingForField={loadingForField}
               />
             </Box>
           </Box>

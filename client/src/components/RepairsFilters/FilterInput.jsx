@@ -88,7 +88,17 @@ const MultiSelectInput = memo(function MultiSelectInput({ field, headerName, val
   );
 });
 
-const AutocompleteMultiInput = memo(function AutocompleteMultiInput({ field, headerName, value, onChange, options }) {
+const AutocompleteMultiInput = memo(function AutocompleteMultiInput({
+  field,
+  headerName,
+  value,
+  onChange,
+  options,
+  onOpen,
+  onInputChange,
+  onLoadMore,
+  loading,
+}) {
   
   const selectedValues = useMemo(() => {
     if (!value) return [];
@@ -107,6 +117,17 @@ const AutocompleteMultiInput = memo(function AutocompleteMultiInput({ field, hea
       options={options}
       value={selectedValues}
       onChange={handleChange}
+      onOpen={onOpen}
+      onInputChange={(_, val) => onInputChange?.(val)}
+      loading={Boolean(loading)}
+      ListboxProps={{
+        onScroll: (e) => {
+          const listboxNode = e.currentTarget;
+          if (!listboxNode) return;
+          const nearBottom = listboxNode.scrollTop + listboxNode.clientHeight >= listboxNode.scrollHeight - 24;
+          if (nearBottom) onLoadMore?.();
+        },
+      }}
       renderTags={(value, getTagProps) =>
         value.map((option, index) => (
           <Chip
@@ -169,7 +190,19 @@ const DateRangeInput = memo(function DateRangeInput({ field, headerName, dateFro
   );
 });
 
-const FilterInput = memo(function FilterInput({ column, value, dateFrom, dateTo, onChange, onDateChange, dynamicOptions }) {
+const FilterInput = memo(function FilterInput({
+  column,
+  value,
+  dateFrom,
+  dateTo,
+  onChange,
+  onDateChange,
+  dynamicOptions,
+  onOptionsOpen,
+  onOptionsInputChange,
+  onOptionsLoadMore,
+  optionsLoading,
+}) {
   const { field, headerName, type, valueOptions, isMultiSelect } = column;
 
 
@@ -205,6 +238,10 @@ const FilterInput = memo(function FilterInput({ column, value, dateFrom, dateTo,
       value={value}
       onChange={onChange}
       options={dynamicOptions || []}
+      onOpen={onOptionsOpen}
+      onInputChange={onOptionsInputChange}
+      onLoadMore={onOptionsLoadMore}
+      loading={optionsLoading}
     />
   );
 });

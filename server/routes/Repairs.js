@@ -7,10 +7,12 @@ const CrudOperations = require("../crudOperations");
 const crud = new CrudOperations(model);
 
 router.get("/", controller.getRows);
+router.get("/export/excel", controller.exportToExcel);
 router.get('/getByEngine/:engine', controller.getByEngine)
 router.get('/getEngines', controller.getDistinctEngineSerials)
 router.get('/getHistory/:id', controller.getHistory)
 router.get('/unique',controller.getDistinctValues)
+router.get('/unique/:field', controller.getDistinctValuesPaged)
 router.get("/:id", crud.getById);
 router.post("/", crud.create);
 router.put("/:id", crud.update);

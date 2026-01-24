@@ -18,7 +18,13 @@ const StepRashi = ({
   editData,
 }) => {
 
-  const { distinctValues } = useDistinctValues()
+  const {
+    getValuesForField,
+    loadingForField,
+    ensureFirstPage,
+    onFieldInputChange,
+    loadMore,
+  } = useDistinctValues("insertModal");
 
 
 
@@ -66,7 +72,7 @@ const StepRashi = ({
             <AutocompleteField
               name="engineSerial"
               label="מספר מנוע"
-              options={distinctValues.engineSerial} // Pass existing engine serials here if you have them
+              options={getValuesForField("engineSerial")}
               value={formData.engineSerial}
               onChange={onChange}
               handleBlur={handleEngineBlur}
@@ -74,6 +80,10 @@ const StepRashi = ({
               required
               error={errors.engineSerial}
               freeSolo={true}
+              onOptionsOpen={() => ensureFirstPage("engineSerial")}
+              onOptionsInputChange={(val) => onFieldInputChange("engineSerial", val)}
+              onOptionsLoadMore={() => loadMore("engineSerial")}
+              optionsLoading={loadingForField("engineSerial")}
             />
             <InputField
               name="minseretSerial"

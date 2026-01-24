@@ -12,6 +12,7 @@ import {
   MenuItem,
   Checkbox,
   ListItemText,
+  Tooltip,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import HistoryIcon from "@mui/icons-material/History";
@@ -214,11 +215,53 @@ export default function DatagridCustom({
 
         // Handle date columns - convert string/timestamp to Date object
         if (c.type === "date" || c.type === "dateTime") {
-          c.valueGetter = (value) => {
-            if (!value) return null;
-            const date = value instanceof Date ? value : new Date(value);
+          c.valueGetter = (value, row) => {
+            const raw = value || row?.[c.field];
+            if (!raw) return null;
+            const date = raw instanceof Date ? raw : new Date(raw);
             return isNaN(date.getTime()) ? null : date;
           };
+
+          // Special handling for updatedAt column: show tooltip with full date-time + who updated
+          if (c.field === "updatedAt") {
+            c.renderCell = (params) => {
+              const date = params.value ? new Date(params.value) : null;
+              if (!date || isNaN(date.getTime())) return "";
+
+              const shortDate = date.toLocaleDateString("he-IL");
+              const fullDateTime = date.toLocaleString("he-IL", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+              });
+
+              const by = params.row?.lastUpdatedBy;
+              let byText = "";
+              if (by && typeof by === "object") {
+                const fullName = by.fullName || by.fullname || "";
+                const pid = by.pid || "";
+                byText = [fullName, pid].filter(Boolean).join(" ");
+              } else if (typeof by === "string") {
+                byText = by;
+              }
+
+              const title = (
+                <Box sx={{ whiteSpace: "pre-line" }}>
+                  {fullDateTime}
+                  {byText && `\nעודכן על ידי: ${byText}`}
+                </Box>
+              );
+
+              return (
+                <Tooltip title={title} arrow>
+                  <span>{shortDate}</span>
+                </Tooltip>
+              );
+            };
+          }
         }
 
         if (c.field === "edit" || c.headerName === "ערוך") {
@@ -295,13 +338,34 @@ export default function DatagridCustom({
         <Box sx={{ color: "red", mb: 1, fontWeight: 600 }}>Error: {error}</Box>
       )}
 
+      {/* BIG LOADING SPINNER OVERLAY */}
+      {loading.getRows && (
+        <Box
+          sx={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "rgba(255, 255, 255, 0.8)",
+            zIndex: 1000,
+            backdropFilter: "blur(2px)",
+          }}
+        >
+          <CircularProgress size={80} thickness={4} />
+        </Box>
+      )}
+
       <DataGrid
         //key={rows.map(r => `${r._id}-${r.waitingHHType?.join(',')}-${r.performenceExpectation}`).join('|')}
         rows={rows}
         columns={processedColumns}
         pageSize={5}
         rowsPerPageOptions={[5]}
-        loading={loading.getRows}
+        loading={false}
         pagination={paginationOff}
         hideFooter={paginationOff}
         disableSelectionOnClick

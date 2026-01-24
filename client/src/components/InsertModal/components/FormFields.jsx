@@ -84,7 +84,22 @@ export const SelectField = React.memo(SelectFieldComponent);
 // ---------------------------
 // AutocompleteField
 // ---------------------------
-const AutocompleteFieldComponent = ({ name, label, options, value, handleBlur, onChange, freeSolo = false, required, error, disabled }) => (
+const AutocompleteFieldComponent = ({
+  name,
+  label,
+  options,
+  value,
+  handleBlur,
+  onChange,
+  freeSolo = false,
+  required,
+  error,
+  disabled,
+  onOptionsOpen,
+  onOptionsInputChange,
+  onOptionsLoadMore,
+  optionsLoading,
+}) => (
   <FieldWrapper>
     <Autocomplete
       options={options}
@@ -93,9 +108,20 @@ const AutocompleteFieldComponent = ({ name, label, options, value, handleBlur, o
       onChange={(_, val) => onChange(name, val)}   // when you select an option 
       freeSolo={freeSolo}
       onInputChange={(_, val) => {
+        onOptionsInputChange?.(val);
         if (freeSolo) {
           onChange(name, val);   // when you type in the input 
         }
+      }}
+      onOpen={() => onOptionsOpen?.()}
+      loading={Boolean(optionsLoading)}
+      ListboxProps={{
+        onScroll: (e) => {
+          const listboxNode = e.currentTarget;
+          if (!listboxNode) return;
+          const nearBottom = listboxNode.scrollTop + listboxNode.clientHeight >= listboxNode.scrollHeight - 24;
+          if (nearBottom) onOptionsLoadMore?.();
+        },
       }}
       renderInput={(params) => (
         <TextField

@@ -1,6 +1,6 @@
 // CustomPagination.jsx
 import React, { useState, useEffect, useRef } from 'react';
-import { Pagination, Box, Select, MenuItem, FormControl, InputLabel, Typography, CircularProgress } from '@mui/material';
+import { Pagination, Box, Select, MenuItem, FormControl, InputLabel, Typography } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
 
 const CustomPagination = ({ 
@@ -14,7 +14,6 @@ const CustomPagination = ({
   onResetComplete, // NEW PROP - callback after reset
 }) => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [loading, setLoading] = useState(false);
   
   const urlPage = parseInt(searchParams.get('page')) || 1;
   const urlPageSize = parseInt(searchParams.get('pageSize')) || initialPageSize;
@@ -58,12 +57,7 @@ const CustomPagination = ({
     }
 
     debounceTimerRef.current = setTimeout(async () => {
-      setLoading(true);
-      try {
-        await onFetchData(paginationModel.page, paginationModel.pageSize);
-      } finally {
-        setLoading(false);
-      }
+      await onFetchData(paginationModel.page, paginationModel.pageSize);
     }, debounceDelay);
 
     return () => {
@@ -99,52 +93,33 @@ const CustomPagination = ({
     <Box
       sx={{
         display: 'flex',
-        justifyContent: 'space-between',
         alignItems: 'center',
-        padding: 2,
-        borderTop: '1px solid rgba(224, 224, 224, 1)',
         gap: 2,
+        position: 'relative',
         flexWrap: 'wrap',
-        position: 'relative'
       }}
     >
-      {loading && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-          }}
-        >
-          <CircularProgress size={24} />
-        </Box>
+      {showPageSize && (
+        <FormControl size="small" sx={{ minWidth: 140 }}>
+          <InputLabel>שורות בעמוד</InputLabel>
+          <Select
+            value={paginationModel.pageSize}
+            label="שורות בעמוד"
+            onChange={handlePageSizeChange}
+          >
+            {pageSizeOptions.map(option => (
+              <MenuItem key={option} value={option}>{option}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
       )}
-
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-        {showPageSize && (
-          <FormControl size="small" sx={{ minWidth: 120 }}>
-            <InputLabel>Rows per page</InputLabel>
-            <Select
-              value={paginationModel.pageSize}
-              label="Rows per page"
-              onChange={handlePageSizeChange}
-              disabled={loading}
-            >
-              {pageSizeOptions.map(option => (
-                <MenuItem key={option} value={option}>{option}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        )}
-        
-        <Typography variant="body2" color="text.secondary">
-          {rowsCount === 0 
-            ? 'No rows' 
-            : `${paginationModel.page * paginationModel.pageSize + 1}-${Math.min((paginationModel.page + 1) * paginationModel.pageSize, rowsCount)} of ${rowsCount}`
-          }
-        </Typography>
-      </Box>
+      
+      <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
+        {rowsCount === 0 
+          ? 'אין שורות' 
+          : `${paginationModel.page * paginationModel.pageSize + 1}-${Math.min((paginationModel.page + 1) * paginationModel.pageSize, rowsCount)} מתוך ${rowsCount}`
+        }
+      </Typography>
 
       <Pagination
         count={totalPages}
@@ -153,7 +128,8 @@ const CustomPagination = ({
         color="primary"
         showFirstButton
         showLastButton
-        disabled={rowsCount === 0 || loading}
+        disabled={rowsCount === 0}
+        size="small"
       />
     </Box>
   );

@@ -12,7 +12,7 @@ import StepAcher from './components/steps/StepAcher';
 
 import { StyledDialog, StyledDialogTitle } from './styles/styledComponents';
 import { colors, steps, getDefaultFormData, waitingHHTypeRequiredString, baseUrl } from '../../assets';
-import { useDistinctValues } from '../../contexts/DistinctValuesContext';
+
 
 
 const InsertModal = ({
@@ -26,7 +26,7 @@ const InsertModal = ({
   const [formData, setFormData] = useState(getDefaultFormData());
   const [errors, setErrors] = useState({});
   const [rashiNextButtonDisable, setRashiNextButtonDisable] = useState(false)
-  const { valueExists, distinctValues } = useDistinctValues()
+
 
   const isEditMode = useMemo(() => editData !== null, [editData]);
 
@@ -118,44 +118,38 @@ const InsertModal = ({
 
 
 
-  const handleEngineBlur = useCallback((field, value, options) => {
+  const handleEngineBlur = useCallback((field, value) => {
+    if (field !== "engineSerial") return;
+    if (!value) return;
 
-    if (field === 'engineSerial' && value) {
-
-      const exists = valueExists(field, value)
-
-      
-      if (exists) {
-        const stay = window.confirm('מנוע זה כבר קיים במערכת האם לטעון נתונים על המנוע הזה?')
-        if (!stay) {
-          setRashiNextButtonDisable(true)
-          setErrors(prev => ({ ...prev, engineSerial: { error: true, msg: 'לא ניתן להוסיף מספר מנוע קיים' } }))
-        } else {
-          fetch(`${baseUrl}/api/repairs/getByEngine/${value}`)
-            .then(res => {
-              if (!res.ok) {
-                throw new Error(`Status: ${res.status}`);
-              }
-              return res.json();
-            })
-            .then(data => {
-              setEditData(data)
-              // do something with data
-            })
-            .catch(err => {
-              console.error("Fetch error:", err);
-            })
-            .finally(() => {
-              console.log("Request finished");
-            });
-
+    // IMPORTANT: don't rely on loaded distinct options (they're paginated).
+    // Always check the DB by attempting to fetch the engine row.
+    fetch(`${baseUrl}/api/repairs/getByEngine/${value}`)
+      .then(async (res) => {
+        if (res.status === 404) return null; // engine does not exist
+        if (!res.ok) throw new Error(`Status: ${res.status}`);
+        return await res.json();
+      })
+      .then((data) => {
+        if (!data) {
+          setRashiNextButtonDisable(false);
+          return;
         }
-      } else {
 
-        setRashiNextButtonDisable(false)
-      }
-    }
-  }, [distinctValues]);
+        const stay = window.confirm("מנוע זה כבר קיים במערכת האם לטעון נתונים על המנוע הזה?");
+        if (!stay) {
+          setRashiNextButtonDisable(true);
+          setErrors((prev) => ({ ...prev, engineSerial: { error: true, msg: "לא ניתן להוסיף מספר מנוע קיים" } }));
+          return;
+        }
+
+        setEditData(data);
+        setRashiNextButtonDisable(false);
+      })
+      .catch((err) => {
+        console.error("Fetch error:", err);
+      });
+  }, [setEditData]);
 
 
   const dialogTitle = useMemo(() => isEditMode ? 'עריכת רשומה' : 'הוספת רשומה חדשה', [isEditMode]);

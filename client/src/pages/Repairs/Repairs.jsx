@@ -18,7 +18,6 @@ import { FilterPanel, TemplateSelector } from "../../components/RepairsFilters";
 import InsertModal from "../../components/InsertModal/InsertModal";
 import RepairHistoryDialog from "../../components/HistoryDialog/RepairHistoryDialog";
 import useUser from "../../contexts/UserContext";
-import { useDistinctValues } from "../../contexts/DistinctValuesContext";
 import CustomPagination from "../../components/CustomPagination";
 
 // Move OUTSIDE component - these never change
@@ -126,7 +125,7 @@ export default function RepairsPage() {
     Array.isArray(user.roles) &&
     user.roles.length === 1 &&
     user.roles[0] === "viewer";
-  const { fetchDistinctValues } = useDistinctValues();
+  const [exportLoading, setExportLoading] = useState(false);
 
   // Fetch data function for CustomPagination
   const handleFetchData = useCallback(async (page, pageSize) => {
@@ -361,7 +360,6 @@ export default function RepairsPage() {
         message: `${pendingChanges.length} שינויים נשמרו בהצלחה!`,
         severity: "success",
       });
-      fetchDistinctValues();
     } catch (err) {
       console.error("Failed to save changes:", err);
       setSnackbar({
@@ -413,7 +411,6 @@ export default function RepairsPage() {
           message: "הרשומה עודכנה בהצלחה!",
           severity: "success",
         });
-        fetchDistinctValues();
       } else {
         res = await fetch(`${baseUrl}/api/${ROUTE}`, {
           method: "POST",
@@ -434,7 +431,6 @@ export default function RepairsPage() {
       }
 
       setOpen(false);
-      fetchDistinctValues();
     } catch (err) {
       console.error(err);
 
@@ -445,6 +441,48 @@ export default function RepairsPage() {
       });
     }
   }, [user]);
+
+  const handleExportToExcel = useCallback(async () => {
+    try {
+      setExportLoading(true);
+
+      const params = new URLSearchParams();
+
+      // Current filters (same shape used for fetching rows)
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== "" && value !== null && value !== undefined) {
+          params.append(key, value);
+        }
+      });
+
+      // Export only currently visible (non-action) columns
+      const exportColumns = visibleColumns.filter((c) => c !== "delete" && c !== "edit" && c !== "history");
+      params.set("columns", exportColumns.join(","));
+
+      const res = await fetch(`${baseUrl}/api/repairs/export/excel?${params.toString()}`);
+      if (!res.ok) throw new Error("נכשל ייצוא לאקסל");
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "ייצוא_חטכים.xlsx";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      setSnackbar({
+        open: true,
+        message: err?.message || "שגיאה בייצוא לאקסל",
+        severity: "error",
+      });
+    } finally {
+      setExportLoading(false);
+    }
+  }, [filters, visibleColumns]);
 
   const handleOpenEdit = useCallback((rowData) => {
     setEditData(rowData.row); // <-- set the row to edit
@@ -549,6 +587,15 @@ export default function RepairsPage() {
             </Button>
           </>
         )}
+
+        <Button
+          variant="contained"
+          onClick={handleExportToExcel}
+          disabled={exportLoading || rowsLoading.getRows}
+          sx={{ backgroundColor: "#1D6F42", "&:hover": { backgroundColor: "#155a35" } }}
+        >
+          {exportLoading ? "מייצא..." : "ייצוא לאקסל"}
+        </Button>
 
         <TemplateSelector
           templates={templates}

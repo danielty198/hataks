@@ -10,6 +10,8 @@ import { theme } from './theme';
 import { BrowserRouter } from 'react-router-dom';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
+import 'dayjs/locale/he';
 
 import '@fontsource/assistant/400.css';
 import '@fontsource/assistant/500.css';
@@ -33,12 +35,15 @@ const cacheRtl = createCache({
   stylisPlugins: [rtlPlugin]
 });
 
+// Global Hebrew locale for all dayjs usage (months/days, etc.)
+dayjs.locale('he');
+
 root.render(
   <CacheProvider value={cacheRtl}>
     <CssBaseline />
     <ThemeProvider theme={theme}>
       <BrowserRouter>
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="he">
           <UserProvider>
             <App />
           </UserProvider>

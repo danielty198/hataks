@@ -93,6 +93,29 @@ const getRows = async (req, res) => {
     // Sort by newest first
     pipeline.push({ $sort: { _id: -1 } });
 
+    // Attach last history entry (who updated + when) per repair
+    pipeline.push({
+      $lookup: {
+        from: "repairhistories",
+        let: { repairId: "$_id" },
+        pipeline: [
+          { $match: { $expr: { $eq: ["$repairId", "$$repairId"] } } },
+          { $sort: { createdAt: -1 } },
+          { $limit: 1 },
+        ],
+        as: "lastHistory",
+      },
+    });
+
+    pipeline.push({
+      $addFields: {
+        lastUpdatedBy: { $arrayElemAt: ["$lastHistory.changedBy", 0] },
+        lastUpdatedAt: { $arrayElemAt: ["$lastHistory.createdAt", 0] },
+      },
+    });
+
+    pipeline.push({ $project: { lastHistory: 0 } });
+
     // Use $facet to get both count and paginated data in one query
     pipeline.push({
       $facet: {
@@ -149,6 +172,130 @@ const getDistinctValues = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch unique values" });
   }
 }
+
+/**
+ * GET /api/repairs/unique/:field?search=&skip=&limit=
+ * Returns paginated distinct values for a single field.
+ *
+ * Notes:
+ * - MongoDB `distinct()` can't paginate, so we use aggregation: $group + $sort + $skip + $limit.
+ * - Response values are filtered to remove null/empty strings.
+ */
+const getDistinctValuesPaged = async (req, res) => {
+  try {
+    const { field } = req.params;
+    const { search = "", skip = "0", limit = "100" } = req.query;
+
+    const validFields = [
+      "sendingBrigade",
+      "sendingBattalion",
+      "engineSerial",
+      "minseretSerial",
+      "recivingBrigade",
+      "recivingBattalion",
+    ];
+
+    if (!validFields.includes(field)) {
+      return res.status(400).json({ error: "Invalid field" });
+    }
+
+    const parsedSkip = Math.max(parseInt(skip, 10) || 0, 0);
+    const parsedLimit = Math.min(Math.max(parseInt(limit, 10) || 100, 1), 200);
+
+    const match = {
+      [field]: { $ne: null, $ne: "" },
+    };
+
+    // Optional substring search
+    if (typeof search === "string" && search.trim().length > 0) {
+      match[field] = { $regex: search.trim(), $options: "i" };
+    }
+
+    const pipeline = [
+      { $match: match },
+      { $group: { _id: `$${field}` } },
+      { $sort: { _id: 1 } },
+      {
+        $facet: {
+          metadata: [{ $count: "total" }],
+          data: [{ $skip: parsedSkip }, { $limit: parsedLimit }],
+        },
+      },
+    ];
+
+    const [result] = await model.aggregate(pipeline).allowDiskUse(true);
+    const total = result?.metadata?.[0]?.total || 0;
+    const values = (result?.data || [])
+      .map((d) => d._id)
+      .filter((v) => v != null && v !== "");
+
+    res.json({
+      field,
+      search: typeof search === "string" ? search : "",
+      skip: parsedSkip,
+      limit: parsedLimit,
+      total,
+      values,
+      hasMore: parsedSkip + values.length < total,
+    });
+  } catch (err) {
+    console.error("Error getting paged unique values:", err);
+    res.status(500).json({ error: "Failed to fetch unique values" });
+  }
+};
+
+// GET /api/repairs/export/excel?{filters...}&columns=a,b,c
+const exportToExcel = async (req, res) => {
+  try {
+    const filters = req.query || {};
+    const matchStage = buildMatchStage(filters);
+
+    // Optional column selection (comma-separated)
+    const rawColumns = typeof filters.columns === "string" ? filters.columns : "";
+    const columns = rawColumns
+      .split(",")
+      .map((c) => c.trim())
+      .filter(Boolean);
+
+    const projection = {};
+    if (columns.length > 0) {
+      // always include _id for traceability
+      projection._id = 1;
+      columns.forEach((c) => {
+        if (c !== "columns") projection[c] = 1;
+      });
+    }
+
+    const query = Object.keys(matchStage).length > 0 ? matchStage : {};
+    const docs = await model
+      .find(query, columns.length > 0 ? projection : undefined)
+      .sort({ _id: -1 })
+      .lean();
+
+    // Convert to XLSX
+    const XLSX = require("xlsx");
+
+    const data = (docs || []).map((d) => {
+      const { __v, ...rest } = d;
+      return rest;
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "repairs");
+
+    const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+
+    const filename = "ייצוא_חטכים.xlsx";
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    // RFC 5987 filename* for UTF-8 filenames
+    res.setHeader("Content-Disposition", `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`);
+    res.send(buffer);
+  } catch (err) {
+    console.error("Export to excel error:", err);
+    res.status(500).json({ error: "Failed to export to excel" });
+  }
+};
 
 
 const updateById = async (req, res) => {
@@ -271,5 +418,12 @@ const getHistory = async (req, res) => {
 }
 
 module.exports = {
-  updateById, getRows, getDistinctEngineSerials, getByEngine, getHistory, getDistinctValues
+  updateById,
+  getRows,
+  getDistinctEngineSerials,
+  getByEngine,
+  getHistory,
+  getDistinctValues,
+  getDistinctValuesPaged,
+  exportToExcel,
 };  
