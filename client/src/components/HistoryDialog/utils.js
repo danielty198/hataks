@@ -20,44 +20,89 @@ export const getChangeColor = (field, newValue) => {
   return 'primary';
 };
 
+// List of date fields that should be formatted as dates
+const dateFields = ['reciveDate', 'startWorkingDate', 'updatedAt', 'createdAt'];
+
 // Format value for display
 export const formatValue = (value, field) => {
   if (value === null || value === undefined || value === '' || (Array.isArray(value) && value.length === 0)) return 'ריק';
   if (typeof value === 'boolean') return value ? 'כן' : 'לא';
   if (field === 'price') return `₪${value}`;
   if (field === 'status' && statusTranslations[value]) return statusTranslations[value];
+  
+  // Format date fields in Israeli format with time - ONLY for known date fields
+  if (dateFields.includes(field)) {
+    // Try to parse as date - only format if it's actually a valid date
+    try {
+      const date = value instanceof Date ? value : new Date(value);
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleString('he-IL', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false,
+          timeZone: 'Asia/Jerusalem',
+        });
+      }
+    } catch (e) {
+      // If date parsing fails, just return the original value
+    }
+  }
+  
   if (Array.isArray(value)) return value.join(', ');
   if (typeof value === 'object') return JSON.stringify(value);
   return String(value);
 };
 
-// Format date for display
+// Format date for display (Israeli format with time)
 export const formatDate = (dateString) => {
   const date = new Date(dateString);
-  return date.toLocaleDateString('he-IL', {
-    day: 'numeric',
-    month: 'short',
+  if (isNaN(date.getTime())) return dateString;
+  return date.toLocaleString('he-IL', {
+    day: '2-digit',
+    month: '2-digit',
     year: 'numeric',
-  });
-};
-
-// Format time for display
-export const formatTime = (dateString) => {
-  const date = new Date(dateString);
-  return date.toLocaleTimeString('he-IL', {
     hour: '2-digit',
     minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+    timeZone: 'Asia/Jerusalem',
   });
 };
 
-// Format date for select options
+// Format time for display (Israeli format with date and time)
+export const formatTime = (dateString) => {
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return dateString;
+  return date.toLocaleString('he-IL', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+    timeZone: 'Asia/Jerusalem',
+  });
+};
+
+// Format date for select options (Israeli format with time)
 export const formatDateOption = (dateString) => {
   const date = new Date(dateString);
-  return date.toLocaleDateString('he-IL', {
+  if (isNaN(date.getTime())) return dateString;
+  return date.toLocaleString('he-IL', {
     weekday: 'long',
-    day: 'numeric',
+    day: '2-digit',
     month: 'long',
     year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+    timeZone: 'Asia/Jerusalem',
   });
 };
 

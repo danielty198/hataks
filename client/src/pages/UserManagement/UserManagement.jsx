@@ -42,13 +42,16 @@ const containerSx = { width: "90%" };
 const toolbarSx = { display: "flex", gap: 2, mb: 2, flexWrap: "wrap", alignItems: "center" };
 
 // Memoized DataGrid wrapper to prevent re-renders
-const MemoizedDataGrid = memo(function MemoizedDataGrid({ data, columns, route, onProcessRowUpdate }) {
+const MemoizedDataGrid = memo(function MemoizedDataGrid({ data, columns, route, onProcessRowUpdate, rowsLoading, setRowsLoading }) {
   return (
     <DatagridCustom
       data={data}
       columns={columns}
       route={route}
       processRowUpdate={onProcessRowUpdate}
+      paginationOff
+      loading={rowsLoading}
+      setLoading={setRowsLoading}
     />
   );
 });
@@ -60,6 +63,11 @@ export default function UserManagementPage() {
   const [visibleColumns, setVisibleColumns] = useState(defaultVisibleColumns);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
   const [pendingChanges, setPendingChanges] = useState([]); // Track unsaved changes
+  const [rowsLoading, setRowsLoading] = useState({
+    getRows: false,
+    save: false,
+    delete: false,
+  });
 
   // Fetch data
   const fetchData = useCallback(async () => {
@@ -334,6 +342,8 @@ export default function UserManagementPage() {
         columns={displayColumns}
         route={ROUTE}
         onProcessRowUpdate={handleProcessRowUpdate}
+        rowsLoading={rowsLoading}
+        setRowsLoading={setRowsLoading}
       />
 
       <Snackbar

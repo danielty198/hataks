@@ -46,10 +46,7 @@ const repairHistorySchema = new mongoose.Schema(
       required: true,
     },
 
-    changedBy: {
-      type: String, // userId / email / system
-      required: true,
-    },
+    changedBy: Object,
     oldRepair: Object,
     newRepair: Object,
     changes: [

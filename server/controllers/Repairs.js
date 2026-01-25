@@ -7,7 +7,7 @@ const { getChanges } = require('../Utils/getChanges')
 
 function buildMatchStage(filters) {
   const matchStage = {};
-  const reservedKeys = ["_page", "_limit", "_sort", "_order", "pageSize", "page"];
+  const reservedKeys = ["_page", "_limit", "_sort", "_order", "pageSize", "page", "columns"];
 
   // Fields that should use partial text search
   const textSearchFields = ["problem", "notes", "description"];
@@ -128,7 +128,7 @@ const getRows = async (req, res) => {
     });
 
     const [result] = await model.aggregate(pipeline).allowDiskUse(true);
- 
+
 
     const rowsCount = result.metadata.length > 0 ? result.metadata[0].total : 0;
     const data = result.data;
@@ -249,6 +249,8 @@ const exportToExcel = async (req, res) => {
   try {
     const filters = req.query || {};
     const matchStage = buildMatchStage(filters);
+
+    // ← And this
 
     // Optional column selection (comma-separated)
     const rawColumns = typeof filters.columns === "string" ? filters.columns : "";

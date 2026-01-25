@@ -76,8 +76,12 @@ export default function DatagridCustom({
   );
   const [user] = useUser();
   const setLoadingFlag = useCallback(
-    (key, value) => setLoading((prev) => ({ ...prev, [key]: value })),
-    []
+    (key, value) => {
+      if (setLoading) {
+        setLoading((prev) => ({ ...prev, [key]: value }));
+      }
+    },
+    [setLoading]
   );
 
   /* -------------------------------------------
@@ -339,7 +343,7 @@ export default function DatagridCustom({
       )}
 
       {/* BIG LOADING SPINNER OVERLAY */}
-      {loading.getRows && (
+      {loading?.getRows && (
         <Box
           sx={{
             position: "absolute",
@@ -400,7 +404,7 @@ export default function DatagridCustom({
       />
 
       {/* SAVE LOADING */}
-      {loading.save && (
+      {loading?.save && (
         <Box
           sx={{
             position: "absolute",

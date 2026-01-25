@@ -107,7 +107,7 @@ const TimelineChangeItem = ({ historyItem }) => {
           </Typography>
           <Chip
             icon={<PersonIcon sx={{ fontSize: 16 }} />}
-            label={`${historyItem.changedBy.fullname}  ${historyItem.changedBy.pid}`}
+            label={`${historyItem?.changedBy?.fullname}  ${historyItem?.changedBy?.pid}`}
             size="small"
             variant="outlined"
             sx={{ height: 26 }}

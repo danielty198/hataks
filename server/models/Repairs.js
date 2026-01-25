@@ -14,7 +14,7 @@ const RepairSchema = new mongoose.Schema({
   // },
   reciveDate: Date//Date
   ,
-  engineSerial: { type: String, required: true, unique: true, },
+  engineSerial: { type: String, unique: true, },
   minseretSerial: String,
   hatakStatus: {
     type: String,
@@ -33,7 +33,7 @@ const RepairSchema = new mongoose.Schema({
   performenceExpectation: String,
   detailsOfNonCompliance: String, // פירוט אי עמידה
   intended: String,
-  addeBy:{fullName:String, pid:String}
+  addeBy: { fullName: String, pid: String }
 }, { timestamps: true });
 RepairSchema.index({ engineSerial: 1 })
 module.exports = { model: mongoose.model('Repair', RepairSchema), RepairSchema: RepairSchema }

@@ -45,7 +45,6 @@ export default function UserInsertModal({ open, onClose, onSubmit, editData, ROU
     useEffect(() => {
         fetchPidOptions();
     }, [rows])
-
     const handleChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
@@ -86,7 +85,7 @@ export default function UserInsertModal({ open, onClose, onSubmit, editData, ROU
                         select
                         label="תפקיד"
                         value={formData.role}
-                        onChange={(e) => handleChange('roles', e.target.value)}
+                        onChange={(e) => handleChange('role', e.target.value)}
                         required
                         fullWidth
                         SelectProps={{

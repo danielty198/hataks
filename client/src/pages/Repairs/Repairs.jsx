@@ -141,7 +141,14 @@ export default function RepairsPage() {
       // Add filter params
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== "" && value !== null && value !== undefined) {
-          params.append(key, value);
+          // Handle array values (like waitingHHType) - convert to comma-separated string
+          if (Array.isArray(value)) {
+            if (value.length > 0) {
+              params.append(key, value.join(","));
+            }
+          } else {
+            params.append(key, value);
+          }
         }
       });
 
@@ -451,7 +458,14 @@ export default function RepairsPage() {
       // Current filters (same shape used for fetching rows)
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== "" && value !== null && value !== undefined) {
-          params.append(key, value);
+          // Handle array values (like waitingHHType) - convert to comma-separated string
+          if (Array.isArray(value)) {
+            if (value.length > 0) {
+              params.append(key, value.join(","));
+            }
+          } else {
+            params.append(key, value);
+          }
         }
       });
 
