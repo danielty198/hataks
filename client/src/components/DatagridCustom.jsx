@@ -17,6 +17,7 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete";
 import HistoryIcon from "@mui/icons-material/History";
 import RestoreFromTrashIcon from "@mui/icons-material/RestoreFromTrash";
+import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import {
   baseUrl,
   datagridcustomCellClassNames,
@@ -302,6 +303,18 @@ export default function DatagridCustom({
               key="restore"
               icon={<RestoreFromTrashIcon />}
               label="Restore"
+              onClick={() => c.action && c.action(params)}
+            />,
+          ];
+        }
+        // generic swap-engine column (for engineSerial swap/clone)
+        if (c.field === "swapEngineSerial" || c.headerName === "החלף מנוע") {
+          c.type = "actions";
+          c.getActions = (params) => [
+            <GridActionsCellItem
+              key="swapEngineSerial"
+              icon={<SwapHorizIcon />}
+              label="SwapEngineSerial"
               onClick={() => c.action && c.action(params)}
             />,
           ];

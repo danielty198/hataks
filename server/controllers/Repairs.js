@@ -436,6 +436,147 @@ const getHistory = async (req, res) => {
   }
 }
 
+/**
+ * POST /api/repairs/change-engine-serial
+ * Body: { sourceId, newEngineSerial, user }
+ *
+ * Rules:
+ * - Only 'admin' or 'manoiya' roles may perform this action.
+ * - If newEngineSerial already exists on another row → swap the two engineSerial values.
+ * - If newEngineSerial does NOT exist → clone the source row with the new engineSerial,
+ *   and on the original row clear minseretSerial.
+ */
+const changeEngineSerial = async (req, res) => {
+  try {
+    const { sourceId, newEngineSerial, user } = req.body || {};
+
+    // ... validation code stays the same ...
+
+    const sourceRepair = await model.findById(sourceId).lean();
+    if (!sourceRepair) {
+      return res.status(404).json({ error: "Source repair not found" });
+    }
+
+    const existingTarget = await model
+      .findOne({ engineSerial: newEngineSerial })
+      .lean();
+
+    // CASE 1: Swap
+    if (existingTarget) {
+      try {
+        const tempEngineSerial = `__TEMP_${sourceRepair.engineSerial}_${Date.now()}`;
+
+        // Step 1: temp value
+        await model.findByIdAndUpdate(sourceRepair._id, {
+          engineSerial: tempEngineSerial,
+          addedBy: { fullName: user.fullName, pid: user.pid },
+        });
+
+        // Step 2: swap to target
+        const updatedTarget = await model
+          .findByIdAndUpdate(
+            existingTarget._id,
+            {
+              engineSerial: sourceRepair.engineSerial,
+              addedBy: { fullName: user.fullName, pid: user.pid },
+            },
+            { new: true }
+          )
+          .lean();
+
+        // Step 3: final value to source
+        const updatedSource = await model
+          .findByIdAndUpdate(
+            sourceRepair._id,
+            {
+              engineSerial: newEngineSerial,
+              addedBy: { fullName: user.fullName, pid: user.pid },
+            },
+            { new: true }
+          )
+          .lean();
+
+        // Log history
+        const sourceChanges = getChanges(sourceRepair, updatedSource);
+        if (sourceChanges.length > 0) {
+          await historyModel.create({
+            repairId: sourceRepair._id,
+            changedBy: { fullName: user.fullName, pid: user.pid },
+            changes: sourceChanges,
+            oldRepair: sourceRepair,
+            newRepair: updatedSource,
+          });
+        }
+
+        const targetChanges = getChanges(existingTarget, updatedTarget);
+        if (targetChanges.length > 0) {
+          await historyModel.create({
+            repairId: existingTarget._id,
+            changedBy: { fullName: user.fullName, pid: user.pid },
+            changes: targetChanges,
+            oldRepair: existingTarget,
+            newRepair: updatedTarget,
+          });
+        }
+
+        return res.json({
+          success: true,
+          mode: "swap",
+          data: { source: updatedSource, target: updatedTarget },
+        });
+      } catch (err) {
+        console.error("Engine swap error:", err);
+        return res.status(500).json({ error: "Failed to swap engine serials" });
+      }
+    }
+
+    // CASE 2: Clone
+    try {
+      const clonedData = {
+        ...sourceRepair,
+        _id: undefined,
+        engineSerial: newEngineSerial,
+      };
+
+      const newRepair = await model.create(clonedData);
+
+      const updatedSource = await model
+        .findByIdAndUpdate(
+          sourceId,
+          {
+            minseretSerial: "",
+            addedBy: { fullName: user.fullName, pid: user.pid },
+          },
+          { new: true }
+        )
+        .lean();
+
+      const sourceChanges = getChanges(sourceRepair, updatedSource);
+      if (sourceChanges.length > 0) {
+        await historyModel.create({
+          repairId: sourceId,
+          changedBy: { fullName: user.fullName, pid: user.pid },
+          changes: sourceChanges,
+          oldRepair: sourceRepair,
+          newRepair: updatedSource,
+        });
+      }
+
+      return res.json({
+        success: true,
+        mode: "clone",
+        data: { source: updatedSource, clone: newRepair },
+      });
+    } catch (err) {
+      console.error("Engine clone error:", err);
+      return res.status(500).json({ error: "Failed to clone repair" });
+    }
+  } catch (err) {
+    console.error("changeEngineSerial error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
 module.exports = {
   updateById,
   getRows,
@@ -445,5 +586,6 @@ module.exports = {
   getDistinctValues,
   getDistinctValuesPaged,
   exportToExcel,
-  getAll
+  getAll,
+  changeEngineSerial,
 };  
