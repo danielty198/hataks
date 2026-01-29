@@ -18,7 +18,7 @@ const DEFAULT_HATAK_TYPES = [
 ];
 
 const BIPage = () => {
-  const [viewMode, setViewMode] = useState('table');
+  const [viewMode, setViewMode] = useState('pies');
   const [selectedManoiya, setSelectedManoiya] = useState([]);
   const [pieTypes, setPieTypes] = useState(DEFAULT_HATAK_TYPES);
   const [editDialogOpen, setEditDialogOpen] = useState(false);

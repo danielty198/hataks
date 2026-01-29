@@ -120,6 +120,8 @@ export default function RepairsPage() {
   const LAST_TEMPLATE_KEY = "lastTemplateId";
   const isAdmin =
     user?.roles && Array.isArray(user.roles) && user.roles.includes("admin");
+  const isManoiya =
+    user?.roles && Array.isArray(user.roles) && user.roles.includes("manoiya");
   const isViewer =
     user?.roles &&
     Array.isArray(user.roles) &&
@@ -523,6 +525,104 @@ export default function RepairsPage() {
   }, []);
 
   // ======================================================
+  // DELETE HANDLER (role-dependent)
+  // ======================================================
+  const handleDelete = useCallback(
+    async (params) => {
+      const id = params.id;
+
+      if (!user) {
+        setSnackbar({
+          open: true,
+          message: "לא נמצא משתמש מחובר",
+          severity: "error",
+        });
+        return;
+      }
+
+      // Viewers should never be able to delete
+      if (isViewer) {
+        setSnackbar({
+          open: true,
+          message: "אין לך הרשאה למחוק שורה זו",
+          severity: "error",
+        });
+        return;
+      }
+
+      // Admin → hard delete
+      if (isAdmin) {
+        const confirmed = window.confirm("האם אתה בטוח שברצונך למחוק שורה זו לצמיתות?");
+        if (!confirmed) return;
+
+        try {
+          const res = await fetch(`${baseUrl}/api/${ROUTE}/${id}`, {
+            method: "DELETE",
+          });
+          if (!res.ok) {
+            throw new Error("מחיקה נכשלה");
+          }
+
+          setRows((prev) => prev.filter((r) => r._id !== id));
+          setSnackbar({
+            open: true,
+            message: "הרשומה נמחקה בהצלחה",
+            severity: "success",
+          });
+        } catch (err) {
+          console.error("Hard delete error:", err);
+          setSnackbar({
+            open: true,
+            message: err.message || "שגיאה במחיקת הרשומה",
+            severity: "error",
+          });
+        }
+        return;
+      }
+
+      // Manoiya → soft delete (mark goingToBeDeleted = true)
+      if (isManoiya) {
+        const confirmed = window.confirm(
+          'האם אתה בטוח שברצונך לסמן שורה זו למחיקה?\nהשורה תוסתר מטבלת החט"כים עד שמנהל ימחק אותה לצמיתות.'
+        );
+        if (!confirmed) return;
+
+        try {
+          const res = await fetch(`${baseUrl}/api/${ROUTE}/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              updates: { goingToBeDeleted: true },
+              user,
+            }),
+          });
+
+          if (!res.ok) {
+            throw new Error("סימון למחיקה נכשל");
+          }
+
+          // Optimistically remove from current table
+          setRows((prev) => prev.filter((r) => r._id !== id));
+
+          setSnackbar({
+            open: true,
+            message: "הרשומה סומנה למחיקה ותיעלם מהטבלה הראשית",
+            severity: "success",
+          });
+        } catch (err) {
+          console.error("Soft delete error:", err);
+          setSnackbar({
+            open: true,
+            message: err.message || "שגיאה בסימון הרשומה למחיקה",
+            severity: "error",
+          });
+        }
+      }
+    },
+    [isAdmin, isManoiya, isViewer, user]
+  );
+
+  // ======================================================
   // inject handleSubmit into columnsConfig
   // ======================================================
   const columnsWithActions = useMemo(() => {
@@ -541,20 +641,23 @@ export default function RepairsPage() {
       if (col.field === "history") {
         newCol.action = handleOpenHistory;
       }
+      if (col.field === "delete") {
+        newCol.action = handleDelete;
+      }
       return newCol;
     });
-  }, [isViewer, handleOpenEdit]);
+  }, [isViewer, handleOpenEdit, handleOpenHistory, handleDelete]);
 
   // visible columns
   const displayColumns = useMemo(() => {
     return columnsWithActions.filter((col) => {
-      // Filter out delete column if not admin
-      if (col.field === "delete" && !isAdmin) return false;
+      // Filter out delete column if viewer
+      if (col.field === "delete" && isViewer) return false;
       if (col.field === "edit" && isViewer) return false;
 
       return visibleColumns.includes(col.field) || col.type === "actions";
     });
-  }, [visibleColumns, columnsWithActions, isAdmin, isViewer]);
+  }, [visibleColumns, columnsWithActions, isViewer]);
 
   const gridData = useMemo(() => rows, [rows]);
 

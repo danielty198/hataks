@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import HistoryIcon from "@mui/icons-material/History";
+import RestoreFromTrashIcon from "@mui/icons-material/RestoreFromTrash";
 import {
   baseUrl,
   datagridcustomCellClassNames,
@@ -290,6 +291,18 @@ export default function DatagridCustom({
               onClick={() =>
                 c.action ? c.action(params) : deleteRow(params.id)
               }
+            />,
+          ];
+        }
+        // generic restore-from-trash column (e.g. for pending deletions view)
+        if (c.headerName === "שחזר") {
+          c.type = "actions";
+          c.getActions = (params) => [
+            <GridActionsCellItem
+              key="restore"
+              icon={<RestoreFromTrashIcon />}
+              label="Restore"
+              onClick={() => c.action && c.action(params)}
             />,
           ];
         }

@@ -82,6 +82,13 @@ const getRows = async (req, res) => {
     // Build match stage
     const matchStage = buildMatchStage(filters);
 
+    // By default, hide rows that are marked to be deleted from the main table.
+    // Only when an explicit goingToBeDeleted filter is provided (e.g. true)
+    // do we override this behavior.
+    if (typeof filters.goingToBeDeleted === "undefined") {
+      matchStage.goingToBeDeleted = { $ne: true };
+    }
+
     // Use facet to run count and data queries in parallel within one aggregation
 
     const pipeline = [];
