@@ -154,6 +154,16 @@ const getRows = async (req, res) => {
   }
 };
 
+const getAll = async (req, res) => {
+  try {
+    const repairs = await model.find();
+    res.json(repairs);
+  } catch (err) {
+    console.error("Error getting all repairs:", err);
+    res.status(500).json({ error: "Failed to fetch all repairs" });
+  }
+}
+
 const getDistinctValues = async (req, res) => {
   try {
     const validFields = [
@@ -435,4 +445,5 @@ module.exports = {
   getDistinctValues,
   getDistinctValuesPaged,
   exportToExcel,
+  getAll
 };  
