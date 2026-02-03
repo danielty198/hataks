@@ -1,5 +1,18 @@
 import React, { useState, useMemo, useEffect, useCallback, memo } from "react";
-import { Box, Typography, Button, Snackbar, Alert } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Button,
+  Snackbar,
+  Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Autocomplete,
+  CircularProgress,
+} from "@mui/material";
 import {
   baseUrl,
   hatakStatusOptions,
@@ -32,6 +45,7 @@ const columnsConfig = [
   { field: "zadik", headerName: "צ' של כלי", isEdit: true, type: "string" },
   { field: "reciveDate", headerName: "תאריך קבלה", isEdit: true, type: "date" },
   { field: "engineSerial", headerName: "מספר מנוע", isEdit: false },
+  { field: "swapEngineSerial", headerName: "החלף מנוע", type: "actions" },
   { field: "minseretSerial", headerName: "מספר ממסרת", isEdit: true, type: "string" },
   { field: "hatakStatus", headerName: 'סטטוס חט"כ', isEdit: true, type: "singleSelect", valueOptions: hatakStatusOptions },
   { field: "tipulType", headerName: "סוג טיפול", isEdit: true, type: "singleSelect", valueOptions: ["שבר", 'שע"מ'] },
@@ -120,12 +134,19 @@ export default function RepairsPage() {
   const LAST_TEMPLATE_KEY = "lastTemplateId";
   const isAdmin =
     user?.roles && Array.isArray(user.roles) && user.roles.includes("admin");
+  const isManoiya =
+    user?.roles && Array.isArray(user.roles) && user.roles.includes("manoiya");
   const isViewer =
     user?.roles &&
     Array.isArray(user.roles) &&
     user.roles.length === 1 &&
     user.roles[0] === "viewer";
   const [exportLoading, setExportLoading] = useState(false);
+  const [engineDialogOpen, setEngineDialogOpen] = useState(false);
+  const [engineDialogRow, setEngineDialogRow] = useState(null);
+  const [newEngineSerial, setNewEngineSerial] = useState("");
+  const [engineOptions, setEngineOptions] = useState([]);
+  const [engineOptionsLoading, setEngineOptionsLoading] = useState(false);
 
   // Fetch data function for CustomPagination
   const handleFetchData = useCallback(async (page, pageSize) => {
@@ -523,6 +544,192 @@ export default function RepairsPage() {
   }, []);
 
   // ======================================================
+  // ENGINE SERIAL SWAP / CLONE HANDLERS
+  // ======================================================
+  const handleOpenEngineDialog = useCallback(
+    (params) => {
+      if (!user) return;
+      if (!isAdmin && !isManoiya) return;
+      setEngineDialogRow(params.row);
+      setNewEngineSerial("");
+      setEngineOptions([]);
+      setEngineDialogOpen(true);
+    },
+    [user, isAdmin, isManoiya]
+  );
+
+  const handleCloseEngineDialog = useCallback(() => {
+    setEngineDialogOpen(false);
+    setEngineDialogRow(null);
+    setNewEngineSerial("");
+  }, []);
+
+  const handleConfirmEngineChange = useCallback(async () => {
+    if (!engineDialogRow || !newEngineSerial.trim()) {
+      setSnackbar({
+        open: true,
+        message: "יש להזין מספר מנוע חדש",
+        severity: "error",
+      });
+      return;
+    }
+
+    try {
+      const res = await fetch(`${baseUrl}/api/${ROUTE}/change-engine-serial`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sourceId: engineDialogRow._id,
+          newEngineSerial: newEngineSerial.trim(),
+          user,
+        }),
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || "שגיאה בהחלפת מספר מנוע");
+      }
+
+      const result = await res.json();
+
+      if (result.mode === "swap") {
+        const { source, target } = result.data || {};
+        setRows((prev) =>
+          prev.map((r) => {
+            if (r._id === source._id) return source;
+            if (r._id === target._id) return target;
+            return r;
+          })
+        );
+        setSnackbar({
+          open: true,
+          message: "מספרי המנועים הוחלפו בהצלחה",
+          severity: "success",
+        });
+      } else if (result.mode === "clone") {
+        const { source, clone } = result.data || {};
+        setRows((prev) =>
+          prev
+            .map((r) => (r._id === source._id ? source : r))
+            .concat(clone ? [clone] : [])
+        );
+        setSnackbar({
+          open: true,
+          message: "נוצרה רשומה חדשה עם מספר המנוע החדש",
+          severity: "success",
+        });
+      }
+
+      handleCloseEngineDialog();
+    } catch (err) {
+      console.error("Engine change error:", err);
+      setSnackbar({
+        open: true,
+        message: err.message || "שגיאה בהחלפת מספר מנוע",
+        severity: "error",
+      });
+    }
+  }, [engineDialogRow, newEngineSerial, user, handleCloseEngineDialog]);
+
+  // ======================================================
+  // DELETE HANDLER (role-dependent)
+  // ======================================================
+  const handleDelete = useCallback(
+    async (params) => {
+      const id = params.id;
+
+      if (!user) {
+        setSnackbar({
+          open: true,
+          message: "לא נמצא משתמש מחובר",
+          severity: "error",
+        });
+        return;
+      }
+
+      // Viewers should never be able to delete
+      if (isViewer) {
+        setSnackbar({
+          open: true,
+          message: "אין לך הרשאה למחוק שורה זו",
+          severity: "error",
+        });
+        return;
+      }
+
+      // Admin → hard delete
+      if (isAdmin) {
+        const confirmed = window.confirm("האם אתה בטוח שברצונך למחוק שורה זו לצמיתות?");
+        if (!confirmed) return;
+
+        try {
+          const res = await fetch(`${baseUrl}/api/${ROUTE}/${id}`, {
+            method: "DELETE",
+          });
+          if (!res.ok) {
+            throw new Error("מחיקה נכשלה");
+          }
+
+          setRows((prev) => prev.filter((r) => r._id !== id));
+          setSnackbar({
+            open: true,
+            message: "הרשומה נמחקה בהצלחה",
+            severity: "success",
+          });
+        } catch (err) {
+          console.error("Hard delete error:", err);
+          setSnackbar({
+            open: true,
+            message: err.message || "שגיאה במחיקת הרשומה",
+            severity: "error",
+          });
+        }
+        return;
+      }
+
+      // Manoiya → soft delete (mark goingToBeDeleted = true)
+      if (isManoiya) {
+        const confirmed = window.confirm(
+          'האם אתה בטוח שברצונך לסמן שורה זו למחיקה?\nהשורה תוסתר מטבלת החט"כים עד שמנהל ימחק אותה לצמיתות.'
+        );
+        if (!confirmed) return;
+
+        try {
+          const res = await fetch(`${baseUrl}/api/${ROUTE}/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              updates: { goingToBeDeleted: true },
+              user,
+            }),
+          });
+
+          if (!res.ok) {
+            throw new Error("סימון למחיקה נכשל");
+          }
+
+          // Optimistically remove from current table
+          setRows((prev) => prev.filter((r) => r._id !== id));
+
+          setSnackbar({
+            open: true,
+            message: "הרשומה סומנה למחיקה ותיעלם מהטבלה הראשית",
+            severity: "success",
+          });
+        } catch (err) {
+          console.error("Soft delete error:", err);
+          setSnackbar({
+            open: true,
+            message: err.message || "שגיאה בסימון הרשומה למחיקה",
+            severity: "error",
+          });
+        }
+      }
+    },
+    [isAdmin, isManoiya, isViewer, user]
+  );
+
+  // ======================================================
   // inject handleSubmit into columnsConfig
   // ======================================================
   const columnsWithActions = useMemo(() => {
@@ -541,20 +748,28 @@ export default function RepairsPage() {
       if (col.field === "history") {
         newCol.action = handleOpenHistory;
       }
+      if (col.field === "delete") {
+        newCol.action = handleDelete;
+      }
+      if (col.field === "swapEngineSerial") {
+        newCol.action = isAdmin || isManoiya ? handleOpenEngineDialog : undefined;
+      }
       return newCol;
     });
-  }, [isViewer, handleOpenEdit]);
+  }, [isViewer, isAdmin, isManoiya, handleOpenEdit, handleOpenHistory, handleDelete, handleOpenEngineDialog]);
 
   // visible columns
   const displayColumns = useMemo(() => {
     return columnsWithActions.filter((col) => {
-      // Filter out delete column if not admin
-      if (col.field === "delete" && !isAdmin) return false;
+      // Filter out delete column if viewer
+      if (col.field === "delete" && isViewer) return false;
       if (col.field === "edit" && isViewer) return false;
+      if (col.field === "swapEngineSerial" && !isAdmin && !isManoiya)
+        return false;
 
       return visibleColumns.includes(col.field) || col.type === "actions";
     });
-  }, [visibleColumns, columnsWithActions, isAdmin, isViewer]);
+  }, [visibleColumns, columnsWithActions, isViewer]);
 
   const gridData = useMemo(() => rows, [rows]);
 
@@ -672,7 +887,79 @@ export default function RepairsPage() {
         setRowsLoading={setRowsLoading}
       />
 
-
+      {/* Engine serial swap/clone dialog */}
+      <Dialog open={engineDialogOpen} onClose={handleCloseEngineDialog}>
+        <DialogTitle>החלפת מספר מנוע</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            מספר מנוע נוכחי:{" "}
+            <strong>{engineDialogRow?.engineSerial || ""}</strong>
+          </Typography>
+          <Autocomplete
+            freeSolo
+            options={engineOptions}
+            value={newEngineSerial}
+            onChange={(_, val) => setNewEngineSerial(val || "")}
+            onInputChange={async (_, val) => {
+              setNewEngineSerial(val || "");
+              if (!val || !val.trim()) {
+                setEngineOptions([]);
+                return;
+              }
+              try {
+                setEngineOptionsLoading(true);
+                const params = new URLSearchParams();
+                params.append("search", val.trim());
+                params.append("skip", "0");
+                params.append("limit", "20");
+                const res = await fetch(
+                  `${baseUrl}/api/${ROUTE}/unique/engineSerial?${params.toString()}`
+                );
+                if (res.ok) {
+                  const data = await res.json();
+                  setEngineOptions(data.values || []);
+                }
+              } catch (e) {
+                console.error("Failed to load engine options", e);
+              } finally {
+                setEngineOptionsLoading(false);
+              }
+            }}
+            loading={engineOptionsLoading}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                autoFocus
+                margin="dense"
+                label="מספר מנוע חדש"
+                fullWidth
+                InputProps={{
+                  ...params.InputProps,
+                  endAdornment: (
+                    <>
+                      {engineOptionsLoading ? (
+                        <CircularProgress color="inherit" size={20} />
+                      ) : null}
+                      {params.InputProps.endAdornment}
+                    </>
+                  ),
+                }}
+              />
+            )}
+          />
+          <Typography variant="caption" sx={{ mt: 1, display: "block" }}>
+            אם המספר כבר קיים, המערכת תחליף בין שני מספרי המנוע.
+            אם זה מספר חדש, תיווצר רשומה חדשה עם הנתונים הנוכחיים, וברשומה
+            הישנה מספר הממסרת יימחק.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseEngineDialog}>ביטול</Button>
+          <Button onClick={handleConfirmEngineChange} variant="contained">
+            אישור
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Snackbar
         open={snackbar.open}

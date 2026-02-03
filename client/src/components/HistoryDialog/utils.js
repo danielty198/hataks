@@ -29,7 +29,7 @@ export const formatValue = (value, field) => {
   if (typeof value === 'boolean') return value ? 'כן' : 'לא';
   if (field === 'price') return `₪${value}`;
   if (field === 'status' && statusTranslations[value]) return statusTranslations[value];
-  
+
   // Format date fields in Israeli format with time - ONLY for known date fields
   if (dateFields.includes(field)) {
     // Try to parse as date - only format if it's actually a valid date
@@ -51,7 +51,7 @@ export const formatValue = (value, field) => {
       // If date parsing fails, just return the original value
     }
   }
-  
+
   if (Array.isArray(value)) return value.join(', ');
   if (typeof value === 'object') return JSON.stringify(value);
   return String(value);
@@ -121,7 +121,6 @@ export const getAvailableDates = (historyData) => {
     label: formatDateOption(value),
   }));
 };
-
 // Extract all available filter options from history data
 export const getAvailableFilterOptions = (historyData, distinctValues = {}) => {
   const options = {
@@ -148,7 +147,7 @@ export const getAvailableFilterOptions = (historyData, distinctValues = {}) => {
 
   // Date options - unique dates formatted nicely
   const dateMap = new Map();
-  
+
   historyData.forEach((item) => {
     // Date
     const dateKey = new Date(item.createdAt).toDateString();
@@ -173,7 +172,7 @@ export const getAvailableFilterOptions = (historyData, distinctValues = {}) => {
 
     // Extract values from newRepair or oldRepair
     const repairData = item.newRepair || item.oldRepair || {};
-    
+
     // Add values from repair data
     const fieldsToExtract = [
       'manoiya', 'hatakType', 'sendingDivision', 'sendingBrigade', 'sendingBattalion',
@@ -217,10 +216,10 @@ export const getAvailableFilterOptions = (historyData, distinctValues = {}) => {
 
   // Add values from distinctValues context for specific fields
   const fieldsFromContext = [
-    'sendingBrigade', 'sendingBattalion', 'engineSerial', 
+    'sendingBrigade', 'sendingBattalion', 'engineSerial',
     'minseretSerial', 'recivingBrigade', 'recivingBattalion'
   ];
-  
+
   fieldsFromContext.forEach((field) => {
     if (distinctValues[field] && Array.isArray(distinctValues[field])) {
       distinctValues[field].forEach((value) => {
@@ -238,7 +237,11 @@ export const getAvailableFilterOptions = (historyData, distinctValues = {}) => {
   const result = {};
   Object.keys(options).forEach((key) => {
     if (options[key] instanceof Set) {
-      result[key] = Array.from(options[key]).sort((a, b) => a.localeCompare(b, 'he'));
+      // Convert to array, filter out null/undefined, convert everything to string, then sort
+      result[key] = Array.from(options[key])
+        .filter((val) => val !== null && val !== undefined)
+        .map((val) => String(val))
+        .sort((a, b) => a.localeCompare(b, 'he'));
     } else {
       result[key] = options[key];
     }
@@ -315,7 +318,7 @@ export const filterHistory = (historyData, filters) => {
       if (filters[field] && filters[field].length > 0) {
         // Get value from repair data
         let value = repairData[field];
-        
+
         // Also check in changes
         const changeForField = changes.find((c) => c.field === field);
         const newValue = changeForField?.newValue;
@@ -323,7 +326,7 @@ export const filterHistory = (historyData, filters) => {
 
         // Collect all possible values for this field
         const allValues = new Set();
-        
+
         if (value !== null && value !== undefined && value !== '') {
           if (Array.isArray(value)) {
             value.forEach((v) => allValues.add(String(v)));
@@ -331,7 +334,7 @@ export const filterHistory = (historyData, filters) => {
             allValues.add(String(value));
           }
         }
-        
+
         if (newValue !== null && newValue !== undefined && newValue !== '') {
           if (Array.isArray(newValue)) {
             newValue.forEach((v) => allValues.add(String(v)));
@@ -339,7 +342,7 @@ export const filterHistory = (historyData, filters) => {
             allValues.add(String(newValue));
           }
         }
-        
+
         if (oldValue !== null && oldValue !== undefined && oldValue !== '') {
           if (Array.isArray(oldValue)) {
             oldValue.forEach((v) => allValues.add(String(v)));

@@ -1,24 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Typography, Paper, CircularProgress } from '@mui/material';
-import ViewToggle from './components/ViewToggle';
-import ManoiyaFilter from './components/ManoiyaFilter';
-import SharedLegend from './components/SharedLegend';
-import PieChartsGrid from './components/PieChartsGrid';
-import ComplexTable from './components/ComplexTable';
-import EditPieDialog from './components/EditPieDialog';
-import { baseUrl } from '../../assets';
+import React, { useState, useEffect } from "react";
+import { Box, Typography, Paper, CircularProgress } from "@mui/material";
+import ViewToggle from "./components/ViewToggle";
+import ManoiyaFilter from "./components/ManoiyaFilter";
+import SharedLegend from "./components/SharedLegend";
+import PieChartsGrid from "./components/PieChartsGrid";
+import ComplexTable from "./components/ComplexTable";
+import EditPieDialog from "./components/EditPieDialog";
+import { baseUrl } from "../../assets";
 
-
-const DEFAULT_HATAK_TYPES = [
-  "סימן 4",
-  "סימן 3",
-  "נמר",
-  "נמר MTU",
-  "נמר אחזקה",
-];
+const DEFAULT_HATAK_TYPES = ["סימן 4", "סימן 3", "נמר", "נמר MTU", "נמר אחזקה"];
 
 const BIPage = () => {
-  const [viewMode, setViewMode] = useState('pies'); // 'pies' or 'table'
+  const [viewMode, setViewMode] = useState("pies"); // 'pies' or 'table'
   const [selectedManoiya, setSelectedManoiya] = useState([]);
   const [pieTypes, setPieTypes] = useState(DEFAULT_HATAK_TYPES);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -31,26 +24,26 @@ const BIPage = () => {
   const [loading, setLoading] = useState(false);
 
   // Fetch pie data from backend
-// Fetch pie data from backend
-const fetchPieData = async () => {
-  setLoading(true);
-  try {
-    const params = new URLSearchParams();
-    pieTypes.forEach((type) => params.append('hatakTypes', type));
-    selectedManoiya.forEach((m) => params.append('manoiya', m));
+  // Fetch pie data from backend
+  const fetchPieData = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      pieTypes.forEach((type) => params.append("hatakTypes", type));
+      selectedManoiya.forEach((m) => params.append("manoiya", m));
 
-    const response = await fetch(`${baseUrl}/api/bi/pie-data?${params}`);
-    if (response.ok) {
-      const result = await response.json();
-      setPieData(result.pieData || {});
-      setTotalCount(result.totalCount || 0);
+      const response = await fetch(`${baseUrl}/api/bi/pie-data?${params}`);
+      if (response.ok) {
+        const result = await response.json();
+        setPieData(result.pieData || {});
+        setTotalCount(result.totalCount || 0);
+      }
+    } catch (error) {
+      console.error("Error fetching pie data:", error);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error('Error fetching pie data:', error);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
   // Fetch table data from backend
   const fetchTableData = async () => {
     setLoading(true);
@@ -62,7 +55,7 @@ const fetchPieData = async () => {
         setTotalCount(result.totalCount || 0);
       }
     } catch (error) {
-      console.error('Error fetching table data:', error);
+      console.error("Error fetching table data:", error);
     } finally {
       setLoading(false);
     }
@@ -70,13 +63,13 @@ const fetchPieData = async () => {
 
   // Fetch data when view mode or filters change
   useEffect(() => {
-    if (viewMode === 'pies') {
+    if (viewMode === "pies") {
       fetchPieData();
     } else {
       fetchTableData();
     }
   }, [viewMode, selectedManoiya, pieTypes]);
-//console.log('Pie Types:', pieTypes);
+  //console.log('Pie Types:', pieTypes);
   // Edit handlers
   const handleEditClick = (index) => {
     setEditingPieIndex(index);
@@ -107,25 +100,39 @@ const fetchPieData = async () => {
       </Typography>
 
       {/* Controls */}
-      <Paper sx={{ p: 2, mb: 3, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+      <Paper
+        sx={{
+          p: 2,
+          mb: 3,
+          display: "flex",
+          gap: 2,
+          alignItems: "center",
+          flexWrap: "wrap",
+        }}
+      >
         <ViewToggle value={viewMode} onChange={setViewMode} />
-        {viewMode === 'pies' && <>
-          <ManoiyaFilter value={selectedManoiya} onChange={setSelectedManoiya} />
-          <Typography variant="body2" color="text.secondary">
-            סה"כ: {totalCount} רשומות
-          </Typography>
-        </>}
+        {viewMode === "pies" && (
+          <>
+            <ManoiyaFilter
+              value={selectedManoiya}
+              onChange={setSelectedManoiya}
+            />
+            <Typography variant="body2" color="text.secondary">
+              סה"כ: {totalCount} רשומות
+            </Typography>
+          </>
+        )}
       </Paper>
 
       {/* Loading */}
       {loading && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
+        <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
           <CircularProgress />
         </Box>
       )}
 
       {/* Pie Charts View */}
-      {!loading && viewMode === 'pies' && (
+      {!loading && viewMode === "pies" && (
         <Box>
           <SharedLegend />
           <PieChartsGrid
@@ -137,14 +144,14 @@ const fetchPieData = async () => {
       )}
 
       {/* Table View */}
-      {!loading && viewMode === 'table' && (
+      {!loading && viewMode === "table" && (
         <ComplexTable tableData={tableData} />
       )}
-  
+
       {/* Edit Dialog */}
       <EditPieDialog
         open={editDialogOpen}
-        currentType={editingPieIndex !== null ? pieTypes[editingPieIndex] : ''}
+        currentType={editingPieIndex !== null ? pieTypes[editingPieIndex] : ""}
         onSave={handleEditSave}
         onCancel={handleEditCancel}
       />

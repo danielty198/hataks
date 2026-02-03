@@ -2,8 +2,14 @@ const { model } = require('../models/Repairs');
 const mongoose = require("mongoose");
 const historyModel = require('../models/Repairs_History')
 const { getChanges } = require('../Utils/getChanges')
-
-
+const XLSX = require("xlsx");
+const formatDateForExcel = (date) => {
+  if (!date) return null;
+  return new Date(date)
+    .toISOString()
+    .replace('T', ' ')
+    .split('.')[0]; // YYYY-MM-DD HH:mm:ss
+};
 
 function buildMatchStage(filters) {
   const matchStage = {};
@@ -82,6 +88,13 @@ const getRows = async (req, res) => {
     // Build match stage
     const matchStage = buildMatchStage(filters);
 
+    // By default, hide rows that are marked to be deleted from the main table.
+    // Only when an explicit goingToBeDeleted filter is provided (e.g. true)
+    // do we override this behavior.
+    if (typeof filters.goingToBeDeleted === "undefined") {
+      matchStage.goingToBeDeleted = { $ne: true };
+    }
+
     // Use facet to run count and data queries in parallel within one aggregation
 
     const pipeline = [];
@@ -144,6 +157,25 @@ const getRows = async (req, res) => {
   } catch (err) {
     console.error("Aggregate error:", err);
     res.status(500).json({ error: "Failed to fetch data" });
+  }
+};
+
+const getAll = async (req, res) => {
+  try {
+    const repairs = await model.find().lean(); // lean = faster + plain objects
+
+    const formattedRepairs = repairs.map(r => ({
+      ...r,
+      reciveDate: formatDateForExcel(r.reciveDate),
+      startWorkingDate: formatDateForExcel(r.startWorkingDate),
+      createdAt: formatDateForExcel(r.createdAt),
+      updatedAt: formatDateForExcel(r.updatedAt),
+    }));
+
+    res.json(formattedRepairs);
+  } catch (err) {
+    console.error("Error getting all repairs:", err);
+    res.status(500).json({ error: "Failed to fetch all repairs" });
   }
 };
 
@@ -245,59 +277,103 @@ const getDistinctValuesPaged = async (req, res) => {
 };
 
 // GET /api/repairs/export/excel?{filters...}&columns=a,b,c
+
+const fieldHeaderMap = {
+  manoiya: "מנועיה",
+  hatakType: "סוג חט\"כ",
+  sendingDivision: "אוגדה מוסרת",
+  sendingBrigade: "חטיבה מוסרת",
+  sendingBattalion: "גדוד מוסר",
+  zadik: "צ' של כלי",
+  reciveDate: "תאריך קבלה",
+  engineSerial: "מספר מנוע",
+  swapEngineSerial: "החלף מנוע",
+  minseretSerial: "מספר ממסרת",
+  hatakStatus: "סטטוס חט\"כ",
+  tipulType: "סוג טיפול",
+  problem: "פירוט תקלה",
+  waitingHHType: "סוג ח\"ח ממתין",
+  detailsHH: "פירוט ח\"ח",
+  michlalNeed: "צריכת מכלל",
+  recivingDivision: "אוגדה מקבלת",
+  recivingBrigade: "חטיבה מקבלת",
+  recivingBattalion: "גדוד מקבל",
+  startWorkingDate: "תאריך לפקודה",
+  forManoiya: "מנועיה לפקודה",
+  performenceExpectation: "צפי ביצוע",
+  detailsOfNonCompliance: "פירוט אי עמידה",
+  intended: "מיועד ל?",
+  updatedAt: "עודכן אחרון",
+  history: "היסטוריה",
+  edit: "ערוך",
+  delete: "מחק",
+};
 const exportToExcel = async (req, res) => {
   try {
     const filters = req.query || {};
     const matchStage = buildMatchStage(filters);
 
-    // ← And this
-
-    // Optional column selection (comma-separated)
     const rawColumns = typeof filters.columns === "string" ? filters.columns : "";
-    const columns = rawColumns
-      .split(",")
-      .map((c) => c.trim())
-      .filter(Boolean);
+    const selectedFields = rawColumns
+      ? rawColumns.split(",").map((c) => c.trim()).filter(Boolean)
+      : Object.keys(fieldHeaderMap); // all fields if none selected
 
     const projection = {};
-    if (columns.length > 0) {
-      // always include _id for traceability
-      projection._id = 1;
-      columns.forEach((c) => {
-        if (c !== "columns") projection[c] = 1;
-      });
-    }
+    selectedFields.forEach((field) => {
+      projection[field] = 1;
+    });
 
     const query = Object.keys(matchStage).length > 0 ? matchStage : {};
     const docs = await model
-      .find(query, columns.length > 0 ? projection : undefined)
+      .find(query, projection)
       .sort({ _id: -1 })
       .lean();
 
-    // Convert to XLSX
-    const XLSX = require("xlsx");
+    // Prepare data rows
+    const dataRows = (docs || []).map((doc) => {
+      const row = {};
+      selectedFields.forEach((field) => {
+        let value = doc[field];
 
-    const data = (docs || []).map((d) => {
-      const { __v, ...rest } = d;
-      return rest;
+        // Format dates
+        if (["reciveDate", "startWorkingDate", "createdAt", "updatedAt"].includes(field)) {
+          value = formatDateForExcel(value);
+        }
+
+        row[field] = value !== undefined && value !== null ? value : "";
+      });
+      return row;
     });
 
-    const worksheet = XLSX.utils.json_to_sheet(data);
+    // Build header row from map
+    const headers = selectedFields.map((field) => fieldHeaderMap[field] || field);
+
+    // Create worksheet
+    const worksheet = XLSX.utils.json_to_sheet(dataRows, { header: selectedFields });
+    XLSX.utils.sheet_add_aoa(worksheet, [headers], { origin: "A1" });
+    XLSX.utils.sheet_add_json(worksheet, dataRows, { skipHeader: true, origin: "A2" });
+
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "repairs");
 
     const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
 
     const filename = "ייצוא_חטכים.xlsx";
-    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-    // RFC 5987 filename* for UTF-8 filenames
-    res.setHeader("Content-Disposition", `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`);
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`
+    );
     res.send(buffer);
   } catch (err) {
     console.error("Export to excel error:", err);
     res.status(500).json({ error: "Failed to export to excel" });
   }
 };
+
 
 
 const updateById = async (req, res) => {
@@ -419,6 +495,147 @@ const getHistory = async (req, res) => {
   }
 }
 
+/**
+ * POST /api/repairs/change-engine-serial
+ * Body: { sourceId, newEngineSerial, user }
+ *
+ * Rules:
+ * - Only 'admin' or 'manoiya' roles may perform this action.
+ * - If newEngineSerial already exists on another row → swap the two engineSerial values.
+ * - If newEngineSerial does NOT exist → clone the source row with the new engineSerial,
+ *   and on the original row clear minseretSerial.
+ */
+const changeEngineSerial = async (req, res) => {
+  try {
+    const { sourceId, newEngineSerial, user } = req.body || {};
+
+    // ... validation code stays the same ...
+
+    const sourceRepair = await model.findById(sourceId).lean();
+    if (!sourceRepair) {
+      return res.status(404).json({ error: "Source repair not found" });
+    }
+
+    const existingTarget = await model
+      .findOne({ engineSerial: newEngineSerial })
+      .lean();
+
+    // CASE 1: Swap
+    if (existingTarget) {
+      try {
+        const tempEngineSerial = `__TEMP_${sourceRepair.engineSerial}_${Date.now()}`;
+
+        // Step 1: temp value
+        await model.findByIdAndUpdate(sourceRepair._id, {
+          engineSerial: tempEngineSerial,
+          addedBy: { fullName: user.fullName, pid: user.pid },
+        });
+
+        // Step 2: swap to target
+        const updatedTarget = await model
+          .findByIdAndUpdate(
+            existingTarget._id,
+            {
+              engineSerial: sourceRepair.engineSerial,
+              addedBy: { fullName: user.fullName, pid: user.pid },
+            },
+            { new: true }
+          )
+          .lean();
+
+        // Step 3: final value to source
+        const updatedSource = await model
+          .findByIdAndUpdate(
+            sourceRepair._id,
+            {
+              engineSerial: newEngineSerial,
+              addedBy: { fullName: user.fullName, pid: user.pid },
+            },
+            { new: true }
+          )
+          .lean();
+
+        // Log history
+        const sourceChanges = getChanges(sourceRepair, updatedSource);
+        if (sourceChanges.length > 0) {
+          await historyModel.create({
+            repairId: sourceRepair._id,
+            changedBy: { fullName: user.fullName, pid: user.pid },
+            changes: sourceChanges,
+            oldRepair: sourceRepair,
+            newRepair: updatedSource,
+          });
+        }
+
+        const targetChanges = getChanges(existingTarget, updatedTarget);
+        if (targetChanges.length > 0) {
+          await historyModel.create({
+            repairId: existingTarget._id,
+            changedBy: { fullName: user.fullName, pid: user.pid },
+            changes: targetChanges,
+            oldRepair: existingTarget,
+            newRepair: updatedTarget,
+          });
+        }
+
+        return res.json({
+          success: true,
+          mode: "swap",
+          data: { source: updatedSource, target: updatedTarget },
+        });
+      } catch (err) {
+        console.error("Engine swap error:", err);
+        return res.status(500).json({ error: "Failed to swap engine serials" });
+      }
+    }
+
+    // CASE 2: Clone
+    try {
+      const clonedData = {
+        ...sourceRepair,
+        _id: undefined,
+        engineSerial: newEngineSerial,
+      };
+
+      const newRepair = await model.create(clonedData);
+
+      const updatedSource = await model
+        .findByIdAndUpdate(
+          sourceId,
+          {
+            minseretSerial: "",
+            addedBy: { fullName: user.fullName, pid: user.pid },
+          },
+          { new: true }
+        )
+        .lean();
+
+      const sourceChanges = getChanges(sourceRepair, updatedSource);
+      if (sourceChanges.length > 0) {
+        await historyModel.create({
+          repairId: sourceId,
+          changedBy: { fullName: user.fullName, pid: user.pid },
+          changes: sourceChanges,
+          oldRepair: sourceRepair,
+          newRepair: updatedSource,
+        });
+      }
+
+      return res.json({
+        success: true,
+        mode: "clone",
+        data: { source: updatedSource, clone: newRepair },
+      });
+    } catch (err) {
+      console.error("Engine clone error:", err);
+      return res.status(500).json({ error: "Failed to clone repair" });
+    }
+  } catch (err) {
+    console.error("changeEngineSerial error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
 module.exports = {
   updateById,
   getRows,
@@ -428,4 +645,6 @@ module.exports = {
   getDistinctValues,
   getDistinctValuesPaged,
   exportToExcel,
+  getAll,
+  changeEngineSerial,
 };  
