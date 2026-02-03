@@ -18,7 +18,7 @@ const DEFAULT_HATAK_TYPES = [
 ];
 
 const BIPage = () => {
-  const [viewMode, setViewMode] = useState('table');
+  const [viewMode, setViewMode] = useState('pies'); // 'pies' or 'table'
   const [selectedManoiya, setSelectedManoiya] = useState([]);
   const [pieTypes, setPieTypes] = useState(DEFAULT_HATAK_TYPES);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -31,26 +31,26 @@ const BIPage = () => {
   const [loading, setLoading] = useState(false);
 
   // Fetch pie data from backend
-  const fetchPieData = async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      pieTypes.forEach((type) => params.append('hatakTypes', type));
-      selectedManoiya.forEach((m) => params.append('manoiya', m));
+// Fetch pie data from backend
+const fetchPieData = async () => {
+  setLoading(true);
+  try {
+    const params = new URLSearchParams();
+    pieTypes.forEach((type) => params.append('hatakTypes', type));
+    selectedManoiya.forEach((m) => params.append('manoiya', m));
 
-      const response = await fetch(`${baseUrl}/api/bi/pie-data?${params}`);
-      if (response.ok) {
-        const result = await response.json();
-        setPieData(result.pieData || {});
-        setTotalCount(result.totalCount || 0);
-      }
-    } catch (error) {
-      console.error('Error fetching pie data:', error);
-    } finally {
-      setLoading(false);
+    const response = await fetch(`${baseUrl}/api/bi/pie-data?${params}`);
+    if (response.ok) {
+      const result = await response.json();
+      setPieData(result.pieData || {});
+      setTotalCount(result.totalCount || 0);
     }
-  };
-
+  } catch (error) {
+    console.error('Error fetching pie data:', error);
+  } finally {
+    setLoading(false);
+  }
+};
   // Fetch table data from backend
   const fetchTableData = async () => {
     setLoading(true);
@@ -76,17 +76,18 @@ const BIPage = () => {
       fetchTableData();
     }
   }, [viewMode, selectedManoiya, pieTypes]);
-
+//console.log('Pie Types:', pieTypes);
   // Edit handlers
   const handleEditClick = (index) => {
     setEditingPieIndex(index);
     setEditDialogOpen(true);
   };
-
   const handleEditSave = (newType) => {
     if (newType && editingPieIndex !== null) {
       const newPieTypes = [...pieTypes];
+      //console.log('Updating pie type at index', editingPieIndex, 'to', newType);
       newPieTypes[editingPieIndex] = newType;
+      //console.log('New pie types:', newPieTypes);
       setPieTypes(newPieTypes);
     }
     setEditDialogOpen(false);
@@ -139,7 +140,7 @@ const BIPage = () => {
       {!loading && viewMode === 'table' && (
         <ComplexTable tableData={tableData} />
       )}
-
+  
       {/* Edit Dialog */}
       <EditPieDialog
         open={editDialogOpen}

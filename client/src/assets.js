@@ -1,59 +1,69 @@
-
 import dayjs from "dayjs";
-export const civil = true
-export const SYSTEM = civil ? 'demo' : "hataks"
+export const civil = true;
+export const SYSTEM = civil ? "demo" : "hataks";
 
 export const clientPort = 3000;
 
 export const serverPort = 5000;
-export const USER_SERVICE_CLIENT_PORT = 3006
-export const USER_SERVICE_SERVER_PORT = 3005
-export const ASSETS_SERVICE_SERVER_PORT = 3011
+export const USER_SERVICE_CLIENT_PORT = 3006;
+export const USER_SERVICE_SERVER_PORT = 3005;
+export const ASSETS_SERVICE_SERVER_PORT = 3011;
 
-
-
-export const baseUrl = clientPort === serverPort ? "" : (civil ? `http://localhost:${serverPort}` : `http://vm0099eged:${serverPort}`);
-export const userServiceUrl = clientPort === serverPort ? '' : (civil ? `http://localhost:3005` : `http://vm0099eged:3005`)
+export const baseUrl =
+  clientPort === serverPort
+    ? ""
+    : civil
+      ? `http://localhost:${serverPort}`
+      : `http://vm0099eged:${serverPort}`;
+export const userServiceUrl =
+  clientPort === serverPort
+    ? ""
+    : civil
+      ? `http://localhost:3005`
+      : `http://vm0099eged:3005`;
 
 export const getDefaultFormData = () => {
   return {
-    manoiya: '',
-    hatakType: '',
+    manoiya: "",
+    hatakType: "",
     zadik: null,
-    engineSerial: '',
-    minseretSerial: '',
-    hatakStatus: '',
-    tipulType: '',
-    problem: '',
+    engineSerial: "",
+    minseretSerial: "",
+    hatakStatus: "",
+    tipulType: "",
+    problem: "",
     reciveDate: null,
-    sendingDivision: '',
+    sendingDivision: "",
     sendingBrigade: null,
     sendingBattalion: null,
-    recivingDivision: '',
+    recivingDivision: "",
     recivingBrigade: null,
     recivingBattalion: null,
-    waitingHHType: '',
-    detailsHH: '',
-    michlalNeed: '',
+    waitingHHType: "",
+    detailsHH: "",
+    michlalNeed: "",
     startWorkingDate: null,
-    forManoiya: '',
-    performenceExpectation: '',
-    detailsOfNonCompliance:'',
-    intended: '',
-  }
+    forManoiya: "",
+    performenceExpectation: "",
+    detailsOfNonCompliance: "",
+    intended: "",
+  };
 };
 
-export const roles = [{
-  value: 'viewer',
-  label: 'צופה'
-}, {
-  value: 'manoiya',
-  label: 'מנועייה'
-}, {
-  value: 'admin',
-  label: 'מנהל'
-}]
-
+export const roles = [
+  {
+    value: "viewer",
+    label: "צופה",
+  },
+  {
+    value: "manoiya",
+    label: "מנועייה",
+  },
+  {
+    value: "admin",
+    label: "מנהל",
+  },
+];
 
 function generateRandomValueByType(type) {
   switch (type) {
@@ -67,7 +77,9 @@ function generateRandomValueByType(type) {
       return Math.random() > 0.5;
 
     case "date":
-      return dayjs().subtract(Math.floor(Math.random() * 30), "day").format("YYYY-MM-DD");
+      return dayjs()
+        .subtract(Math.floor(Math.random() * 30), "day")
+        .format("YYYY-MM-DD");
 
     default:
       return null;
@@ -80,7 +92,7 @@ export function generateData(columns, count = 10) {
   for (let i = 0; i < count; i++) {
     const row = { _id: i + 1 };
 
-    columns.forEach(col => {
+    columns.forEach((col) => {
       row[col.field] = generateRandomValueByType(col.type);
     });
 
@@ -99,32 +111,28 @@ export const FILTERS_AUTOCOMPLETE_FIELDS = [
   "recivingBattalion",
 ];
 
-
 export const steps = [
-  { label: 'ראשי', description: 'פרטים בסיסיים' },
-  { label: 'נתוני יחידה', description: 'יחידה מוסרת ומקבלת' },
-  { label: 'אחר', description: 'פרטים נוספים' },
+  { label: "ראשי", description: "פרטים בסיסיים" },
+  { label: "נתוני יחידה", description: "יחידה מוסרת ומקבלת" },
+  { label: "אחר", description: "פרטים נוספים" },
 ];
 
-export const tipulTypeOptions = ['שבר', 'שע"מ'];
-export const michlalNeedOptions = ['מנוע', 'ממסרת', 'מנוע + ממסרת'];
+export const tipulTypeOptions = ["שבר", 'שע"מ'];
+export const michlalNeedOptions = ["מנוע", "ממסרת", "מנוע + ממסרת"];
 
+export const waitingHHTypeRequiredString = 'ממתין ח"ח';
+export const zadikOptions = [1, 2, 3, 4, 5, 6, 6, 7, 8, 9, 9, 0];
 
-export const waitingHHTypeRequiredString = 'ממתין ח"ח'
-export const zadikOptions = [1, 2, 3, 4, 5, 6, 6, 7, 8, 9, 9, 0]
-
-export const performenceExpectationOptions = ["כן", "לא", "עדיין בעבודה"]
+export const performenceExpectationOptions = ["כן", "לא", "עדיין בעבודה"];
 
 export const intendedOptions = [
-  "פצ\"ן",
-  "פד\"ם",
+  'פצ"ן',
+  'פד"ם',
   "סבב אגד",
   "סבב פיקודי",
   "אימונים והכשרות",
-  "אחר"
+  "אחר",
 ];
-
-
 
 export const hatakTypeOptions = [
   "סימן 4",
@@ -139,11 +147,11 @@ export const hatakTypeOptions = [
   "פומה רגיל",
   "פומה+",
   "פומה++",
-  "טג\"ש",
+  'טג"ש',
   "נקפדן",
   "נגמחון",
-  "טחל\"ץ",
-  "מנת\"ץ",
+  'טחל"ץ',
+  'מנת"ץ',
   "דוהר",
   "דוהר משופר",
   "רוכב ב'",
@@ -151,29 +159,17 @@ export const hatakTypeOptions = [
   "דורס",
   "דורס משופר",
   "נגמש A1",
-  "נגמ\"ש A2",
-  "נגמ\"ש A2 קשת",
+  'נגמ"ש A2',
+  'נגמ"ש A2 קשת',
   "נגמש A3 קשת",
-  "נגמ\"ש מגן",
+  'נגמ"ש מגן',
   "אלפא",
   "פיטר",
-  "רמ\"מ מבזק",
-  "אחר"
+  'רמ"מ מבזק',
+  "אחר",
 ];
 
-
-
-
-export const manoiyaOptions = [
-  "653",
-  "651",
-  "703",
-  "674",
-  "652",
-  "אחר"
-];
-
-
+export const manoiyaOptions = ["653", "651", "703", "674", "652", "אחר"];
 
 export const ogdotOptions = [
   "252",
@@ -188,11 +184,11 @@ export const ogdotOptions = [
   "460",
   "831",
   "704",
-  "בהל\"צ",
-  "ביסל\"ח",
+  'בהל"צ',
+  'ביסל"ח',
   "ג'וליס",
   "עמיעד",
-  "אחר"
+  "אחר",
 ];
 
 export const waitingHHTypeOptions = [
@@ -206,73 +202,67 @@ export const waitingHHTypeOptions = [
   "ערכת בלמים ס'4",
   "מתנע",
   "אטם חזיה",
-  "אחר"
+  "אחר",
 ];
-
-
-
 
 export const hatakStatusOptions = [
   "כשיר סבב",
   "כשיר פיקודי",
   "כשיר חוב",
-  "ממתין ח\"ח",
+  'ממתין ח"ח',
   "בלאי",
   "נופק",
   "מושבת מנוע",
   "מושבת ממסרת",
   "מושבת מנוע + ממסרת",
   "דרג ג' ממתין לחוליה",
-  "דרג ג' נשלח למש\"א"
+  "דרג ג' נשלח למש\"א",
 ];
 
-
 export const colors = {
-  primary: '#13293D',
-  primaryLight: '#3a5f7d',
-  primaryDark: '#0d1e2b',
-  white: '#ffffff',
-  background: '#f5f7fa',
-  cardBg: '#ffffff',
-  border: '#e0e6ed',
-  success: '#2e7d32',
-  successLight: '#4caf50',
+  primary: "#13293D",
+  primaryLight: "#3a5f7d",
+  primaryDark: "#0d1e2b",
+  white: "#ffffff",
+  background: "#f5f7fa",
+  cardBg: "#ffffff",
+  border: "#e0e6ed",
+  success: "#2e7d32",
+  successLight: "#4caf50",
 };
 
-
-
 export const datagridcustomCellClassNames = {
-  '& .hatak-kosher': {
-    backgroundColor: '#d4edda',
-    color: '#155724',
-    fontWeight: '500',
+  "& .hatak-kosher": {
+    backgroundColor: "#d4edda",
+    color: "#155724",
+    fontWeight: "500",
   },
 
   // נופק - תורכיז פסטל
-  '& .hatak-nofek': {
-    backgroundColor: '#d1ecf1',
-    color: '#0c5460',
-    fontWeight: '500',
+  "& .hatak-nofek": {
+    backgroundColor: "#d1ecf1",
+    color: "#0c5460",
+    fontWeight: "500",
   },
 
   // בלאי - צהוב פסטל
-  '& .hatak-balai': {
-    backgroundColor: '#fff3cd',
-    color: '#856404',
-    fontWeight: '500',
+  "& .hatak-balai": {
+    backgroundColor: "#fff3cd",
+    color: "#856404",
+    fontWeight: "500",
   },
 
   // דרג ג' + ממתין ח"ח - כתום פסטל
-  '& .hatak-darag3': {
-    backgroundColor: '#ffe5d0',
-    color: '#8b4513',
-    fontWeight: '500',
+  "& .hatak-darag3": {
+    backgroundColor: "#ffe5d0",
+    color: "#8b4513",
+    fontWeight: "500",
   },
 
   // מושבת - אדום פסטל
-  '& .hatak-mushbat': {
-    backgroundColor: '#f8d7da',
-    color: '#721c24',
-    fontWeight: '500',
+  "& .hatak-mushbat": {
+    backgroundColor: "#f8d7da",
+    color: "#721c24",
+    fontWeight: "500",
   },
-}
+};
