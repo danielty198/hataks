@@ -14,7 +14,8 @@ import { hatakTypeOptions } from '../../../assets';
 
 const EditPieDialog = ({ open, currentType, onSave, onCancel }) => {
   const [selectedType, setSelectedType] = useState('');
-
+  const duplicateHatakTypeOptions = [...hatakTypeOptions];
+  duplicateHatakTypeOptions.push('הכל'); // הוספת "הכל" כאופציה נוספת
   useEffect(() => {
     if (open) {
       setSelectedType(currentType);
@@ -36,7 +37,7 @@ const EditPieDialog = ({ open, currentType, onSave, onCancel }) => {
             onChange={(e) => setSelectedType(e.target.value)}
             label="סוג חט״כ"
           >
-            {hatakTypeOptions.map((type) => (
+            {duplicateHatakTypeOptions.map((type) => (
               <MenuItem key={type} value={type}>
                 {type}
               </MenuItem>
