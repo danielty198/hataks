@@ -2,8 +2,14 @@ const { model } = require('../models/Repairs');
 const mongoose = require("mongoose");
 const historyModel = require('../models/Repairs_History')
 const { getChanges } = require('../Utils/getChanges')
-
-
+const XLSX = require("xlsx");
+const formatDateForExcel = (date) => {
+  if (!date) return null;
+  return new Date(date)
+    .toISOString()
+    .replace('T', ' ')
+    .split('.')[0]; // YYYY-MM-DD HH:mm:ss
+};
 
 function buildMatchStage(filters) {
   const matchStage = {};
@@ -156,13 +162,22 @@ const getRows = async (req, res) => {
 
 const getAll = async (req, res) => {
   try {
-    const repairs = await model.find();
-    res.json(repairs);
+    const repairs = await model.find().lean(); // lean = faster + plain objects
+
+    const formattedRepairs = repairs.map(r => ({
+      ...r,
+      reciveDate: formatDateForExcel(r.reciveDate),
+      startWorkingDate: formatDateForExcel(r.startWorkingDate),
+      createdAt: formatDateForExcel(r.createdAt),
+      updatedAt: formatDateForExcel(r.updatedAt),
+    }));
+
+    res.json(formattedRepairs);
   } catch (err) {
     console.error("Error getting all repairs:", err);
     res.status(500).json({ error: "Failed to fetch all repairs" });
   }
-}
+};
 
 const getDistinctValues = async (req, res) => {
   try {
@@ -262,59 +277,103 @@ const getDistinctValuesPaged = async (req, res) => {
 };
 
 // GET /api/repairs/export/excel?{filters...}&columns=a,b,c
+
+const fieldHeaderMap = {
+  manoiya: "מנועיה",
+  hatakType: "סוג חט\"כ",
+  sendingDivision: "אוגדה מוסרת",
+  sendingBrigade: "חטיבה מוסרת",
+  sendingBattalion: "גדוד מוסר",
+  zadik: "צ' של כלי",
+  reciveDate: "תאריך קבלה",
+  engineSerial: "מספר מנוע",
+  swapEngineSerial: "החלף מנוע",
+  minseretSerial: "מספר ממסרת",
+  hatakStatus: "סטטוס חט\"כ",
+  tipulType: "סוג טיפול",
+  problem: "פירוט תקלה",
+  waitingHHType: "סוג ח\"ח ממתין",
+  detailsHH: "פירוט ח\"ח",
+  michlalNeed: "צריכת מכלל",
+  recivingDivision: "אוגדה מקבלת",
+  recivingBrigade: "חטיבה מקבלת",
+  recivingBattalion: "גדוד מקבל",
+  startWorkingDate: "תאריך לפקודה",
+  forManoiya: "מנועיה לפקודה",
+  performenceExpectation: "צפי ביצוע",
+  detailsOfNonCompliance: "פירוט אי עמידה",
+  intended: "מיועד ל?",
+  updatedAt: "עודכן אחרון",
+  history: "היסטוריה",
+  edit: "ערוך",
+  delete: "מחק",
+};
 const exportToExcel = async (req, res) => {
   try {
     const filters = req.query || {};
     const matchStage = buildMatchStage(filters);
 
-    // ← And this
-
-    // Optional column selection (comma-separated)
     const rawColumns = typeof filters.columns === "string" ? filters.columns : "";
-    const columns = rawColumns
-      .split(",")
-      .map((c) => c.trim())
-      .filter(Boolean);
+    const selectedFields = rawColumns
+      ? rawColumns.split(",").map((c) => c.trim()).filter(Boolean)
+      : Object.keys(fieldHeaderMap); // all fields if none selected
 
     const projection = {};
-    if (columns.length > 0) {
-      // always include _id for traceability
-      projection._id = 1;
-      columns.forEach((c) => {
-        if (c !== "columns") projection[c] = 1;
-      });
-    }
+    selectedFields.forEach((field) => {
+      projection[field] = 1;
+    });
 
     const query = Object.keys(matchStage).length > 0 ? matchStage : {};
     const docs = await model
-      .find(query, columns.length > 0 ? projection : undefined)
+      .find(query, projection)
       .sort({ _id: -1 })
       .lean();
 
-    // Convert to XLSX
-    const XLSX = require("xlsx");
+    // Prepare data rows
+    const dataRows = (docs || []).map((doc) => {
+      const row = {};
+      selectedFields.forEach((field) => {
+        let value = doc[field];
 
-    const data = (docs || []).map((d) => {
-      const { __v, ...rest } = d;
-      return rest;
+        // Format dates
+        if (["reciveDate", "startWorkingDate", "createdAt", "updatedAt"].includes(field)) {
+          value = formatDateForExcel(value);
+        }
+
+        row[field] = value !== undefined && value !== null ? value : "";
+      });
+      return row;
     });
 
-    const worksheet = XLSX.utils.json_to_sheet(data);
+    // Build header row from map
+    const headers = selectedFields.map((field) => fieldHeaderMap[field] || field);
+
+    // Create worksheet
+    const worksheet = XLSX.utils.json_to_sheet(dataRows, { header: selectedFields });
+    XLSX.utils.sheet_add_aoa(worksheet, [headers], { origin: "A1" });
+    XLSX.utils.sheet_add_json(worksheet, dataRows, { skipHeader: true, origin: "A2" });
+
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "repairs");
 
     const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
 
     const filename = "ייצוא_חטכים.xlsx";
-    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-    // RFC 5987 filename* for UTF-8 filenames
-    res.setHeader("Content-Disposition", `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`);
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`
+    );
     res.send(buffer);
   } catch (err) {
     console.error("Export to excel error:", err);
     res.status(500).json({ error: "Failed to export to excel" });
   }
 };
+
 
 
 const updateById = async (req, res) => {
