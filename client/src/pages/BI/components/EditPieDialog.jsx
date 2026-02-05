@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -9,13 +9,12 @@ import {
   InputLabel,
   Select,
   MenuItem,
-} from '@mui/material';
-import { hatakTypeOptions } from '../../../assets';
+} from "@mui/material";
+import { hatakTypeOptions } from "../../../assets";
 
 const EditPieDialog = ({ open, currentType, onSave, onCancel }) => {
-  const [selectedType, setSelectedType] = useState('');
-  const duplicateHatakTypeOptions = [...hatakTypeOptions];
-  duplicateHatakTypeOptions.push('הכל'); // הוספת "הכל" כאופציה נוספת
+  const [selectedType, setSelectedType] = useState("");
+
   useEffect(() => {
     if (open) {
       setSelectedType(currentType);
@@ -25,7 +24,6 @@ const EditPieDialog = ({ open, currentType, onSave, onCancel }) => {
   const handleSave = () => {
     onSave(selectedType);
   };
-
   return (
     <Dialog open={open} onClose={onCancel}>
       <DialogTitle>בחר סוג חט"כ</DialogTitle>
@@ -37,7 +35,7 @@ const EditPieDialog = ({ open, currentType, onSave, onCancel }) => {
             onChange={(e) => setSelectedType(e.target.value)}
             label="סוג חט״כ"
           >
-            {duplicateHatakTypeOptions.map((type) => (
+            {hatakTypeOptions.map((type) => (
               <MenuItem key={type} value={type}>
                 {type}
               </MenuItem>
