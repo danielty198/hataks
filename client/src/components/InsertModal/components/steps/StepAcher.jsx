@@ -89,6 +89,8 @@ const StepAcher = ({ formData, errors = {}, onChange }) => {
               value={formData.intended}
               onChange={onChange}
             />
+            <InputField name = "pca" label='פק"ע' value={formData.pca || ""} onChange={onChange} />
+            <InputField name = "deactivationCertificate" label='תעודת השבתה' value={formData.deactivationCertificate || ""} onChange={onChange} />
           </FieldsRow>
         </FormCard>
       </Box>

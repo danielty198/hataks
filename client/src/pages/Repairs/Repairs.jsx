@@ -25,7 +25,7 @@ import {
   waitingHHTypeRequiredString,
   performenceExpectationOptions,
 } from "../../assets";
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from "react-router-dom";
 import DatagridCustom from "../../components/DatagridCustom";
 import { FilterPanel, TemplateSelector } from "../../components/RepairsFilters";
 import InsertModal from "../../components/InsertModal/InsertModal";
@@ -37,31 +37,144 @@ import CustomPagination from "../../components/CustomPagination";
 const ROUTE = "repairs";
 
 const columnsConfig = [
-  { field: "manoiya", headerName: "מנועיה", isEdit: true, type: "singleSelect", valueOptions: manoiyaOptions },
-  { field: "hatakType", headerName: 'סוג חט"כ', isEdit: true, type: "singleSelect", valueOptions: hatakTypeOptions },
-  { field: "sendingDivision", headerName: "אוגדה מוסרת", isEdit: true, type: "singleSelect", valueOptions: ogdotOptions },
-  { field: "sendingBrigade", headerName: "חטיבה מוסרת", isEdit: true, type: "string" },
-  { field: "sendingBattalion", headerName: "גדוד מוסר", isEdit: true, type: "string" },
+  {
+    field: "manoiya",
+    headerName: "מנועיה",
+    isEdit: true,
+    type: "singleSelect",
+    valueOptions: manoiyaOptions,
+  },
+  {
+    field: "hatakType",
+    headerName: 'סוג חט"כ',
+    isEdit: true,
+    type: "singleSelect",
+    valueOptions: hatakTypeOptions,
+  },
+  {
+    field: "sendingDivision",
+    headerName: "אוגדה מוסרת",
+    isEdit: true,
+    type: "singleSelect",
+    valueOptions: ogdotOptions,
+  },
+  {
+    field: "sendingBrigade",
+    headerName: "חטיבה מוסרת",
+    isEdit: true,
+    type: "string",
+  },
+  {
+    field: "sendingBattalion",
+    headerName: "גדוד מוסר",
+    isEdit: true,
+    type: "string",
+  },
   { field: "zadik", headerName: "צ' של כלי", isEdit: true, type: "string" },
   { field: "reciveDate", headerName: "תאריך קבלה", isEdit: true, type: "date" },
   { field: "engineSerial", headerName: "מספר מנוע", isEdit: false },
   { field: "swapEngineSerial", headerName: "החלף מנוע", type: "actions" },
-  { field: "minseretSerial", headerName: "מספר ממסרת", isEdit: true, type: "string" },
-  { field: "hatakStatus", headerName: 'סטטוס חט"כ', isEdit: true, type: "singleSelect", valueOptions: hatakStatusOptions },
-  { field: "tipulType", headerName: "סוג טיפול", isEdit: true, type: "singleSelect", valueOptions: ["שבר", 'שע"מ'] },
+  {
+    field: "minseretSerial",
+    headerName: "מספר ממסרת",
+    isEdit: true,
+    type: "string",
+  },
+  {
+    field: "hatakStatus",
+    headerName: 'סטטוס חט"כ',
+    isEdit: true,
+    type: "singleSelect",
+    valueOptions: hatakStatusOptions,
+  },
+  {
+    field: "tipulType",
+    headerName: "סוג טיפול",
+    isEdit: true,
+    type: "singleSelect",
+    valueOptions: ["שבר", 'שע"מ'],
+  },
   { field: "problem", headerName: "פירוט תקלה", isEdit: true, type: "string" },
-  { field: "waitingHHType", headerName: 'סוג ח"ח ממתין', isEdit: true, isMultiSelect: true, valueOptions: waitingHHTypeOptions },
+  {
+    field: "waitingHHType",
+    headerName: 'סוג ח"ח ממתין',
+    isEdit: true,
+    isMultiSelect: true,
+    valueOptions: waitingHHTypeOptions,
+  },
   { field: "detailsHH", headerName: 'פירוט ח"ח', isEdit: true, type: "string" },
-  { field: "michlalNeed", headerName: "צריכת מכלל", isEdit: true, type: "string" },
-  { field: "recivingDivision", headerName: "אוגדה מקבלת", isEdit: true, type: "singleSelect", valueOptions: ogdotOptions },
-  { field: "recivingBrigade", headerName: "חטיבה מקבלת", isEdit: true, type: "string" },
-  { field: "recivingBattalion", headerName: "גדוד מקבל", isEdit: true, type: "string" },
-  { field: "startWorkingDate", headerName: "תאריך לפקודה", isEdit: true, type: "date" },
-  { field: "forManoiya", headerName: "מנועיה לפקודה", isEdit: true, type: "singleSelect", valueOptions: manoiyaOptions },
-  { field: "performenceExpectation", headerName: "צפי ביצוע", isEdit: true, type: "singleSelect", valueOptions: performenceExpectationOptions },
-  { field: "detailsOfNonCompliance", headerName: "פירוט אי עמידה", isEdit: true, type: "string" },
-  { field: "intended", headerName: "מיועד ל?", isEdit: true, type: "singleSelect", valueOptions: intendedOptions },
-  { field: "updatedAt", headerName: "עודכן אחרון", isEdit: false, type: "date" },
+  {
+    field: "michlalNeed",
+    headerName: "צריכת מכלל",
+    isEdit: true,
+    type: "string",
+  },
+  {
+    field: "recivingDivision",
+    headerName: "אוגדה מקבלת",
+    isEdit: true,
+    type: "singleSelect",
+    valueOptions: ogdotOptions,
+  },
+  {
+    field: "recivingBrigade",
+    headerName: "חטיבה מקבלת",
+    isEdit: true,
+    type: "string",
+  },
+  {
+    field: "recivingBattalion",
+    headerName: "גדוד מקבל",
+    isEdit: true,
+    type: "string",
+  },
+  {
+    field: "startWorkingDate",
+    headerName: "תאריך לפקודה",
+    isEdit: true,
+    type: "date",
+  },
+  {
+    field: "forManoiya",
+    headerName: "מנועיה לפקודה",
+    isEdit: true,
+    type: "singleSelect",
+    valueOptions: manoiyaOptions,
+  },
+  {
+    field: "performenceExpectation",
+    headerName: "צפי ביצוע",
+    isEdit: true,
+    type: "singleSelect",
+    valueOptions: performenceExpectationOptions,
+  },
+  {
+    field: "detailsOfNonCompliance",
+    headerName: "פירוט אי עמידה",
+    isEdit: true,
+    type: "string",
+  },
+  {
+    field: "intended",
+    headerName: "מיועד ל?",
+    isEdit: true,
+    type: "singleSelect",
+    valueOptions: intendedOptions,
+  },
+  {
+    field: "updatedAt",
+    headerName: "עודכן אחרון",
+    isEdit: false,
+    type: "date",
+  },
+  { field: "pca", headerName: 'פק"ע', isEdit: true, type: "string" },
+  {
+    field: "deactivationCertificate",
+    headerName: "תעודת השבתה",
+    isEdit: true,
+    type: "string",
+  },
+  { field: "shinoa", headerName: "שינוע", isEdit: true,valueOptions: manoiyaOptions, type: "singleSelect"},
   { field: "history", headerName: "היסטוריה", type: "actions" },
   { field: "edit", headerName: "ערוך", type: "actions" },
   { field: "delete", headerName: "מחק", type: "actions" },
@@ -88,7 +201,7 @@ const MemoizedDataGrid = memo(function MemoizedDataGrid({
   onProcessRowUpdate,
   paginationOff,
   rowsLoading,
-  setRowsLoading
+  setRowsLoading,
 }) {
   return (
     <DatagridCustom
@@ -149,43 +262,46 @@ export default function RepairsPage() {
   const [engineOptionsLoading, setEngineOptionsLoading] = useState(false);
 
   // Fetch data function for CustomPagination
-  const handleFetchData = useCallback(async (page, pageSize) => {
-    setRowsLoading(prev => ({ ...prev, getRows: true }))
-    try {
-      
-      const params = new URLSearchParams();
+  console.log("pendingChanges:", pendingChanges);
+  const handleFetchData = useCallback(
+    async (page, pageSize) => {
+      setRowsLoading((prev) => ({ ...prev, getRows: true }));
+      try {
+        const params = new URLSearchParams();
 
-      // Add pagination params
-      params.append('pageSize', pageSize);
-      params.append('page', page);
+        // Add pagination params
+        params.append("pageSize", pageSize);
+        params.append("page", page);
 
-      // Add filter params
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== "" && value !== null && value !== undefined) {
-          // Handle array values (like waitingHHType) - convert to comma-separated string
-          if (Array.isArray(value)) {
-            if (value.length > 0) {
-              params.append(key, value.join(","));
+        // Add filter params
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value !== "" && value !== null && value !== undefined) {
+            // Handle array values (like waitingHHType) - convert to comma-separated string
+            if (Array.isArray(value)) {
+              if (value.length > 0) {
+                params.append(key, value.join(","));
+              }
+            } else {
+              params.append(key, value);
             }
-          } else {
-            params.append(key, value);
           }
-        }
-      });
+        });
 
-      const queryString = params.toString();
-      const url = `${baseUrl}/api/repairs?${queryString}`;
-      const res = await fetch(url);
+        const queryString = params.toString();
+        const url = `${baseUrl}/api/repairs?${queryString}`;
+        const res = await fetch(url);
 
-      const { data, rowsCount } = await res.json();
+        const { data, rowsCount } = await res.json();
 
-      setRows(data);
-      setRowsCount(rowsCount);
-    } catch (err) {
-      console.error("Failed to fetch data:", err);
-    }
-    setRowsLoading(prev => ({ ...prev, getRows: false }))
-  }, [filters]);
+        setRows(data);
+        setRowsCount(rowsCount);
+      } catch (err) {
+        console.error("Failed to fetch data:", err);
+      }
+      setRowsLoading((prev) => ({ ...prev, getRows: false }));
+    },
+    [filters],
+  );
 
   // Fetch templates + initial data
   useEffect(() => {
@@ -201,13 +317,13 @@ export default function RepairsPage() {
       const lastTemplateId = localStorage.getItem(LAST_TEMPLATE_KEY);
       if (lastTemplateId) {
         const lastTemplate = user.templates.find(
-          (t) => t.id === lastTemplateId
+          (t) => t.id === lastTemplateId,
         );
         if (lastTemplate) {
           setSelectedTemplate(lastTemplate.id);
           setFilters(lastTemplate.filters || {});
           setVisibleColumns(
-            lastTemplate.visibleColumns || defaultVisibleColumns
+            lastTemplate.visibleColumns || defaultVisibleColumns,
           );
         }
       }
@@ -233,7 +349,7 @@ export default function RepairsPage() {
       setFilters(template.filters);
       setVisibleColumns(template.visibleColumns);
     },
-    [templates]
+    [templates],
   );
 
   const handleSaveTemplate = useCallback((newTemplate) => {
@@ -252,7 +368,7 @@ export default function RepairsPage() {
         localStorage.removeItem(LAST_TEMPLATE_KEY);
       }
     },
-    [selectedTemplate]
+    [selectedTemplate],
   );
 
   const openModal = useCallback(() => setOpen(true), []);
@@ -273,7 +389,7 @@ export default function RepairsPage() {
   const handleProcessRowUpdate = useCallback((newRow, oldRow) => {
     // Check if there are actual changes
     const hasChanges = Object.keys(newRow).some(
-      (key) => newRow[key] !== oldRow[key]
+      (key) => newRow[key] !== oldRow[key],
     );
     if (!hasChanges) {
       return oldRow; // No changes, return old row
@@ -293,13 +409,35 @@ export default function RepairsPage() {
         severity: "warning",
       });
     }
-    const performanceChanged = newRow.performenceExpectation !== oldRow.performenceExpectation;
+    if (newRow.shinoa  && (newRow.shinoa === newRow.manoiya || !manoiyaOptions.includes(newRow.shinoa))) {
+      // פה
+      newRow.shinoa = "";
+      setSnackbar({
+        open: true,
+        message: "שדה שינוע לא תקין - שדה שינוע נוקה ונעול",
+        severity: "warning",
+      });
+    } 
+    else if (newRow.shinoa !== oldRow.shinoa && newRow.shinoa !== newRow.manoiya ) { // אם השינוע שונה מהמנועיה
+      
+      if( oldRow.shinoa !== newRow.manoiya || manoiyaOptions.includes(newRow.shinoa)) //pv
+      {
+      setSnackbar({
+        open: true,
+        message: "שדה שינוע התווסף בהצלחה",
+        severity: "success",
+      });
+    }
+    } 
+    const performanceChanged =
+      newRow.performenceExpectation !== oldRow.performenceExpectation;
 
     if (performanceChanged) {
       if (newRow.performenceExpectation === "לא") {
         setSnackbar({
           open: true,
-          message: 'צפי ביצוע הוא "לא" - עכשיו ניתן לערוך את שדה פירוט אי עמידה',
+          message:
+            'צפי ביצוע הוא "לא" - עכשיו ניתן לערוך את שדה פירוט אי עמידה',
           severity: "info",
         });
       } else {
@@ -330,6 +468,7 @@ export default function RepairsPage() {
               newRow.waitingHHType[0] === "")))
       ) {
         // Show error snackbar
+        console.log("here");
         const errMsg =
           'כאשר סטטוס חטכ הוא ממתין ל- ח"ח חייב לתת לסוג ח"ח ממתין ערך';
         setSnackbar({
@@ -341,6 +480,8 @@ export default function RepairsPage() {
         return oldRow; // Revert to old row
       }
     }
+    
+    
 
     // Check if this row is already in pending changes
     setPendingChanges((prev) => {
@@ -379,10 +520,15 @@ export default function RepairsPage() {
         return await res.json();
       });
 
-      await Promise.all(updatePromises);
+      const results = await Promise.all(updatePromises);
 
       setPendingChanges([]); // Clear pending changes
-
+      setRows((prev) =>
+      prev.map((r) => {
+        const updated = results.find((result) => result.data._id === r._id);
+        return updated ? updated.data : r;
+      })
+    );
       setSnackbar({
         open: true,
         message: `${pendingChanges.length} שינויים נשמרו בהצלחה!`,
@@ -414,62 +560,64 @@ export default function RepairsPage() {
   // ======================================================
   // ACTION HANDLER (edit / add)
   // ======================================================
-  const handleSubmit = useCallback(async (data, isEdit) => {
-    try {
-      let res;
-      let updatedRecord;
+  const handleSubmit = useCallback(
+    async (data, isEdit) => {
+      try {
+        let res;
+        let updatedRecord;
 
-      if (isEdit) {
-        if (!data?._id) throw new Error("Missing record id for update");
+        if (isEdit) {
+          if (!data?._id) throw new Error("Missing record id for update");
 
-        res = await fetch(`${baseUrl}/api/${ROUTE}/${data._id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ updates: data, user: user }),
-        });
+          res = await fetch(`${baseUrl}/api/${ROUTE}/${data._id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ updates: data, user: user }),
+          });
 
-        if (!res.ok) throw new Error("נכשל עדכון שורה");
-        updatedRecord = await res.json();
-        setRows((prev) =>
-          prev.map((r) => (r._id === data._id ? updatedRecord.data : r))
-        );
+          if (!res.ok) throw new Error("נכשל עדכון שורה");
+          updatedRecord = await res.json();
+          setRows((prev) =>
+            prev.map((r) => (r._id === data._id ? updatedRecord.data : r)),
+          );
+
+          setSnackbar({
+            open: true,
+            message: "הרשומה עודכנה בהצלחה!",
+            severity: "success",
+          });
+        } else {
+          res = await fetch(`${baseUrl}/api/${ROUTE}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          });
+
+          if (!res.ok) throw new Error("נכשל הוספת שורה");
+          updatedRecord = await res.json();
+
+          setRows((prev) => [...prev, updatedRecord]);
+
+          setSnackbar({
+            open: true,
+            message: "הרשומה נוספה בהצלחה!",
+            severity: "success",
+          });
+        }
+
+        setOpen(false);
+      } catch (err) {
+        console.error(err);
 
         setSnackbar({
           open: true,
-          message: "הרשומה עודכנה בהצלחה!",
-          severity: "success",
-        });
-      } else {
-        res = await fetch(`${baseUrl}/api/${ROUTE}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
-
-        if (!res.ok) throw new Error("נכשל הוספת שורה");
-        updatedRecord = await res.json();
-
-        setRows((prev) => [...prev, updatedRecord]);
-
-        setSnackbar({
-          open: true,
-          message: "הרשומה נוספה בהצלחה!",
-          severity: "success",
+          message: err.message || "פעולה נכשלה",
+          severity: "error",
         });
       }
-
-      setOpen(false);
-    } catch (err) {
-      console.error(err);
-
-      setSnackbar({
-        open: true,
-        message: err.message || "פעולה נכשלה",
-        severity: "error",
-      });
-    }
-  }, [user]);
-
+    },
+    [user],
+  );
   const handleExportToExcel = useCallback(async () => {
     try {
       setExportLoading(true);
@@ -491,10 +639,14 @@ export default function RepairsPage() {
       });
 
       // Export only currently visible (non-action) columns
-      const exportColumns = visibleColumns.filter((c) => c !== "delete" && c !== "edit" && c !== "history");
+      const exportColumns = visibleColumns.filter(
+        (c) => c !== "delete" && c !== "edit" && c !== "history",
+      );
       params.set("columns", exportColumns.join(","));
 
-      const res = await fetch(`${baseUrl}/api/repairs/export/excel?${params.toString()}`);
+      const res = await fetch(
+        `${baseUrl}/api/repairs/export/excel?${params.toString()}`,
+      );
       if (!res.ok) throw new Error("נכשל ייצוא לאקסל");
 
       const blob = await res.blob();
@@ -555,7 +707,7 @@ export default function RepairsPage() {
       setEngineOptions([]);
       setEngineDialogOpen(true);
     },
-    [user, isAdmin, isManoiya]
+    [user, isAdmin, isManoiya],
   );
 
   const handleCloseEngineDialog = useCallback(() => {
@@ -599,7 +751,7 @@ export default function RepairsPage() {
             if (r._id === source._id) return source;
             if (r._id === target._id) return target;
             return r;
-          })
+          }),
         );
         setSnackbar({
           open: true,
@@ -611,7 +763,7 @@ export default function RepairsPage() {
         setRows((prev) =>
           prev
             .map((r) => (r._id === source._id ? source : r))
-            .concat(clone ? [clone] : [])
+            .concat(clone ? [clone] : []),
         );
         setSnackbar({
           open: true,
@@ -659,7 +811,9 @@ export default function RepairsPage() {
 
       // Admin → hard delete
       if (isAdmin) {
-        const confirmed = window.confirm("האם אתה בטוח שברצונך למחוק שורה זו לצמיתות?");
+        const confirmed = window.confirm(
+          "האם אתה בטוח שברצונך למחוק שורה זו לצמיתות?",
+        );
         if (!confirmed) return;
 
         try {
@@ -690,7 +844,7 @@ export default function RepairsPage() {
       // Manoiya → soft delete (mark goingToBeDeleted = true)
       if (isManoiya) {
         const confirmed = window.confirm(
-          'האם אתה בטוח שברצונך לסמן שורה זו למחיקה?\nהשורה תוסתר מטבלת החט"כים עד שמנהל ימחק אותה לצמיתות.'
+          'האם אתה בטוח שברצונך לסמן שורה זו למחיקה?\nהשורה תוסתר מטבלת החט"כים עד שמנהל ימחק אותה לצמיתות.',
         );
         if (!confirmed) return;
 
@@ -726,7 +880,7 @@ export default function RepairsPage() {
         }
       }
     },
-    [isAdmin, isManoiya, isViewer, user]
+    [isAdmin, isManoiya, isViewer, user],
   );
 
   // ======================================================
@@ -752,11 +906,20 @@ export default function RepairsPage() {
         newCol.action = handleDelete;
       }
       if (col.field === "swapEngineSerial") {
-        newCol.action = isAdmin || isManoiya ? handleOpenEngineDialog : undefined;
+        newCol.action =
+          isAdmin || isManoiya ? handleOpenEngineDialog : undefined;
       }
       return newCol;
     });
-  }, [isViewer, isAdmin, isManoiya, handleOpenEdit, handleOpenHistory, handleDelete, handleOpenEngineDialog]);
+  }, [
+    isViewer,
+    isAdmin,
+    isManoiya,
+    handleOpenEdit,
+    handleOpenHistory,
+    handleDelete,
+    handleOpenEngineDialog,
+  ]);
 
   // visible columns
   const displayColumns = useMemo(() => {
@@ -821,7 +984,10 @@ export default function RepairsPage() {
           variant="contained"
           onClick={handleExportToExcel}
           disabled={exportLoading || rowsLoading.getRows}
-          sx={{ backgroundColor: "#1D6F42", "&:hover": { backgroundColor: "#155a35" } }}
+          sx={{
+            backgroundColor: "#1D6F42",
+            "&:hover": { backgroundColor: "#155a35" },
+          }}
         >
           {exportLoading ? "מייצא..." : "ייצוא לאקסל"}
         </Button>
@@ -913,7 +1079,7 @@ export default function RepairsPage() {
                 params.append("skip", "0");
                 params.append("limit", "20");
                 const res = await fetch(
-                  `${baseUrl}/api/${ROUTE}/unique/engineSerial?${params.toString()}`
+                  `${baseUrl}/api/${ROUTE}/unique/engineSerial?${params.toString()}`,
                 );
                 if (res.ok) {
                   const data = await res.json();
@@ -948,9 +1114,9 @@ export default function RepairsPage() {
             )}
           />
           <Typography variant="caption" sx={{ mt: 1, display: "block" }}>
-            אם המספר כבר קיים, המערכת תחליף בין שני מספרי המנוע.
-            אם זה מספר חדש, תיווצר רשומה חדשה עם הנתונים הנוכחיים, וברשומה
-            הישנה מספר הממסרת יימחק.
+            אם המספר כבר קיים, המערכת תחליף בין שני מספרי המנוע. אם זה מספר חדש,
+            תיווצר רשומה חדשה עם הנתונים הנוכחיים, וברשומה הישנה מספר הממסרת
+            יימחק.
           </Typography>
         </DialogContent>
         <DialogActions>

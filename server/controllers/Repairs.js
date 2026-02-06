@@ -398,9 +398,21 @@ const updateById = async (req, res) => {
       return res.status(404).json({ message: 'Repair not found' });
     }
 
-    // Add addedBy info to updates
+    // ✅ ולידציה של שינוע - אם שווה למנועיה, מאפסים אותו
+    const validatedUpdates = { ...updates };
+    
+    if (validatedUpdates.shinoa) {
+      const currentManoiya = validatedUpdates.manoiya || oldRepair.manoiya;
+      
+      if (validatedUpdates.shinoa === currentManoiya) {
+        validatedUpdates.shinoa = "";
+        console.log(`Shinoa reset: shinoa (${updates.shinoa}) equals manoiya (${currentManoiya})`);
+      }
+    }
+
+    // 🔥 Add addedBy info to updates
     const updatesWithUser = {
-      ...updates,
+      ...validatedUpdates,
       addedBy: {
         fullName: user.fullName,
         pid: user.pid
@@ -413,29 +425,34 @@ const updateById = async (req, res) => {
       { new: true }
     ).lean();
 
-    // Get changes for history logging
+    // 🔥 Get changes for history logging - BEFORE creating history
     const changes = getChanges(oldRepair, updatedRepair);
+    
+    console.log('🔍 Changes detected:', changes); // DEBUG
 
     if (changes.length > 0) {
-      await historyModel.create({
+      const historyEntry = await historyModel.create({
         repairId: id,
         changedBy: { fullName: user.fullName, pid: user.pid },
         changes,
         oldRepair: oldRepair,
         newRepair: updatedRepair
       });
+      console.log(`✅ Created history entry with ${changes.length} changes, ID: ${historyEntry._id}`);
+    } else {
+      console.log('⚠️ No changes detected - history not saved');
     }
 
     res.json({
       success: true,
-      data: updatedRepair
+      data: updatedRepair,
+      changesCount: changes.length // 🔥 Return this for debugging
     });
   } catch (err) {
     console.error("Update error:", err);
     res.status(500).json({ error: "Failed to update" });
   }
 };
-
 
 
 
@@ -484,7 +501,7 @@ const getHistory = async (req, res) => {
 
     const history = await historyModel.find({ repairId: id });
 
-    if (!history) {
+    if (!history || history.length === 0) {
       return res.status(404).json({ message: 'לא קיים היסטוריה על חט"כ זה' });
     }
 

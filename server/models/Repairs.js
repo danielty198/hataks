@@ -29,6 +29,9 @@ const RepairSchema = new mongoose.Schema({
   recivingBattalion: String,
   startWorkingDate: Date //Date
   ,
+  pca: String, // פק"ע
+  deactivationCertificate: String, // תעודת השבתה
+  shinoa: String, // שינוע
   forManoiya: String,
   performenceExpectation: String,
   detailsOfNonCompliance: String, // פירוט אי עמידה

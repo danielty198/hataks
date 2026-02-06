@@ -42,6 +42,9 @@ export const getDefaultFormData = () => {
     waitingHHType: "",
     detailsHH: "",
     michlalNeed: "",
+    pca: "",
+    deactivationCertificate: "",
+    shinoa: "",
     startWorkingDate: null,
     forManoiya: "",
     performenceExpectation: "",
@@ -169,7 +172,7 @@ export const hatakTypeOptions = [
   "אחר",
 ];
 
-export const manoiyaOptions = ["653", "651", "703", "674", "652", "אחר"];
+export const manoiyaOptions = ["653", "651", "703", "674", "652", "אחר", 'מש"א'];
 
 export const ogdotOptions = [
   "252",
