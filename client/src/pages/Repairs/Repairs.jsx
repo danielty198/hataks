@@ -114,6 +114,7 @@ export default function RepairsPage() {
   const [openHistoryDialog, setOpenHistoryModal] = useState(false);
   const [repairId, setRepairId] = useState();
   const [currentEngineHistory, setCurrentEngineHistory] = useState();
+  const [historyRefreshTrigger, setHistoryRefreshTrigger] = useState(0);
   const [triggerPaginationReset, setTriggerPaginationReset] = useState(false);
   const navigate = useNavigate();
   const [user] = useUser();
@@ -418,6 +419,10 @@ export default function RepairsPage() {
           message: "הרשומה עודכנה בהצלחה!",
           severity: "success",
         });
+        // Refresh history dialog if it's open for this repair
+        if (repairId && data._id === repairId) {
+          setHistoryRefreshTrigger((t) => t + 1);
+        }
       } else {
         res = await fetch(`${baseUrl}/api/${ROUTE}`, {
           method: "POST",
@@ -447,7 +452,7 @@ export default function RepairsPage() {
         severity: "error",
       });
     }
-  }, [user]);
+  }, [user, repairId]);
 
   const handleExportToExcel = useCallback(async () => {
     try {
@@ -626,6 +631,7 @@ export default function RepairsPage() {
           onClose={handleCloseHistory}
           repairId={repairId}
           currentEngineHistory={currentEngineHistory}
+          refreshTrigger={historyRefreshTrigger}
         />
         <FilterPanel
           columns={columnsConfig}

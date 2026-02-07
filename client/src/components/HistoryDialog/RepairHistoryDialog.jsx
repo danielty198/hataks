@@ -17,12 +17,19 @@ import EmptyState from './components/EmptyState';
 import LoadingState from './components/LoadingState';
 import ErrorState from './components/ErrorState';
 
-const RepairHistoryDialog = ({ open, onClose, repairId, currentEngineHistory }) => {
+const RepairHistoryDialog = ({ open, onClose, repairId, currentEngineHistory, refreshTrigger }) => {
   const [filters, setFilters] = useState(getInitialFilters());
   const { historyData, loading, error, refetch } = useRepairHistory(repairId, open);
   
   // Get distinct values from context for dynamic filter options
   const { distinctValues } = useDistinctValues();
+
+  // Refetch history when parent requests refresh (e.g. after saving repair from InsertModal)
+  React.useEffect(() => {
+    if (open && repairId && refreshTrigger != null && refreshTrigger > 0) {
+      refetch();
+    }
+  }, [refreshTrigger]);
 
   // Reset filters when dialog closes
   React.useEffect(() => {
