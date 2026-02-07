@@ -12,9 +12,9 @@ const RepairSchema = new mongoose.Schema({
   //   // enum: ['שע"מ', 'שבר'], 
   //   type: String
   // },
-  reciveDate: Date//Date
+  reciveDate: Date //Date
   ,
-  engineSerial: { type: String, unique: true, },
+  engineSerial: { type: String, unique: true },
   minseretSerial: String,
   hatakStatus: {
     type: String,
@@ -22,18 +22,29 @@ const RepairSchema = new mongoose.Schema({
   },
   problem: String,
   waitingHHType: [],
-  detailsHH: String,// פירוט חח
+  detailsHH: String, // פירוט חח
   michlalNeed: String,
   recivingDivision: String,
   recivingBrigade: String,
   recivingBattalion: String,
   startWorkingDate: Date //Date
   ,
+  pca: String, // פק"ע
+  deactivationCertificate: String, // תעודת השבתה
+  shinoa: String, // שינוע
   forManoiya: String,
   performenceExpectation: String,
   detailsOfNonCompliance: String, // פירוט אי עמידה
   intended: String,
-  addeBy: { fullName: String, pid: String }
+  addeBy: { fullName: String, pid: String },
+  // Marks rows that were "soft deleted" by מנועייה users.
+  // These rows are hidden from the main repairs table and shown
+  // only in the admin pending-deletion view.
+  goingToBeDeleted: {
+    type: Boolean,
+    default: false,
+    index: true,
+  },
 }, { timestamps: true });
 RepairSchema.index({ engineSerial: 1 })
 module.exports = { model: mongoose.model('Repair', RepairSchema), RepairSchema: RepairSchema }

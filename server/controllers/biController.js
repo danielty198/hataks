@@ -20,7 +20,7 @@ exports.getPieData = async (req, res) => {
     let { hatakTypes, manoiya } = req.query;
 
     // Ensure hatakTypes is an array
-    if (!hatakTypes ||hatakTypes.includes('הכל') ) {
+    if (!hatakTypes) {
       hatakTypes = [];
     } else if (!Array.isArray(hatakTypes)) {
       hatakTypes = [hatakTypes];
@@ -33,11 +33,15 @@ exports.getPieData = async (req, res) => {
 
     // Build match stage
     const matchStage = {};
+    
     if (hatakTypes.length > 0) {
       matchStage.hatakType = { $in: hatakTypes };
+      //console.log('Filtering by hatakTypes:', matchStage.hatakType);
     }
+    
     if (manoiya && manoiya.length > 0) {
       matchStage.manoiya = { $in: manoiya };
+      //console.log('Filtering by manoiya:', matchStage.manoiya);
     }
 
     // Aggregation pipeline
@@ -106,7 +110,6 @@ exports.getPieData = async (req, res) => {
     res.status(500).json({ message: 'שגיאה בטעינת נתוני עוגות', error: error.message });
   }
 };
-
 /**
  * GET /api/bi/table-data
  * Get complex table data aggregated by hatakType, manoiya, and hatakStatus
@@ -126,7 +129,7 @@ exports.getTableData = async (req, res) => {
         },
       },
     ];
-
+    
     const results = await Repair.aggregate(pipeline);
 
     // Get all unique values for structure

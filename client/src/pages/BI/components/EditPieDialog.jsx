@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -9,11 +9,11 @@ import {
   InputLabel,
   Select,
   MenuItem,
-} from '@mui/material';
-import { hatakTypeOptions } from '../../../assets';
+} from "@mui/material";
+import { hatakTypeOptions } from "../../../assets";
 
 const EditPieDialog = ({ open, currentType, onSave, onCancel }) => {
-  const [selectedType, setSelectedType] = useState('');
+  const [selectedType, setSelectedType] = useState("");
 
   useEffect(() => {
     if (open) {
@@ -24,7 +24,6 @@ const EditPieDialog = ({ open, currentType, onSave, onCancel }) => {
   const handleSave = () => {
     onSave(selectedType);
   };
-
   return (
     <Dialog open={open} onClose={onCancel}>
       <DialogTitle>בחר סוג חט"כ</DialogTitle>

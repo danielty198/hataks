@@ -16,6 +16,12 @@ export default function Sidebar() {
       roles: [], // visible to these roles
     },
     {
+      label: "חטכים למחיקה",
+      path: "/hataks-to-delete",
+      icon: "🗑️",
+      roles: ["admin"], // admin only (pending deletions)
+    },
+    {
       label: "BI",
       path: "/bi",
       icon: "📊",

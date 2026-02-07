@@ -3,6 +3,7 @@ import { Routes, Route, useNavigate } from "react-router-dom";
 import { Box, AppBar, Toolbar, Typography } from "@mui/material";
 import Sidebar from "./components/Sidebar";
 import Repairs from "./pages/Repairs/Repairs";
+import RepairsPendingDeletionPage from "./pages/Repairs/RepairsPendingDeletion";
 import BI from "./pages/BI";
 import '@fontsource/assistant/400.css';
 import '@fontsource/assistant/500.css';
@@ -19,9 +20,9 @@ function App() {
 
   const [user, setUser] = useUser();
   const navigate = useNavigate();
-useEffect(()=> {
-setUser({roles:['admin'],templates:[]})
-},[])
+  useEffect(() => {
+    setUser({ roles: ['admin'], templates: [] })
+  }, [])
   // useEffect(() => {
 
   //   const handleUser = async () => {
@@ -96,6 +97,16 @@ setUser({roles:['admin'],templates:[]})
             <Route path="/" element={<DistinctValuesProvider><Repairs /></DistinctValuesProvider>} />
             <Route path="/bi" element={<BI />} />
             <Route path="/hataks" element={<DistinctValuesProvider><Repairs /></DistinctValuesProvider>} />
+            <Route
+              path="/hataks-to-delete"
+              element={
+                <ProtectedRoute roleRequired="admin">
+                  <DistinctValuesProvider>
+                    <RepairsPendingDeletionPage />
+                  </DistinctValuesProvider>
+                </ProtectedRoute>
+              }
+            />
             <Route path="/users" element={<ProtectedRoute roleRequired='admin'><UserManagement /></ProtectedRoute>} />
           </Routes>
         </ProtectedUser>

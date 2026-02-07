@@ -86,6 +86,19 @@ const TimelineChangeItem = ({ historyItem }) => {
   const hasFullData = historyItem.oldRepair || historyItem.newRepair;
   const repairData = historyItem.newRepair || historyItem.oldRepair || {};
 
+
+  const fullname = historyItem?.changedBy?.fullname;
+  const pid = historyItem?.changedBy?.pid;
+
+  const label =
+    fullname && pid
+      ? `${fullname} ${pid}`
+      : fullname
+        ? fullname
+        : pid
+          ? pid
+          : "No data";
+
   return (
     <TimelineItem>
       <TimelineDot color={dotColor}>
@@ -107,7 +120,7 @@ const TimelineChangeItem = ({ historyItem }) => {
           </Typography>
           <Chip
             icon={<PersonIcon sx={{ fontSize: 16 }} />}
-            label={`${historyItem?.changedBy?.fullname}  ${historyItem?.changedBy?.pid}`}
+            label={label}
             size="small"
             variant="outlined"
             sx={{ height: 26 }}
