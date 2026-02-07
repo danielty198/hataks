@@ -319,6 +319,18 @@ export default function DatagridCustom({
             />,
           ];
         }
+        // generic swap-minseret column (for minseretSerial swap/update)
+        if (c.field === "swapMinseretSerial" || c.headerName === "החלף ממסרת") {
+          c.type = "actions";
+          c.getActions = (params) => [
+            <GridActionsCellItem
+              key="swapMinseretSerial"
+              icon={<SwapHorizIcon />}
+              label="SwapMinseretSerial"
+              onClick={() => c.action && c.action(params)}
+            />,
+          ];
+        }
         if (c.field === "hatakStatus") {
           c.cellClassName = (params) => {
             const value = params.value;

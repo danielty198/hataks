@@ -10,6 +10,7 @@ import '@fontsource/assistant/500.css';
 import { ASSETS_SERVICE_SERVER_PORT, clientPort, USER_SERVICE_CLIENT_PORT, USER_SERVICE_SERVER_PORT } from "./assets";
 
 import UserManagement from './pages/UserManagement/UserManagement'
+import SwitchRules from './pages/SwitchRules/SwitchRules'
 import ProtectedRoute from "./utils/ProtectedRoute";
 import ProtectedUser from "./utils/ProtectedUser";
 import useUser from "./contexts/UserContext";
@@ -108,6 +109,7 @@ function App() {
               }
             />
             <Route path="/users" element={<ProtectedRoute roleRequired='admin'><UserManagement /></ProtectedRoute>} />
+            <Route path="/switch-rules" element={<ProtectedRoute roleRequired="admin"><SwitchRules /></ProtectedRoute>} />
           </Routes>
         </ProtectedUser>
 

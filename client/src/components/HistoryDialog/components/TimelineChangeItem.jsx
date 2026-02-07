@@ -24,7 +24,7 @@ import {
   ValueChip,
 } from '../styled';
 import { fieldTranslations } from '../constants';
-import { getChangeColor, formatValue, formatTime } from '../utils';
+import { getChangeColor, formatValue, formatTime, filterMeaningfulChanges } from '../utils';
 
 // Group fields by category
 const fieldGroups = [
@@ -58,25 +58,34 @@ const fieldGroups = [
       'reciveDate',
       'startWorkingDate',
       'performenceExpectation',
+      'pca',
+      'shinoa',
     ],
   },
   {
     title: 'יעד',
     fields: ['intended'],
   },
+  {
+    title: 'אחר',
+    fields: ['detailsHH', 'detailsOfNonCompliance', 'deactivationCertificate'],
+  },
 ];
 
 const TimelineChangeItem = ({ historyItem }) => {
   const [expanded, setExpanded] = useState(false);
 
-  const mainChange = historyItem.changes[0];
+  // Hide no-op changes (e.g. ריק → ריק)
+  const meaningfulChanges = filterMeaningfulChanges(historyItem.changes || []);
+
+  const mainChange = meaningfulChanges[0];
   const dotColor = mainChange
     ? getChangeColor(mainChange.field, mainChange.newValue)
     : 'primary';
 
   // Create a map of changed fields for quick lookup
   const changesMap = new Map(
-    historyItem.changes.map((c) => [
+    meaningfulChanges.map((c) => [
       c.field,
       { oldValue: c.oldValue, newValue: c.newValue },
     ])
@@ -86,6 +95,9 @@ const TimelineChangeItem = ({ historyItem }) => {
   const hasFullData = historyItem.oldRepair || historyItem.newRepair;
   const repairData = historyItem.newRepair || historyItem.oldRepair || {};
 
+
+  // Don't render if all changes were no-ops (e.g. ריק → ריק)
+  if (meaningfulChanges.length === 0) return null;
 
   const fullname = historyItem?.changedBy?.fullname;
   const pid = historyItem?.changedBy?.pid;
@@ -129,9 +141,9 @@ const TimelineChangeItem = ({ historyItem }) => {
 
         <Divider sx={{ mb: 1.5 }} />
 
-        {/* Changes Summary */}
+        {/* Changes Summary - only meaningful changes (no ריק → ריק) */}
         <Box>
-          {historyItem.changes.map((change, changeIndex) => (
+          {meaningfulChanges.map((change, changeIndex) => (
             <ChangeRow key={changeIndex}>
               <Typography variant="body2" fontWeight={500} sx={{ minWidth: 80 }}>
                 {fieldTranslations[change.field] || change.field}:

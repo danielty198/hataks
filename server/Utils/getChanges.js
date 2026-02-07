@@ -1,3 +1,10 @@
+// Treat null, undefined, '' and empty array as equivalent "empty"
+function isEmpty(val) {
+  if (val === null || val === undefined || val === "") return true;
+  if (Array.isArray(val) && val.length === 0) return true;
+  return false;
+}
+
 function getChanges(oldDoc, newDoc) {
   const changes = [];
 
@@ -9,17 +16,15 @@ function getChanges(oldDoc, newDoc) {
 
     // Handle arrays (like waitingHHType)
     if (Array.isArray(oldValue) && Array.isArray(newValue)) {
-      // Sort and compare as strings
       const oldSorted = [...oldValue].sort().join(",");
       const newSorted = [...newValue].sort().join(",");
-
-      if (oldSorted !== newSorted) {
-        changes.push({
-          field: key,
-          oldValue: oldValue,
-          newValue: newValue,
-        });
-      }
+      // Skip if both empty or same
+      if (oldSorted === newSorted) continue;
+      changes.push({
+        field: key,
+        oldValue: oldValue,
+        newValue: newValue,
+      });
       continue;
     }
 
@@ -54,7 +59,8 @@ function getChanges(oldDoc, newDoc) {
       continue;
     }
 
-    // Handle primitives
+    // Handle primitives: skip when both are "empty" (null/undefined/'')
+    if (isEmpty(oldValue) && isEmpty(newValue)) continue;
     if (oldValue?.toString?.() !== newValue?.toString?.()) {
       changes.push({
         field: key,

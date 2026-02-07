@@ -33,6 +33,12 @@ export default function Sidebar() {
       icon: "👤",
       roles: ["admin"], // admin only
     },
+    {
+      label: "כללי החלפה",
+      path: "/switch-rules",
+      icon: "🔄",
+      roles: ["admin"], // admin only
+    },
   ];
 
   const visibleItems = menuItems.filter(item => {

@@ -80,6 +80,7 @@ const columnsConfig = [
     isEdit: true,
     type: "string",
   },
+  { field: "swapMinseretSerial", headerName: "החלף ממסרת", type: "actions" },
   {
     field: "hatakStatus",
     headerName: 'סטטוס חט"כ',
@@ -261,6 +262,17 @@ export default function RepairsPage() {
   const [newEngineSerial, setNewEngineSerial] = useState("");
   const [engineOptions, setEngineOptions] = useState([]);
   const [engineOptionsLoading, setEngineOptionsLoading] = useState(false);
+  const [engineOptionsHasMore, setEngineOptionsHasMore] = useState(false);
+  const [engineOptionsLoadingMore, setEngineOptionsLoadingMore] = useState(false);
+  const [minseretDialogOpen, setMinseretDialogOpen] = useState(false);
+  const [minseretDialogRow, setMinseretDialogRow] = useState(null);
+  const [newMinseretSerial, setNewMinseretSerial] = useState("");
+  const [minseretOptions, setMinseretOptions] = useState([]);
+  const [minseretOptionsLoading, setMinseretOptionsLoading] = useState(false);
+  const [minseretOptionsHasMore, setMinseretOptionsHasMore] = useState(false);
+  const [minseretOptionsLoadingMore, setMinseretOptionsLoadingMore] = useState(false);
+  const engineInputDebounceRef = React.useRef(null);
+  const minseretInputDebounceRef = React.useRef(null);
 
   // Fetch data function for CustomPagination
   console.log("pendingChanges:", pendingChanges);
@@ -734,7 +746,45 @@ export default function RepairsPage() {
     setEngineDialogOpen(false);
     setEngineDialogRow(null);
     setNewEngineSerial("");
+    setEngineOptionsHasMore(false);
+    if (engineInputDebounceRef.current) clearTimeout(engineInputDebounceRef.current);
   }, []);
+
+  const fetchEngineCompatibleOptions = useCallback(
+    async (sourceId, search, skip, append) => {
+      if (!sourceId) return;
+      const params = new URLSearchParams();
+      params.append("sourceId", sourceId);
+      params.append("field", "engineSerial");
+      params.append("search", search);
+      params.append("skip", String(skip));
+      params.append("limit", "100");
+      const res = await fetch(`${baseUrl}/api/${ROUTE}/compatible-for-swap?${params.toString()}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const values = data.values || [];
+      if (append) {
+        setEngineOptions((prev) => {
+          const seen = new Set(prev);
+          values.forEach((v) => seen.add(v));
+          return [...prev, ...values.filter((v) => !prev.includes(v))];
+        });
+      } else {
+        setEngineOptions(values);
+      }
+      setEngineOptionsHasMore(!!data.hasMore);
+    },
+    [],
+  );
+
+  React.useEffect(() => {
+    if (engineDialogOpen && engineDialogRow && engineDialogRow._id) {
+      setEngineOptionsLoading(true);
+      fetchEngineCompatibleOptions(engineDialogRow._id, "", 0, false).finally(() =>
+        setEngineOptionsLoading(false),
+      );
+    }
+  }, [engineDialogOpen, engineDialogRow, fetchEngineCompatibleOptions]);
 
   const handleConfirmEngineChange = useCallback(async () => {
     if (!engineDialogRow || !newEngineSerial.trim()) {
@@ -802,6 +852,130 @@ export default function RepairsPage() {
       });
     }
   }, [engineDialogRow, newEngineSerial, user, handleCloseEngineDialog]);
+
+  // ======================================================
+  // MINSERET SERIAL SWAP / UPDATE HANDLERS
+  // ======================================================
+  const handleOpenMinseretDialog = useCallback(
+    (params) => {
+      if (!user) return;
+      if (!isAdmin && !isManoiya) return;
+      setMinseretDialogRow(params.row);
+      setNewMinseretSerial("");
+      setMinseretOptions([]);
+      setMinseretDialogOpen(true);
+    },
+    [user, isAdmin, isManoiya],
+  );
+
+  const handleCloseMinseretDialog = useCallback(() => {
+    setMinseretDialogOpen(false);
+    setMinseretDialogRow(null);
+    setNewMinseretSerial("");
+    setMinseretOptionsHasMore(false);
+    if (minseretInputDebounceRef.current) clearTimeout(minseretInputDebounceRef.current);
+  }, []);
+
+  const fetchMinseretCompatibleOptions = useCallback(
+    async (sourceId, search, skip, append) => {
+      if (!sourceId) return;
+      const params = new URLSearchParams();
+      params.append("sourceId", sourceId);
+      params.append("field", "minseretSerial");
+      params.append("search", search);
+      params.append("skip", String(skip));
+      params.append("limit", "100");
+      const res = await fetch(`${baseUrl}/api/${ROUTE}/compatible-for-swap?${params.toString()}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const values = data.values || [];
+      if (append) {
+        setMinseretOptions((prev) => {
+          const seen = new Set(prev);
+          values.forEach((v) => seen.add(v));
+          return [...prev, ...values.filter((v) => !prev.includes(v))];
+        });
+      } else {
+        setMinseretOptions(values);
+      }
+      setMinseretOptionsHasMore(!!data.hasMore);
+    },
+    [],
+  );
+
+  React.useEffect(() => {
+    if (minseretDialogOpen && minseretDialogRow && minseretDialogRow._id) {
+      setMinseretOptionsLoading(true);
+      fetchMinseretCompatibleOptions(minseretDialogRow._id, "", 0, false).finally(() =>
+        setMinseretOptionsLoading(false),
+      );
+    }
+  }, [minseretDialogOpen, minseretDialogRow, fetchMinseretCompatibleOptions]);
+
+  const handleConfirmMinseretChange = useCallback(async () => {
+    if (!minseretDialogRow || !newMinseretSerial.trim()) {
+      setSnackbar({
+        open: true,
+        message: "יש להזין מספר ממסרת חדש",
+        severity: "error",
+      });
+      return;
+    }
+
+    try {
+      const res = await fetch(`${baseUrl}/api/${ROUTE}/change-minseret-serial`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sourceId: minseretDialogRow._id,
+          newMinseretSerial: newMinseretSerial.trim(),
+          user,
+        }),
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || "שגיאה בהחלפת מספר ממסרת");
+      }
+
+      const result = await res.json();
+
+      if (result.mode === "swap") {
+        const { source, target } = result.data || {};
+        setRows((prev) =>
+          prev.map((r) => {
+            if (r._id === source._id) return source;
+            if (r._id === target._id) return target;
+            return r;
+          }),
+        );
+        setSnackbar({
+          open: true,
+          message: "מספרי הממסרות הוחלפו בהצלחה",
+          severity: "success",
+        });
+      } else if (result.mode === "update") {
+        const { source } = result.data || {};
+        setRows((prev) =>
+          prev.map((r) => (r._id === source._id ? source : r)),
+        );
+        setSnackbar({
+          open: true,
+          message: "מספר הממסרת עודכן בהצלחה",
+          severity: "success",
+        });
+      }
+
+      handleCloseMinseretDialog();
+    } catch (err) {
+      console.error("Minseret change error:", err);
+      setSnackbar({
+        open: true,
+        message: err.message || "שגיאה בהחלפת מספר ממסרת",
+        severity: "error",
+      });
+    }
+  }, [minseretDialogRow, newMinseretSerial, user, handleCloseMinseretDialog]);
 
   // ======================================================
   // DELETE HANDLER (role-dependent)
@@ -929,6 +1103,10 @@ export default function RepairsPage() {
         newCol.action =
           isAdmin || isManoiya ? handleOpenEngineDialog : undefined;
       }
+      if (col.field === "swapMinseretSerial") {
+        newCol.action =
+          isAdmin || isManoiya ? handleOpenMinseretDialog : undefined;
+      }
       return newCol;
     });
   }, [
@@ -939,6 +1117,7 @@ export default function RepairsPage() {
     handleOpenHistory,
     handleDelete,
     handleOpenEngineDialog,
+    handleOpenMinseretDialog,
   ]);
 
   // visible columns
@@ -948,6 +1127,8 @@ export default function RepairsPage() {
       if (col.field === "delete" && isViewer) return false;
       if (col.field === "edit" && isViewer) return false;
       if (col.field === "swapEngineSerial" && !isAdmin && !isManoiya)
+        return false;
+      if (col.field === "swapMinseretSerial" && !isAdmin && !isManoiya)
         return false;
 
       return visibleColumns.includes(col.field) || col.type === "actions";
@@ -1087,44 +1268,53 @@ export default function RepairsPage() {
             options={engineOptions}
             value={newEngineSerial}
             onChange={(_, val) => setNewEngineSerial(val || "")}
-            onInputChange={async (_, val) => {
+            onInputChange={(_, val) => {
               setNewEngineSerial(val || "");
-              if (!val || !val.trim()) {
-                setEngineOptions([]);
-                return;
-              }
-              try {
+              if (engineInputDebounceRef.current) clearTimeout(engineInputDebounceRef.current);
+              if (!engineDialogRow?._id) return;
+              const search = (val || "").trim();
+              engineInputDebounceRef.current = setTimeout(() => {
                 setEngineOptionsLoading(true);
-                const params = new URLSearchParams();
-                params.append("search", val.trim());
-                params.append("skip", "0");
-                params.append("limit", "20");
-                const res = await fetch(
-                  `${baseUrl}/api/${ROUTE}/unique/engineSerial?${params.toString()}`,
-                );
-                if (res.ok) {
-                  const data = await res.json();
-                  setEngineOptions(data.values || []);
-                }
-              } catch (e) {
-                console.error("Failed to load engine options", e);
-              } finally {
-                setEngineOptionsLoading(false);
-              }
+                fetchEngineCompatibleOptions(engineDialogRow._id, search, 0, false)
+                  .catch((e) => console.error("Failed to load engine options", e))
+                  .finally(() => setEngineOptionsLoading(false));
+              }, 300);
             }}
             loading={engineOptionsLoading}
+            ListboxProps={{
+              onScroll: (e) => {
+                const el = e.target;
+                if (
+                  !engineOptionsHasMore ||
+                  engineOptionsLoadingMore ||
+                  !engineDialogRow?._id
+                )
+                  return;
+                if (el.scrollHeight - el.scrollTop <= el.clientHeight + 80) {
+                  setEngineOptionsLoadingMore(true);
+                  fetchEngineCompatibleOptions(
+                    engineDialogRow._id,
+                    (newEngineSerial || "").trim(),
+                    engineOptions.length,
+                    true,
+                  )
+                    .catch((e) => console.error("Load more engine options", e))
+                    .finally(() => setEngineOptionsLoadingMore(false));
+                }
+              },
+            }}
             renderInput={(params) => (
               <TextField
                 {...params}
                 autoFocus
                 margin="dense"
-                label="מספר מנוע חדש"
+                label={'מספר מנוע חדש (רק מתוך סוג חט"כ תואם)'}
                 fullWidth
                 InputProps={{
                   ...params.InputProps,
                   endAdornment: (
                     <>
-                      {engineOptionsLoading ? (
+                      {engineOptionsLoading || engineOptionsLoadingMore ? (
                         <CircularProgress color="inherit" size={20} />
                       ) : null}
                       {params.InputProps.endAdornment}
@@ -1143,6 +1333,88 @@ export default function RepairsPage() {
         <DialogActions>
           <Button onClick={handleCloseEngineDialog}>ביטול</Button>
           <Button onClick={handleConfirmEngineChange} variant="contained">
+            אישור
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Minseret serial swap/update dialog */}
+      <Dialog open={minseretDialogOpen} onClose={handleCloseMinseretDialog}>
+        <DialogTitle>החלפת מספר ממסרת</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            מספר ממסרת נוכחי:{" "}
+            <strong>{minseretDialogRow?.minseretSerial || ""}</strong>
+          </Typography>
+          <Autocomplete
+            freeSolo
+            options={minseretOptions}
+            value={newMinseretSerial}
+            onChange={(_, val) => setNewMinseretSerial(val || "")}
+            onInputChange={(_, val) => {
+              setNewMinseretSerial(val || "");
+              if (minseretInputDebounceRef.current) clearTimeout(minseretInputDebounceRef.current);
+              if (!minseretDialogRow?._id) return;
+              const search = (val || "").trim();
+              minseretInputDebounceRef.current = setTimeout(() => {
+                setMinseretOptionsLoading(true);
+                fetchMinseretCompatibleOptions(minseretDialogRow._id, search, 0, false)
+                  .catch((e) => console.error("Failed to load minseret options", e))
+                  .finally(() => setMinseretOptionsLoading(false));
+              }, 300);
+            }}
+            loading={minseretOptionsLoading}
+            ListboxProps={{
+              onScroll: (e) => {
+                const el = e.target;
+                if (
+                  !minseretOptionsHasMore ||
+                  minseretOptionsLoadingMore ||
+                  !minseretDialogRow?._id
+                )
+                  return;
+                if (el.scrollHeight - el.scrollTop <= el.clientHeight + 80) {
+                  setMinseretOptionsLoadingMore(true);
+                  fetchMinseretCompatibleOptions(
+                    minseretDialogRow._id,
+                    (newMinseretSerial || "").trim(),
+                    minseretOptions.length,
+                    true,
+                  )
+                    .catch((e) => console.error("Load more minseret options", e))
+                    .finally(() => setMinseretOptionsLoadingMore(false));
+                }
+              },
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                autoFocus
+                margin="dense"
+                label={'מספר ממסרת חדש (רק מתוך סוג חט"כ תואם)'}
+                fullWidth
+                InputProps={{
+                  ...params.InputProps,
+                  endAdornment: (
+                    <>
+                      {minseretOptionsLoading || minseretOptionsLoadingMore ? (
+                        <CircularProgress color="inherit" size={20} />
+                      ) : null}
+                      {params.InputProps.endAdornment}
+                    </>
+                  ),
+                }}
+              />
+            )}
+          />
+          <Typography variant="caption" sx={{ mt: 1, display: "block" }}>
+            אם המספר כבר קיים, המערכת תחליף בין שני מספרי הממסרת. אם זה מספר
+            חדש, ייעדכן מספר הממסרת ברשומה הנוכחית. רק רשומות מסוג חט&quot;כ תואם מוצגות.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseMinseretDialog}>ביטול</Button>
+          <Button onClick={handleConfirmMinseretChange} variant="contained">
             אישור
           </Button>
         </DialogActions>

@@ -2,6 +2,7 @@ const { model } = require('../models/Repairs');
 const mongoose = require("mongoose");
 const historyModel = require('../models/Repairs_History')
 const { getChanges } = require('../Utils/getChanges')
+const { getCompatibleHatakTypes } = require('./SwitchRules');
 const XLSX = require("xlsx");
 const formatDateForExcel = (date) => {
   if (!date) return null;
@@ -276,6 +277,82 @@ const getDistinctValuesPaged = async (req, res) => {
   }
 };
 
+/**
+ * GET /api/repairs/compatible-for-swap?sourceId=...&field=engineSerial|minseretSerial&search=&skip=0&limit=100
+ * Returns paginated distinct values for the field from repairs whose hatakType is in the same switch group as the source repair.
+ */
+const getCompatibleForSwap = async (req, res) => {
+  try {
+    const { sourceId, field, search = "", skip = "0", limit = "100" } = req.query;
+    if (!sourceId || !field) {
+      return res.status(400).json({ error: "sourceId and field are required" });
+    }
+    if (field !== "engineSerial" && field !== "minseretSerial") {
+      return res.status(400).json({ error: "field must be engineSerial or minseretSerial" });
+    }
+
+    const sourceRepair = await model.findById(sourceId).select("hatakType").lean();
+    if (!sourceRepair) {
+      return res.status(404).json({ error: "Source repair not found" });
+    }
+
+    const compatibleHatakTypes = await getCompatibleHatakTypes(sourceRepair.hatakType, field);
+    if (!compatibleHatakTypes || compatibleHatakTypes.length === 0) {
+      return res.json({
+        field,
+        search: String(search),
+        skip: 0,
+        limit: 100,
+        total: 0,
+        values: [],
+        hasMore: false,
+      });
+    }
+
+    const parsedSkip = Math.max(parseInt(skip, 10) || 0, 0);
+    const parsedLimit = Math.min(Math.max(parseInt(limit, 10) || 100, 1), 200);
+
+    const match = {
+      hatakType: { $in: compatibleHatakTypes },
+      [field]: { $ne: null, $ne: "" },
+    };
+    if (typeof search === "string" && search.trim().length > 0) {
+      match[field] = { $regex: search.trim(), $options: "i" };
+    }
+
+    const pipeline = [
+      { $match: match },
+      { $group: { _id: `$${field}` } },
+      { $sort: { _id: 1 } },
+      {
+        $facet: {
+          metadata: [{ $count: "total" }],
+          data: [{ $skip: parsedSkip }, { $limit: parsedLimit }],
+        },
+      },
+    ];
+
+    const [result] = await model.aggregate(pipeline).allowDiskUse(true);
+    const total = result?.metadata?.[0]?.total || 0;
+    const values = (result?.data || [])
+      .map((d) => d._id)
+      .filter((v) => v != null && v !== "");
+
+    res.json({
+      field,
+      search: String(search),
+      skip: parsedSkip,
+      limit: parsedLimit,
+      total,
+      values,
+      hasMore: parsedSkip + values.length < total,
+    });
+  } catch (err) {
+    console.error("getCompatibleForSwap error:", err);
+    res.status(500).json({ error: "Failed to fetch compatible values" });
+  }
+};
+
 // GET /api/repairs/export/excel?{filters...}&columns=a,b,c
 
 const fieldHeaderMap = {
@@ -539,6 +616,17 @@ const changeEngineSerial = async (req, res) => {
 
     // CASE 1: Swap
     if (existingTarget) {
+      const compatibleHatakTypes = await getCompatibleHatakTypes(sourceRepair.hatakType, "engineSerial");
+      if (!compatibleHatakTypes || compatibleHatakTypes.length === 0) {
+        return res.status(400).json({
+          error: "אין הגדרות החלפה עבור סוג חט\"כ זה. נא להגדיר בקבוצות החלפה.",
+        });
+      }
+      if (!compatibleHatakTypes.includes(existingTarget.hatakType)) {
+        return res.status(400).json({
+          error: `ניתן להחליף רק עם חט\"כ מאותו סוג. הרשומה הנבחרת היא מסוג "${existingTarget.hatakType || ""}".`,
+        });
+      }
       try {
         const tempEngineSerial = `__TEMP_${sourceRepair.engineSerial}_${Date.now()}`;
 
@@ -653,6 +741,143 @@ const changeEngineSerial = async (req, res) => {
   }
 };
 
+/**
+ * POST /api/repairs/change-minseret-serial
+ * Body: { sourceId, newMinseretSerial, user }
+ *
+ * Rules:
+ * - Only 'admin' or 'manoiya' roles may perform this action.
+ * - If newMinseretSerial already exists on another row → swap the two minseretSerial values.
+ * - If newMinseretSerial does NOT exist → update the source row to the new minseretSerial.
+ */
+const changeMinseretSerial = async (req, res) => {
+  try {
+    const { sourceId, newMinseretSerial, user } = req.body || {};
+
+    const sourceRepair = await model.findById(sourceId).lean();
+    if (!sourceRepair) {
+      return res.status(404).json({ error: "Source repair not found" });
+    }
+
+    const existingTarget = await model
+      .findOne({ minseretSerial: newMinseretSerial })
+      .lean();
+
+    // CASE 1: Swap
+    if (existingTarget) {
+      const compatibleHatakTypes = await getCompatibleHatakTypes(sourceRepair.hatakType, "minseretSerial");
+      if (!compatibleHatakTypes || compatibleHatakTypes.length === 0) {
+        return res.status(400).json({
+          error: "אין הגדרות החלפה עבור סוג חט\"כ זה. נא להגדיר בקבוצות החלפה.",
+        });
+      }
+      if (!compatibleHatakTypes.includes(existingTarget.hatakType)) {
+        return res.status(400).json({
+          error: `ניתן להחליף רק עם חט\"כ מאותו סוג. הרשומה הנבחרת היא מסוג "${existingTarget.hatakType || ""}".`,
+        });
+      }
+      try {
+        const tempMinseretSerial = `__TEMP_${sourceRepair.minseretSerial || ""}_${Date.now()}`;
+
+        await model.findByIdAndUpdate(sourceRepair._id, {
+          minseretSerial: tempMinseretSerial,
+          addedBy: { fullName: user.fullName, pid: user.pid },
+        });
+
+        const updatedTarget = await model
+          .findByIdAndUpdate(
+            existingTarget._id,
+            {
+              minseretSerial: sourceRepair.minseretSerial || "",
+              addedBy: { fullName: user.fullName, pid: user.pid },
+            },
+            { new: true }
+          )
+          .lean();
+
+        const updatedSource = await model
+          .findByIdAndUpdate(
+            sourceRepair._id,
+            {
+              minseretSerial: newMinseretSerial,
+              addedBy: { fullName: user.fullName, pid: user.pid },
+            },
+            { new: true }
+          )
+          .lean();
+
+        const sourceChanges = getChanges(sourceRepair, updatedSource);
+        if (sourceChanges.length > 0) {
+          await historyModel.create({
+            repairId: sourceRepair._id,
+            changedBy: { fullName: user.fullName, pid: user.pid },
+            changes: sourceChanges,
+            oldRepair: sourceRepair,
+            newRepair: updatedSource,
+          });
+        }
+
+        const targetChanges = getChanges(existingTarget, updatedTarget);
+        if (targetChanges.length > 0) {
+          await historyModel.create({
+            repairId: existingTarget._id,
+            changedBy: { fullName: user.fullName, pid: user.pid },
+            changes: targetChanges,
+            oldRepair: existingTarget,
+            newRepair: updatedTarget,
+          });
+        }
+
+        return res.json({
+          success: true,
+          mode: "swap",
+          data: { source: updatedSource, target: updatedTarget },
+        });
+      } catch (err) {
+        console.error("Minseret swap error:", err);
+        return res.status(500).json({ error: "Failed to swap minseret serials" });
+      }
+    }
+
+    // CASE 2: Update source to new value (no other row has it)
+    try {
+      const updatedSource = await model
+        .findByIdAndUpdate(
+          sourceId,
+          {
+            minseretSerial: newMinseretSerial,
+            addedBy: { fullName: user.fullName, pid: user.pid },
+          },
+          { new: true }
+        )
+        .lean();
+
+      const sourceChanges = getChanges(sourceRepair, updatedSource);
+      if (sourceChanges.length > 0) {
+        await historyModel.create({
+          repairId: sourceId,
+          changedBy: { fullName: user.fullName, pid: user.pid },
+          changes: sourceChanges,
+          oldRepair: sourceRepair,
+          newRepair: updatedSource,
+        });
+      }
+
+      return res.json({
+        success: true,
+        mode: "update",
+        data: { source: updatedSource },
+      });
+    } catch (err) {
+      console.error("Minseret update error:", err);
+      return res.status(500).json({ error: "Failed to update minseret serial" });
+    }
+  } catch (err) {
+    console.error("changeMinseretSerial error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
 module.exports = {
   updateById,
   getRows,
@@ -661,7 +886,9 @@ module.exports = {
   getHistory,
   getDistinctValues,
   getDistinctValuesPaged,
+  getCompatibleForSwap,
   exportToExcel,
   getAll,
   changeEngineSerial,
+  changeMinseretSerial,
 };  

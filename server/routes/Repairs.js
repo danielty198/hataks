@@ -14,7 +14,9 @@ router.get('/getEngines', controller.getDistinctEngineSerials)
 router.get('/getHistory/:id', controller.getHistory)
 router.get('/unique',controller.getDistinctValues)
 router.get('/unique/:field', controller.getDistinctValuesPaged)
+router.get("/compatible-for-swap", controller.getCompatibleForSwap);
 router.post('/change-engine-serial', controller.changeEngineSerial);
+router.post('/change-minseret-serial', controller.changeMinseretSerial);
 router.get("/:id", crud.getById);
 router.post("/", crud.create);
 router.put("/:id", crud.update);

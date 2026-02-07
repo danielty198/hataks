@@ -20,10 +20,12 @@ export const fieldTranslations = {
   startWorkingDate: "תאריך לפקודה",
   forManoiya: "מנועיה לפקודה",
   performenceExpectation: "צפי ביצוע",
+  detailsOfNonCompliance: "פירוט אי עמידה",
   intended: "מיועד ל?",
-
-
-
+  pca: 'פק"ע',
+  shinoa: "שינוע",
+  detailsHH: 'פירוט ח"ח',
+  deactivationCertificate: "תעודת השבתה",
 }
 
 // Status translations

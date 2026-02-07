@@ -57,6 +57,16 @@ export const formatValue = (value, field) => {
   return String(value);
 };
 
+// Filter out no-op changes (e.g. ריק → ריק) so they are not shown in history
+export const filterMeaningfulChanges = (changes, formatValueFn = formatValue) => {
+  if (!changes || !Array.isArray(changes)) return [];
+  return changes.filter((c) => {
+    const oldDisplay = formatValueFn(c.oldValue, c.field);
+    const newDisplay = formatValueFn(c.newValue, c.field);
+    return oldDisplay !== newDisplay;
+  });
+};
+
 // Format date for display (Israeli format with time)
 export const formatDate = (dateString) => {
   const date = new Date(dateString);
