@@ -26,6 +26,12 @@ const dateFields = ['reciveDate', 'startWorkingDate', 'updatedAt', 'createdAt'];
 // Format value for display
 export const formatValue = (value, field) => {
   if (value === null || value === undefined || value === '' || (Array.isArray(value) && value.length === 0)) return 'ריק';
+
+  // Special case: deletion flag in history
+  if (field === 'goingToBeDeleted' && typeof value === 'boolean') {
+    return value ? 'נמחק' : 'לא';
+  }
+
   if (typeof value === 'boolean') return value ? 'כן' : 'לא';
   if (field === 'price') return `₪${value}`;
   if (field === 'status' && statusTranslations[value]) return statusTranslations[value];

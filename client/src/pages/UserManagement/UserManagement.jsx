@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback, memo } from "react";
 import { Box, Typography, Button, Snackbar, Alert } from "@mui/material";
-import { baseUrl, colors, roles, SYSTEM, userServiceUrl } from "../../assets";
+import { baseUrl, colors, roles, manoiyaOptions, SYSTEM, userServiceUrl } from "../../assets";
 
 import DatagridCustom from "../../components/DatagridCustom";
 import UserInsertModal from "./UserInsertModal";
@@ -29,6 +29,13 @@ const columnsConfig = [
         return role ? role.label : val;
       });
     }
+  },
+  {
+    field: "manoiya",
+    headerName: "מנועייה",
+    isEdit: true,
+    type: "singleSelect",
+    valueOptions: [...manoiyaOptions.filter(o => o !== "אחר"), "אגד", 'חט"ל', "אטל", "אחר"],
   },
 
   // ACTIONS (callback injected later)

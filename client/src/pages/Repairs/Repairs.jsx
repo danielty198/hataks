@@ -244,6 +244,8 @@ export default function RepairsPage() {
   const [currentEngineHistory, setCurrentEngineHistory] = useState();
   const [historyRefreshTrigger, setHistoryRefreshTrigger] = useState(0);
   const [triggerPaginationReset, setTriggerPaginationReset] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [currentPageSize, setCurrentPageSize] = useState(15);
   const navigate = useNavigate();
   const [user] = useUser();
   const LAST_TEMPLATE_KEY = "lastTemplateId";
@@ -278,6 +280,8 @@ export default function RepairsPage() {
   console.log("pendingChanges:", pendingChanges);
   const handleFetchData = useCallback(
     async (page, pageSize) => {
+      setCurrentPage(page);
+      setCurrentPageSize(pageSize);
       setRowsLoading((prev) => ({ ...prev, getRows: true }));
       try {
         const params = new URLSearchParams();
@@ -815,26 +819,12 @@ export default function RepairsPage() {
       const result = await res.json();
 
       if (result.mode === "swap") {
-        const { source, target } = result.data || {};
-        setRows((prev) =>
-          prev.map((r) => {
-            if (r._id === source._id) return source;
-            if (r._id === target._id) return target;
-            return r;
-          }),
-        );
         setSnackbar({
           open: true,
           message: "מספרי המנועים הוחלפו בהצלחה",
           severity: "success",
         });
       } else if (result.mode === "clone") {
-        const { source, clone } = result.data || {};
-        setRows((prev) =>
-          prev
-            .map((r) => (r._id === source._id ? source : r))
-            .concat(clone ? [clone] : []),
-        );
         setSnackbar({
           open: true,
           message: "נוצרה רשומה חדשה עם מספר המנוע החדש",
@@ -842,7 +832,9 @@ export default function RepairsPage() {
         });
       }
 
+      // Close dialog immediately, then refetch in background
       handleCloseEngineDialog();
+      handleFetchData(currentPage, currentPageSize);
     } catch (err) {
       console.error("Engine change error:", err);
       setSnackbar({
@@ -851,7 +843,7 @@ export default function RepairsPage() {
         severity: "error",
       });
     }
-  }, [engineDialogRow, newEngineSerial, user, handleCloseEngineDialog]);
+  }, [engineDialogRow, newEngineSerial, user, handleCloseEngineDialog, handleFetchData, currentPage, currentPageSize]);
 
   // ======================================================
   // MINSERET SERIAL SWAP / UPDATE HANDLERS
@@ -941,24 +933,18 @@ export default function RepairsPage() {
       const result = await res.json();
 
       if (result.mode === "swap") {
-        const { source, target } = result.data || {};
-        setRows((prev) =>
-          prev.map((r) => {
-            if (r._id === source._id) return source;
-            if (r._id === target._id) return target;
-            return r;
-          }),
-        );
         setSnackbar({
           open: true,
           message: "מספרי הממסרות הוחלפו בהצלחה",
           severity: "success",
         });
+      } else if (result.mode === "clone") {
+        setSnackbar({
+          open: true,
+          message: "נוצרה רשומה חדשה עם מספר הממסרת החדש",
+          severity: "success",
+        });
       } else if (result.mode === "update") {
-        const { source } = result.data || {};
-        setRows((prev) =>
-          prev.map((r) => (r._id === source._id ? source : r)),
-        );
         setSnackbar({
           open: true,
           message: "מספר הממסרת עודכן בהצלחה",
@@ -966,7 +952,9 @@ export default function RepairsPage() {
         });
       }
 
+      // Close dialog immediately, then refetch in background
       handleCloseMinseretDialog();
+      handleFetchData(currentPage, currentPageSize);
     } catch (err) {
       console.error("Minseret change error:", err);
       setSnackbar({
@@ -975,7 +963,7 @@ export default function RepairsPage() {
         severity: "error",
       });
     }
-  }, [minseretDialogRow, newMinseretSerial, user, handleCloseMinseretDialog]);
+  }, [minseretDialogRow, newMinseretSerial, user, handleCloseMinseretDialog, handleFetchData, currentPage, currentPageSize]);
 
   // ======================================================
   // DELETE HANDLER (role-dependent)
@@ -1225,7 +1213,7 @@ export default function RepairsPage() {
           onFetchData={handleFetchData}
           initialPageSize={15}
           showPageSize={true}
-          pageSizeOptions={[10, 15, 25, 50, 100]}
+          pageSizeOptions={[10, 15, 25, 50, 100, 200 ,"הכל"]}
           debounceDelay={300}
           resetToPage1={triggerPaginationReset} // NEW PROP
           onResetComplete={handlePaginationResetComplete} // NEW PROP
@@ -1308,7 +1296,7 @@ export default function RepairsPage() {
                 {...params}
                 autoFocus
                 margin="dense"
-                label={'מספר מנוע חדש (רק מתוך סוג חט"כ תואם)'}
+                label="מספר מנוע חדש (ניתן להזין מספר חדש או לבחור קיים)"
                 fullWidth
                 InputProps={{
                   ...params.InputProps,
@@ -1391,7 +1379,7 @@ export default function RepairsPage() {
                 {...params}
                 autoFocus
                 margin="dense"
-                label={'מספר ממסרת חדש (רק מתוך סוג חט"כ תואם)'}
+                label="מספר ממסרת חדש (ניתן להזין מספר חדש או לבחור קיים)"
                 fullWidth
                 InputProps={{
                   ...params.InputProps,
@@ -1408,8 +1396,9 @@ export default function RepairsPage() {
             )}
           />
           <Typography variant="caption" sx={{ mt: 1, display: "block" }}>
-            אם המספר כבר קיים, המערכת תחליף בין שני מספרי הממסרת. אם זה מספר
-            חדש, ייעדכן מספר הממסרת ברשומה הנוכחית. רק רשומות מסוג חט&quot;כ תואם מוצגות.
+            אם המספר כבר קיים, המערכת תחליף בין שני מספרי הממסרת. אם זה מספר חדש,
+            תיווצר רשומה חדשה עם הנתונים הנוכחיים, וברשומה הישנה מספר המנוע
+            יימחק.
           </Typography>
         </DialogContent>
         <DialogActions>

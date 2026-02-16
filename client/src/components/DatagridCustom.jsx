@@ -31,7 +31,7 @@ export default function DatagridCustom({
   route,
   processRowUpdate,
   paginationOff,
-  loading, 
+  loading,
   setLoading,
 }) {
   const [rows, setRows] = useState([]);
@@ -315,6 +315,7 @@ export default function DatagridCustom({
               key="swapEngineSerial"
               icon={<SwapHorizIcon />}
               label="SwapEngineSerial"
+              disabled={!params.row?.engineSerial}
               onClick={() => c.action && c.action(params)}
             />,
           ];
@@ -327,6 +328,7 @@ export default function DatagridCustom({
               key="swapMinseretSerial"
               icon={<SwapHorizIcon />}
               label="SwapMinseretSerial"
+              disabled={!params.row?.minseretSerial}
               onClick={() => c.action && c.action(params)}
             />,
           ];

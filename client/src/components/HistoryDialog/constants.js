@@ -26,6 +26,7 @@ export const fieldTranslations = {
   shinoa: "שינוע",
   detailsHH: 'פירוט ח"ח',
   deactivationCertificate: "תעודת השבתה",
+  goingToBeDeleted: "נמחק",
 }
 
 // Status translations

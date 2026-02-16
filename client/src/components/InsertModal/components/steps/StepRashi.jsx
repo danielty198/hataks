@@ -88,6 +88,7 @@ const StepRashi = ({
             <InputField
               name="minseretSerial"
               label="מספר ממסרת"
+              required
               value={formData.minseretSerial}
               onChange={onChange}
             />

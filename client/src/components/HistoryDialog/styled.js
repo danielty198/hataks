@@ -68,7 +68,6 @@ export const ValueChip = styled(Chip)(({ theme, variant }) => ({
   ...(variant === 'old' && {
     backgroundColor: theme.palette.error.light + '30',
     color: theme.palette.error.dark,
-    textDecoration: 'line-through',
   }),
   ...(variant === 'new' && {
     backgroundColor: theme.palette.success.light + '30',

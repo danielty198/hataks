@@ -14,7 +14,7 @@ const RepairSchema = new mongoose.Schema({
   // },
   reciveDate: Date //Date
   ,
-  engineSerial: { type: String, unique: true },
+  engineSerial: { type: String },
   minseretSerial: String,
   hatakStatus: {
     type: String,

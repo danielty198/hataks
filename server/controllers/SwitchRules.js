@@ -116,6 +116,8 @@ const getCompatibleHatakTypes = async (hatakType, field) => {
     .find({ [flag]: true, hatakTypes: hatakType })
     .lean();
   const compatible = new Set();
+  // Always allow swapping with the same hatakType, even if it's not in any group
+  compatible.add(hatakType);
   rules.forEach((r) => r.hatakTypes.forEach((t) => compatible.add(t)));
   return Array.from(compatible);
 };

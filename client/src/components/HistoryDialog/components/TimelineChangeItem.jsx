@@ -15,6 +15,7 @@ import {
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
   FiberManualRecord as DotIcon,
+  ContentCopy as CopyIcon,
 } from '@mui/icons-material';
 import {
   TimelineItem,
@@ -101,7 +102,7 @@ const TimelineChangeItem = ({ historyItem }) => {
 
   const fullname = historyItem?.changedBy?.fullname;
   const pid = historyItem?.changedBy?.pid;
-
+  const date = new Date()
   const label =
     fullname && pid
       ? `${fullname} ${pid}`
@@ -118,6 +119,31 @@ const TimelineChangeItem = ({ historyItem }) => {
       </TimelineDot>
 
       <ChangeCard elevation={0}>
+        {/* Copied From Indicator */}
+        {historyItem.copiedFrom && (
+          <Box
+            sx={{
+              mb: 1.5,
+              p: 1.5,
+              borderRadius: 1,
+              backgroundColor: 'rgba(33, 150, 243, 0.08)',
+              border: '1px solid',
+              borderColor: 'rgba(33, 150, 243, 0.3)',
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <CopyIcon sx={{ fontSize: 16, color: '#1976d2' }} />
+              <Typography variant="caption" sx={{ color: '#1976d2', fontWeight: 600 }}>
+                היסטוריה מועתקת מחט"כ קודם בתאריך {date.getMonth() + 1}/{date.getDate()}/{date.getFullYear()}
+              </Typography>
+            </Box>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5, pr: 3 }}>
+              מנוע: {historyItem.copiedFrom.engineSerial || 'לא ידוע'}
+              {historyItem.copiedFrom.minseretSerial && ` | ממסרת: ${historyItem.copiedFrom.minseretSerial}`}
+            </Typography>
+          </Box>
+        )}
+
         {/* Time and User */}
         <Box
           sx={{

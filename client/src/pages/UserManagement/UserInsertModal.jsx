@@ -11,16 +11,17 @@ import {
     Box,
     Chip
 } from "@mui/material";
-import { baseUrl, roles, SYSTEM, userServiceUrl } from "../../assets";
+import { baseUrl, roles, manoiyaOptions, SYSTEM, userServiceUrl } from "../../assets";
 
 export default function UserInsertModal({ open, onClose, onSubmit, editData, ROUTE, rows }) {
-    const [formData, setFormData] = useState({ pid: "", role: [] });
+    const manoiyaFullOptions = [...manoiyaOptions.filter(o => o !== "אחר"), "אגד", 'חט"ל', "אטל", "אחר"];
+    const [formData, setFormData] = useState({ pid: "", role: [], manoiya: "" });
     const [pidOptions, setPidOptions] = useState([]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
 
-        setFormData({ pid: "", role: [] });
+        setFormData({ pid: "", role: [], manoiya: "" });
 
     }, [open]);
 
@@ -103,6 +104,18 @@ export default function UserInsertModal({ open, onClose, onSubmit, editData, ROU
                         {roles?.map(el => {
                             return <MenuItem key={el.value} name={el.value} value={el.value}>{el.label}</MenuItem>
                         })}
+                    </TextField>
+
+                    <TextField
+                        select
+                        label="מנועייה"
+                        value={formData.manoiya}
+                        onChange={(e) => handleChange('manoiya', e.target.value)}
+                        fullWidth
+                    >
+                        {manoiyaFullOptions.map(option => (
+                            <MenuItem key={option} value={option}>{option}</MenuItem>
+                        ))}
                     </TextField>
                 </Box>
             </DialogContent>

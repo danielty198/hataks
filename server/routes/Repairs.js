@@ -8,6 +8,7 @@ const crud = new CrudOperations(model);
 
 router.get("/", controller.getRows);
 router.get("/all", controller.getAll);
+router.get("/docAmount", controller.getDocAmount)
 router.get("/export/excel", controller.exportToExcel);
 router.get('/getByEngine/:engine', controller.getByEngine)
 router.get('/getEngines', controller.getDistinctEngineSerials)

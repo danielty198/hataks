@@ -96,6 +96,12 @@ const getRows = async (req, res) => {
       matchStage.goingToBeDeleted = { $ne: true };
     }
 
+    // By default, hide "נופק" (issued) repairs since they are no longer in the garage.
+    // Only when an explicit hatakStatus filter is provided do we override this.
+    if (typeof filters.hatakStatus === "undefined") {
+      matchStage.hatakStatus = { $ne: "נופק" };
+    }
+
     // Use facet to run count and data queries in parallel within one aggregation
 
     const pipeline = [];
@@ -477,10 +483,10 @@ const updateById = async (req, res) => {
 
     // ✅ ולידציה של שינוע - אם שווה למנועיה, מאפסים אותו
     const validatedUpdates = { ...updates };
-    
+
     if (validatedUpdates.shinoa) {
       const currentManoiya = validatedUpdates.manoiya || oldRepair.manoiya;
-      
+
       if (validatedUpdates.shinoa === currentManoiya) {
         validatedUpdates.shinoa = "";
         console.log(`Shinoa reset: shinoa (${updates.shinoa}) equals manoiya (${currentManoiya})`);
@@ -504,7 +510,7 @@ const updateById = async (req, res) => {
 
     // 🔥 Get changes for history logging - BEFORE creating history
     const changes = getChanges(oldRepair, updatedRepair);
-    
+
     console.log('🔍 Changes detected:', changes); // DEBUG
 
     if (changes.length > 0) {
@@ -531,6 +537,16 @@ const updateById = async (req, res) => {
   }
 };
 
+const getDocAmount = async (req, res) => {
+  try {
+    const count = await model.countDocuments(); // counts all documents
+
+    res.json({ count });
+  } catch (error) {
+    console.error('Error counting documents:', error);
+    res.status(500).json({ error: 'Failed to count documents' });
+  }
+};
 
 
 // Function to get all distinct engineSerial values from the Repair collection
@@ -704,6 +720,27 @@ const changeEngineSerial = async (req, res) => {
 
       const newRepair = await model.create(clonedData);
 
+      // Copy all history from source repair to new repair
+      const sourceHistory = await historyModel.find({ repairId: sourceId }).lean();
+      if (sourceHistory && sourceHistory.length > 0) {
+        const copiedHistoryEntries = sourceHistory.map((historyEntry) => ({
+          repairId: newRepair._id,
+          changedBy: historyEntry.changedBy,
+          oldRepair: historyEntry.oldRepair,
+          newRepair: historyEntry.newRepair,
+          changes: historyEntry.changes,
+          copiedFrom: {
+            repairId: sourceId,
+            engineSerial: sourceRepair.engineSerial,
+            minseretSerial: sourceRepair.minseretSerial,
+            copiedAt: new Date(),
+          },
+          createdAt: historyEntry.createdAt,
+        }));
+        await historyModel.insertMany(copiedHistoryEntries);
+        console.log(`✅ Copied ${copiedHistoryEntries.length} history entries to new repair ${newRepair._id}`);
+      }
+
       const updatedSource = await model
         .findByIdAndUpdate(
           sourceId,
@@ -839,13 +876,43 @@ const changeMinseretSerial = async (req, res) => {
       }
     }
 
-    // CASE 2: Update source to new value (no other row has it)
+    // CASE 2: Clone (create new repair with new minseret, keep engine serial)
     try {
+      const clonedData = {
+        ...sourceRepair,
+        _id: undefined,
+        minseretSerial: newMinseretSerial,
+        // engineSerial will be copied from sourceRepair via spread
+      };
+
+      const newRepair = await model.create(clonedData);
+
+      // Copy all history from source repair to new repair
+      const sourceHistory = await historyModel.find({ repairId: sourceId }).lean();
+      if (sourceHistory && sourceHistory.length > 0) {
+        const copiedHistoryEntries = sourceHistory.map((historyEntry) => ({
+          repairId: newRepair._id,
+          changedBy: historyEntry.changedBy,
+          oldRepair: historyEntry.oldRepair,
+          newRepair: historyEntry.newRepair,
+          changes: historyEntry.changes,
+          copiedFrom: {
+            repairId: sourceId,
+            engineSerial: sourceRepair.engineSerial,
+            minseretSerial: sourceRepair.minseretSerial,
+            copiedAt: new Date(),
+          },
+          createdAt: historyEntry.createdAt,
+        }));
+        await historyModel.insertMany(copiedHistoryEntries);
+        console.log(`✅ Copied ${copiedHistoryEntries.length} history entries to new repair ${newRepair._id}`);
+      }
+
       const updatedSource = await model
         .findByIdAndUpdate(
           sourceId,
           {
-            minseretSerial: newMinseretSerial,
+            engineSerial: "",
             addedBy: { fullName: user.fullName, pid: user.pid },
           },
           { new: true }
@@ -865,12 +932,12 @@ const changeMinseretSerial = async (req, res) => {
 
       return res.json({
         success: true,
-        mode: "update",
-        data: { source: updatedSource },
+        mode: "clone",
+        data: { source: updatedSource, clone: newRepair },
       });
     } catch (err) {
-      console.error("Minseret update error:", err);
-      return res.status(500).json({ error: "Failed to update minseret serial" });
+      console.error("Minseret clone error:", err);
+      return res.status(500).json({ error: "Failed to clone repair with new minseret" });
     }
   } catch (err) {
     console.error("changeMinseretSerial error:", err);
@@ -879,6 +946,7 @@ const changeMinseretSerial = async (req, res) => {
 };
 
 module.exports = {
+  getDocAmount,
   updateById,
   getRows,
   getDistinctEngineSerials,

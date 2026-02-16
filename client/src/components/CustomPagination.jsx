@@ -2,8 +2,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Pagination, Box, Select, MenuItem, FormControl, InputLabel, Typography } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
+import { baseUrl } from '../assets';
 
-const CustomPagination = ({ 
+const CustomPagination = ({
   rowsCount,
   onFetchData,
   initialPageSize = 15,
@@ -14,23 +15,24 @@ const CustomPagination = ({
   onResetComplete, // NEW PROP - callback after reset
 }) => {
   const [searchParams, setSearchParams] = useSearchParams();
-  
+
   const urlPage = parseInt(searchParams.get('page')) || 1;
   const urlPageSize = parseInt(searchParams.get('pageSize')) || initialPageSize;
-  
+
   const [paginationModel, setPaginationModel] = useState({
     page: urlPage - 1,
     pageSize: urlPageSize,
   });
 
   const debounceTimerRef = useRef(null);
+  const [isShowAll, setIsShowAll] = useState(false);
   const totalPages = Math.ceil(rowsCount / paginationModel.pageSize);
 
   // Watch for URL changes (browser back/forward)
   useEffect(() => {
     const currentUrlPage = parseInt(searchParams.get('page')) || 1;
     const currentUrlPageSize = parseInt(searchParams.get('pageSize')) || initialPageSize;
-    
+
     if (currentUrlPage - 1 !== paginationModel.page || currentUrlPageSize !== paginationModel.pageSize) {
       setPaginationModel({
         page: currentUrlPage - 1,
@@ -83,10 +85,33 @@ const CustomPagination = ({
   };
 
   const handlePageSizeChange = (event) => {
-    setPaginationModel({
-      page: 0,
-      pageSize: event.target.value
-    });
+    const value = event.target.value;
+    if (value === "הכל") {
+      setIsShowAll(true);
+      fetch(`${baseUrl}/api/repairs/docAmount`)
+        .then(res => {
+          if (!res.ok) throw new Error();
+          return res.json();
+        })
+        .then(data => {
+          setPaginationModel({
+            page: 0,
+            pageSize: data.count || 1000,
+          });
+        })
+        .catch(() => {
+          setPaginationModel({
+            page: 0,
+            pageSize: 1000,
+          });
+        });
+    } else {
+      setIsShowAll(false);
+      setPaginationModel({
+        page: 0,
+        pageSize: value,
+      });
+    }
   };
 
   return (
@@ -103,7 +128,7 @@ const CustomPagination = ({
         <FormControl size="small" sx={{ minWidth: 140 }}>
           <InputLabel>שורות בעמוד</InputLabel>
           <Select
-            value={paginationModel.pageSize}
+            value={isShowAll ? "הכל" : paginationModel.pageSize}
             label="שורות בעמוד"
             onChange={handlePageSizeChange}
           >
@@ -113,10 +138,10 @@ const CustomPagination = ({
           </Select>
         </FormControl>
       )}
-      
+
       <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
-        {rowsCount === 0 
-          ? 'אין שורות' 
+        {rowsCount === 0
+          ? 'אין שורות'
           : `${paginationModel.page * paginationModel.pageSize + 1}-${Math.min((paginationModel.page + 1) * paginationModel.pageSize, rowsCount)} מתוך ${rowsCount}`
         }
       </Typography>

@@ -16,7 +16,7 @@ const repairObject = {
   },
   reciveDate: String//Date
   ,
-  engineSerial: { type: String, required: true, unique: true, },
+  engineSerial: { type: String,  },
   minseretSerial: String,
   hatakStatus: {
     type: String,
@@ -63,6 +63,16 @@ const repairHistorySchema = new mongoose.Schema(
         },
       },
     ],
+    // Flag to mark history entries that were copied from another repair
+    copiedFrom: {
+      repairId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Repair',
+      },
+      engineSerial: String,
+      minseretSerial: String,
+      copiedAt: Date,
+    },
   },
   { timestamps: true }
 );
