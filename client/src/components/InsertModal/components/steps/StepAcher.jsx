@@ -2,19 +2,17 @@ import React from "react";
 import { Fade, Box } from "@mui/material";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import FormCard from "../FormCard";
-import { SelectField, DateField, InputField } from "../FormFields";
+import { SelectField, InputField } from "../FormFields";
 import { FieldsRow } from "../../styles/styledComponents";
 import {
-  intendedOptions,
   manoiyaOptions,
   waitingHHTypeOptions,
-  michlalNeedOptions,
-  performenceExpectationOptions,
   waitingHHTypeRequiredString,
+  engineFaultBankOptions,
+  minseretFaultBankOptions,
 } from "../../../../assets";
 
 const StepAcher = ({ formData, errors = {}, onChange }) => {
-  // Check if waitingHHType is required based on hatakStatus
   const isWaitingHHTypeRequired =
     formData.hatakStatus === waitingHHTypeRequiredString;
 
@@ -46,51 +44,63 @@ const StepAcher = ({ formData, errors = {}, onChange }) => {
               disable={formData.waitingHHType?.includes("אחר") ? false : true}
             />
             <SelectField
-              name="michlalNeed"
-              label="צריכת מכלל"
-              options={michlalNeedOptions}
-              value={formData.michlalNeed}
-              onChange={onChange}
-            />
-            <DateField
-              name="startWorkingDate"
-              label="תאריך לפקודה"
-              value={formData.startWorkingDate}
-              onChange={onChange}
-            />
-
-            <SelectField
-              name="forManoiya"
-              label="מנועיה לפקודה"
+              name="shinoa"
+              label="שינוע"
               options={manoiyaOptions}
-              value={formData.forManoiya}
+              value={formData.shinoa}
               onChange={onChange}
             />
-
-            <SelectField
-              name="performenceExpectation"
-              label="צפי ביצוע"
-              options={performenceExpectationOptions}
-              value={formData.performenceExpectation}
+            <InputField name="pca" label='פק"ע' value={formData.pca || ""} onChange={onChange} />
+            <InputField
+              name="outgoingEngine"
+              label="מנוע יוצא"
+              value={formData.outgoingEngine || ""}
               onChange={onChange}
             />
             <InputField
-              name="detailsOfNonCompliance"
-              label="פירוט אי עמידה"
-              options={[]}
-              value={formData.detailsOfNonCompliance || ""}
+              name="shamOutgoingEngine"
+              label='שע"מ מנוע יוצא'
+              value={formData.shamOutgoingEngine || ""}
               onChange={onChange}
-              disable={formData.performenceExpectation === "לא" ? false : true}
+            />
+            <InputField
+              name="outgoingMinseret"
+              label="ממסרת יוצאת"
+              value={formData.outgoingMinseret || ""}
+              onChange={onChange}
+            />
+            <InputField
+              name="shamOutgoingMinseret"
+              label='שע"מ ממסרת יוצאת'
+              value={formData.shamOutgoingMinseret || ""}
+              onChange={onChange}
             />
             <SelectField
-              name="intended"
-              label="מתוכנן ל"
-              options={intendedOptions}
-              value={formData.intended}
+              name="engineFaultBank"
+              label="בנק תקלות מנוע"
+              options={engineFaultBankOptions}
+              value={formData.engineFaultBank}
               onChange={onChange}
             />
-            <InputField name = "pca" label='פק"ע' value={formData.pca || ""} onChange={onChange} />
-            <InputField name = "deactivationCertificate" label='תעודת השבתה' value={formData.deactivationCertificate || ""} onChange={onChange} />
+            <SelectField
+              name="minseretFaultBank"
+              label="בנק תקלות ממסרת"
+              options={minseretFaultBankOptions}
+              value={formData.minseretFaultBank}
+              onChange={onChange}
+            />
+            <InputField
+              name="engineDeactivationNumber"
+              label="מספר השבתה מנוע"
+              value={formData.engineDeactivationNumber || ""}
+              onChange={onChange}
+            />
+            <InputField
+              name="minseretDeactivationNumber"
+              label="מספר השבתה ממסרת"
+              value={formData.minseretDeactivationNumber || ""}
+              onChange={onChange}
+            />
           </FieldsRow>
         </FormCard>
       </Box>

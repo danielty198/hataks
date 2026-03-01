@@ -23,15 +23,24 @@ const RepairSchema = new mongoose.Schema({
   problem: String,
   waitingHHType: [],
   detailsHH: String, // פירוט חח
-  michlalNeed: String,
   recivingDivision: String,
   recivingBrigade: String,
   recivingBattalion: String,
   startWorkingDate: Date //Date
   ,
   pca: String, // פק"ע
-  deactivationCertificate: String, // תעודת השבתה
   shinoa: String, // שינוע
+  shamEngine: String, // שע"מ מנוע
+  shamMinseret: String, // שע"מ ממסרת
+  actuallyChecked: String, // מה נבדק בפועל
+  outgoingEngine: String, // מנוע יוצא
+  shamOutgoingEngine: String, // שע"מ מנוע יוצא
+  outgoingMinseret: String, // ממסרת יוצאת
+  shamOutgoingMinseret: String, // שע"מ ממסרת יוצאת
+  engineFaultBank: String, // בנק תקלות מנוע
+  minseretFaultBank: String, // בנק תקלות ממסרת
+  engineDeactivationNumber: String, // מספר השבתה מנוע
+  minseretDeactivationNumber: String, // מספר השבתה ממסרת
   forManoiya: String,
   performenceExpectation: String,
   detailsOfNonCompliance: String, // פירוט אי עמידה

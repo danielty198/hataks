@@ -377,7 +377,6 @@ const fieldHeaderMap = {
   problem: "פירוט תקלה",
   waitingHHType: "סוג ח\"ח ממתין",
   detailsHH: "פירוט ח\"ח",
-  michlalNeed: "צריכת מכלל",
   recivingDivision: "אוגדה מקבלת",
   recivingBrigade: "חטיבה מקבלת",
   recivingBattalion: "גדוד מקבל",
@@ -386,6 +385,19 @@ const fieldHeaderMap = {
   performenceExpectation: "צפי ביצוע",
   detailsOfNonCompliance: "פירוט אי עמידה",
   intended: "מיועד ל?",
+  pca: "פק\"ע",
+  shinoa: "שינוע",
+  shamEngine: "שע\"מ מנוע",
+  shamMinseret: "שע\"מ ממסרת",
+  actuallyChecked: "מה נבדק בפועל",
+  outgoingEngine: "מנוע יוצא",
+  shamOutgoingEngine: "שע\"מ מנוע יוצא",
+  outgoingMinseret: "ממסרת יוצאת",
+  shamOutgoingMinseret: "שע\"מ ממסרת יוצאת",
+  engineFaultBank: "בנק תקלות מנוע",
+  minseretFaultBank: "בנק תקלות ממסרת",
+  engineDeactivationNumber: "מספר השבתה מנוע",
+  minseretDeactivationNumber: "מספר השבתה ממסרת",
   updatedAt: "עודכן אחרון",
   history: "היסטוריה",
   edit: "ערוך",
@@ -458,6 +470,30 @@ const exportToExcel = async (req, res) => {
 };
 
 
+
+const createRepair = async (req, res) => {
+  try {
+    const { data, user } = req.body;
+
+    const newRepair = await model.create(data);
+
+    // Log creation in history
+    if (user) {
+      await historyModel.create({
+        repairId: newRepair._id,
+        changedBy: { fullName: user.fullName, pid: user.pid },
+        changes: [{ field: "נוצר", oldValue: null, newValue: "רשומה חדשה" }],
+        oldRepair: null,
+        newRepair: newRepair.toObject(),
+      });
+    }
+
+    res.json(newRepair);
+  } catch (err) {
+    console.error("Create repair error:", err);
+    res.status(400).json({ error: "Failed to create repair" });
+  }
+};
 
 const updateById = async (req, res) => {
   try {
@@ -539,7 +575,12 @@ const updateById = async (req, res) => {
 
 const getDocAmount = async (req, res) => {
   try {
-    const count = await model.countDocuments(); // counts all documents
+    // Apply the same default filters as getRows so the count matches what the user actually sees
+    const filter = {
+      goingToBeDeleted: { $ne: true },
+      hatakStatus: { $ne: "נופק" },
+    };
+    const count = await model.countDocuments(filter);
 
     res.json({ count });
   } catch (error) {
@@ -664,12 +705,14 @@ const changeEngineSerial = async (req, res) => {
           )
           .lean();
 
-        // Step 3: final value to source
+        // Step 3: final value to source + copy outgoing engine data
         const updatedSource = await model
           .findByIdAndUpdate(
             sourceRepair._id,
             {
               engineSerial: newEngineSerial,
+              outgoingEngine: sourceRepair.engineSerial || "",
+              shamOutgoingEngine: sourceRepair.shamEngine || "",
               addedBy: { fullName: user.fullName, pid: user.pid },
             },
             { new: true }
@@ -746,6 +789,8 @@ const changeEngineSerial = async (req, res) => {
           sourceId,
           {
             minseretSerial: "",
+            outgoingEngine: sourceRepair.engineSerial || "",
+            shamOutgoingEngine: sourceRepair.shamEngine || "",
             addedBy: { fullName: user.fullName, pid: user.pid },
           },
           { new: true }
@@ -837,6 +882,8 @@ const changeMinseretSerial = async (req, res) => {
             sourceRepair._id,
             {
               minseretSerial: newMinseretSerial,
+              outgoingMinseret: sourceRepair.minseretSerial || "",
+              shamOutgoingMinseret: sourceRepair.shamMinseret || "",
               addedBy: { fullName: user.fullName, pid: user.pid },
             },
             { new: true }
@@ -913,6 +960,8 @@ const changeMinseretSerial = async (req, res) => {
           sourceId,
           {
             engineSerial: "",
+            outgoingMinseret: sourceRepair.minseretSerial || "",
+            shamOutgoingMinseret: sourceRepair.shamMinseret || "",
             addedBy: { fullName: user.fullName, pid: user.pid },
           },
           { new: true }
@@ -947,6 +996,7 @@ const changeMinseretSerial = async (req, res) => {
 
 module.exports = {
   getDocAmount,
+  createRepair,
   updateById,
   getRows,
   getDistinctEngineSerials,

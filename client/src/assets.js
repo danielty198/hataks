@@ -17,7 +17,7 @@ export const baseUrl =
       : `http://vm0099eged:${serverPort}`;
 export const userServiceUrl =
   clientPort === serverPort
-    ? ""
+    ? `http://vm0099eged:3005`
     : civil
       ? `http://localhost:3005`
       : `http://vm0099eged:3005`;
@@ -43,8 +43,18 @@ export const getDefaultFormData = () => {
     detailsHH: "",
     michlalNeed: "",
     pca: "",
-    deactivationCertificate: "",
     shinoa: "",
+    shamEngine: "",
+    shamMinseret: "",
+    actuallyChecked: "",
+    outgoingEngine: "",
+    shamOutgoingEngine: "",
+    outgoingMinseret: "",
+    shamOutgoingMinseret: "",
+    engineFaultBank: "",
+    minseretFaultBank: "",
+    engineDeactivationNumber: "",
+    minseretDeactivationNumber: "",
     startWorkingDate: null,
     forManoiya: "",
     performenceExpectation: "",
@@ -118,10 +128,13 @@ export const steps = [
   { label: "ראשי", description: "פרטים בסיסיים" },
   { label: "נתוני יחידה", description: "יחידה מוסרת ומקבלת" },
   { label: "אחר", description: "פרטים נוספים" },
+  { label: 'פקודת חט"כ', description: "פרטי פקודה" },
 ];
 
 export const tipulTypeOptions = ["שבר", 'שע"מ'];
-export const michlalNeedOptions = ["מנוע", "ממסרת", "מנוע + ממסרת"];
+
+export const engineFaultBankOptions = [];
+export const minseretFaultBankOptions = [];
 
 export const waitingHHTypeRequiredString = 'ממתין ח"ח';
 export const zadikOptions = [1, 2, 3, 4, 5, 6, 6, 7, 8, 9, 9, 0];

@@ -4,6 +4,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import SettingsIcon from '@mui/icons-material/Settings';
 import GroupsIcon from '@mui/icons-material/Groups';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 import { ColorlibConnector, ColorlibStepIconRoot } from '../styles/styledComponents';
 import { colors, steps } from '../../../assets';
 
@@ -11,6 +12,7 @@ const stepIcons = {
   1: <SettingsIcon sx={{ fontSize: 26 }} />,
   2: <GroupsIcon sx={{ fontSize: 26 }} />,
   3: <MoreHorizIcon sx={{ fontSize: 26 }} />,
+  4: <AssignmentIcon sx={{ fontSize: 26 }} />,
 };
 
 function ColorlibStepIcon(props) {

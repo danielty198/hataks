@@ -19,7 +19,7 @@ router.get("/compatible-for-swap", controller.getCompatibleForSwap);
 router.post('/change-engine-serial', controller.changeEngineSerial);
 router.post('/change-minseret-serial', controller.changeMinseretSerial);
 router.get("/:id", crud.getById);
-router.post("/", crud.create);
+router.post("/", controller.createRepair);
 router.put("/:id", crud.update);
 router.patch("/:id", controller.updateById);
 router.delete("/:id", crud.delete);

@@ -86,10 +86,23 @@ const StepRashi = ({
               optionsLoading={loadingForField("engineSerial")}
             />
             <InputField
+              name="shamEngine"
+              label='שע"מ מנוע'
+              value={formData.shamEngine || ""}
+              onChange={onChange}
+            />
+            <InputField
               name="minseretSerial"
               label="מספר ממסרת"
               required
               value={formData.minseretSerial}
+              onChange={onChange}
+              error={errors.minseretSerial}
+            />
+            <InputField
+              name="shamMinseret"
+              label='שע"מ ממסרת'
+              value={formData.shamMinseret || ""}
               onChange={onChange}
             />
             <SelectField
@@ -137,6 +150,15 @@ const StepRashi = ({
               onChange={onChange}
               required
               error={errors.problem}
+              multiline
+            />
+          </FullWidthField>
+          <FullWidthField>
+            <InputField
+              name="actuallyChecked"
+              label="מה נבדק בפועל"
+              value={formData.actuallyChecked || ""}
+              onChange={onChange}
               multiline
             />
           </FullWidthField>

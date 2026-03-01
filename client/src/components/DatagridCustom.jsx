@@ -34,8 +34,16 @@ export default function DatagridCustom({
   loading,
   setLoading,
 }) {
-  const [rows, setRows] = useState([]);
+  const [rows, setRows] = useState(Array.isArray(data) ? data : []);
+  const [prevData, setPrevData] = useState(data);
 
+  // Sync rows immediately when data prop changes (no useEffect delay)
+  if (data !== prevData) {
+    setPrevData(data);
+    if (data !== undefined) {
+      setRows(data);
+    }
+  }
 
   const [snack, setSnack] = useState({
     open: false,
@@ -43,13 +51,6 @@ export default function DatagridCustom({
     severity: "success",
     undo: null,
   });
-
-  // Sync rows when data prop changes
-  useEffect(() => {
-    if (data !== undefined) {
-      setRows(data);
-    }
-  }, [data]);
 
   const showSnack = (message, severity = "success", undo = null) => {
     setSnack({ open: true, message, severity, undo });
@@ -407,10 +408,8 @@ export default function DatagridCustom({
         //key={rows.map(r => `${r._id}-${r.waitingHHType?.join(',')}-${r.performenceExpectation}`).join('|')}
         rows={rows}
         columns={processedColumns}
-        pageSize={5}
-        rowsPerPageOptions={[5]}
         loading={false}
-        pagination={paginationOff}
+        pagination={!paginationOff}
         hideFooter={paginationOff}
         disableSelectionOnClick
         getRowId={(row) => row._id}

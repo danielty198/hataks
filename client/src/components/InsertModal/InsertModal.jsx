@@ -9,6 +9,7 @@ import ActionButtons from './components/ActionButtons';
 import StepRashi from './components/steps/StepRashi';
 import StepYechida from './components/steps/StepYechida';
 import StepAcher from './components/steps/StepAcher';
+import StepPkuda from './components/steps/StepPkuda';
 
 import { StyledDialog, StyledDialogTitle } from './styles/styledComponents';
 import { colors, steps, getDefaultFormData, waitingHHTypeRequiredString, baseUrl } from '../../assets';
@@ -48,8 +49,10 @@ const InsertModal = ({
     }
   }, [open, editData]);
 
+  const numbersOnlyFields = ['engineSerial', 'shamEngine', 'shamMinseret', 'shamOutgoingEngine', 'shamOutgoingMinseret', 'engineDeactivationNumber', 'minseretDeactivationNumber'];
+
   const handleChange = useCallback((field, value) => {
-    if (field === 'engineSerial' && (value === 0 || value) && value.length > 0) {
+    if (numbersOnlyFields.includes(field) && (value === 0 || value) && value.length > 0) {
       const lastChar = value[value.length - 1];
       if (!/[0-9]/.test(lastChar)) {
         return;
@@ -72,6 +75,7 @@ const InsertModal = ({
       if (!formData.manoiya) newErrors.manoiya = { error: true, msg: 'שדה חובה' };
       if (!formData.hatakType) newErrors.hatakType = { error: true, msg: 'שדה חובה' };
       if (!formData.engineSerial) newErrors.engineSerial = { error: true, msg: 'שדה חובה' };
+      if (!formData.minseretSerial) newErrors.minseretSerial = { error: true, msg: 'שדה חובה' };
       if (!formData.hatakStatus) newErrors.hatakStatus = { error: true, msg: 'שדה חובה' };
       if (!formData.tipulType) newErrors.tipulType = { error: true, msg: 'שדה חובה' };
       if (!formData.problem) newErrors.problem = { error: true, msg: 'שדה חובה' };
@@ -183,6 +187,13 @@ const InsertModal = ({
           <StepAcher
             formData={formData}
             errors={errors}
+            onChange={handleChange}
+          />
+        );
+      case 3:
+        return (
+          <StepPkuda
+            formData={formData}
             onChange={handleChange}
           />
         );

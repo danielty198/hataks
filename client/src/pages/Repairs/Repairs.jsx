@@ -37,145 +37,81 @@ import CustomPagination from "../../components/CustomPagination";
 const ROUTE = "repairs";
 
 const columnsConfig = [
-  {
-    field: "manoiya",
-    headerName: "מנועיה",
-    isEdit: true,
-    type: "singleSelect",
-    valueOptions: manoiyaOptions,
-  },
-  {
-    field: "hatakType",
-    headerName: 'סוג חט"כ',
-    isEdit: true,
-    type: "singleSelect",
-    valueOptions: hatakTypeOptions,
-  },
-  {
-    field: "sendingDivision",
-    headerName: "אוגדה מוסרת",
-    isEdit: true,
-    type: "singleSelect",
-    valueOptions: ogdotOptions,
-  },
-  {
-    field: "sendingBrigade",
-    headerName: "חטיבה מוסרת",
-    isEdit: true,
-    type: "string",
-  },
-  {
-    field: "sendingBattalion",
-    headerName: "גדוד מוסר",
-    isEdit: true,
-    type: "string",
-  },
-  { field: "zadik", headerName: "צ' של כלי", isEdit: true, type: "string" },
-  { field: "reciveDate", headerName: "תאריך קבלה", isEdit: true, type: "date" },
-  { field: "engineSerial", headerName: "מספר מנוע", isEdit: false },
-  { field: "swapEngineSerial", headerName: "החלף מנוע", type: "actions" },
-  {
-    field: "minseretSerial",
-    headerName: "מספר ממסרת",
-    isEdit: true,
-    type: "string",
-  },
-  { field: "swapMinseretSerial", headerName: "החלף ממסרת", type: "actions" },
-  {
-    field: "hatakStatus",
-    headerName: 'סטטוס חט"כ',
-    isEdit: true,
-    type: "singleSelect",
-    valueOptions: hatakStatusOptions,
-  },
-  {
-    field: "tipulType",
-    headerName: "סוג טיפול",
-    isEdit: true,
-    type: "singleSelect",
-    valueOptions: ["שבר", 'שע"מ'],
-  },
-  { field: "problem", headerName: "פירוט תקלה", isEdit: true, type: "string" },
-  {
-    field: "waitingHHType",
-    headerName: 'סוג ח"ח ממתין',
-    isEdit: true,
-    isMultiSelect: true,
-    valueOptions: waitingHHTypeOptions,
-  },
-  { field: "detailsHH", headerName: 'פירוט ח"ח', isEdit: true, type: "string" },
-  {
-    field: "michlalNeed",
-    headerName: "צריכת מכלל",
-    isEdit: true,
-    type: "string",
-  },
-  {
-    field: "recivingDivision",
-    headerName: "אוגדה מקבלת",
-    isEdit: true,
-    type: "singleSelect",
-    valueOptions: ogdotOptions,
-  },
-  {
-    field: "recivingBrigade",
-    headerName: "חטיבה מקבלת",
-    isEdit: true,
-    type: "string",
-  },
-  {
-    field: "recivingBattalion",
-    headerName: "גדוד מקבל",
-    isEdit: true,
-    type: "string",
-  },
-  {
-    field: "startWorkingDate",
-    headerName: "תאריך לפקודה",
-    isEdit: true,
-    type: "date",
-  },
-  {
-    field: "forManoiya",
-    headerName: "מנועיה לפקודה",
-    isEdit: true,
-    type: "singleSelect",
-    valueOptions: manoiyaOptions,
-  },
-  {
-    field: "performenceExpectation",
-    headerName: "צפי ביצוע",
-    isEdit: true,
-    type: "singleSelect",
-    valueOptions: performenceExpectationOptions,
-  },
-  {
-    field: "detailsOfNonCompliance",
-    headerName: "פירוט אי עמידה",
-    isEdit: true,
-    type: "string",
-  },
-  {
-    field: "intended",
-    headerName: "מיועד ל?",
-    isEdit: true,
-    type: "singleSelect",
-    valueOptions: intendedOptions,
-  },
-  {
-    field: "updatedAt",
-    headerName: "עודכן אחרון",
-    isEdit: false,
-    type: "date",
-  },
+  // 1. מנועיה
+  { field: "manoiya", headerName: "מנועיה", isEdit: true, type: "singleSelect", valueOptions: manoiyaOptions },
+  // 2. פק"ע
   { field: "pca", headerName: 'פק"ע', isEdit: true, type: "string" },
-  {
-    field: "deactivationCertificate",
-    headerName: "תעודת השבתה",
-    isEdit: true,
-    type: "string",
-  },
+  // 3. שינוע
   { field: "shinoa", headerName: "שינוע", isEdit: true, valueOptions: manoiyaOptions, type: "singleSelect" },
+  // 4. סוג חט"כ
+  { field: "hatakType", headerName: 'סוג חט"כ', isEdit: true, type: "singleSelect", valueOptions: hatakTypeOptions },
+  // 5. תאריך קבלה
+  { field: "reciveDate", headerName: "תאריך קבלה", isEdit: true, type: "date" },
+  // 6. אוגדה מוסרת
+  { field: "sendingDivision", headerName: "אוגדה מוסרת", isEdit: true, type: "singleSelect", valueOptions: ogdotOptions },
+  // 7. חטיבה מוסרת
+  { field: "sendingBrigade", headerName: "חטיבה מוסרת", isEdit: true, type: "string" },
+  // 8. גדוד מוסר
+  { field: "sendingBattalion", headerName: "גדוד מוסר", isEdit: true, type: "string" },
+  // 9. צ' של כלי
+  { field: "zadik", headerName: "צ' של כלי", isEdit: true, type: "string" },
+  // 10. מספר מנוע
+  { field: "engineSerial", headerName: "מספר מנוע", isEdit: false },
+  // 11. שע"מ מנוע
+  { field: "shamEngine", headerName: 'שע"מ מנוע', isEdit: true, type: "string" },
+  // 12. החלף מנוע
+  { field: "swapEngineSerial", headerName: "החלף מנוע", type: "actions" },
+  // 13. מספר ממסרת
+  { field: "minseretSerial", headerName: "מספר ממסרת", isEdit: true, type: "string" },
+  // 14. שע"מ ממסרת
+  { field: "shamMinseret", headerName: 'שע"מ ממסרת', isEdit: true, type: "string" },
+  // 15. החלף ממסרת
+  { field: "swapMinseretSerial", headerName: "החלף ממסרת", type: "actions" },
+  // 16. סטטוס חט"כ
+  { field: "hatakStatus", headerName: 'סטטוס חט"כ', isEdit: true, type: "singleSelect", valueOptions: hatakStatusOptions },
+  // 17. סוג טיפול
+  { field: "tipulType", headerName: "סוג טיפול", isEdit: true, type: "singleSelect", valueOptions: ["שבר", 'שע"מ'] },
+  // 18. פירוט תקלה
+  { field: "problem", headerName: "פירוט תקלה", isEdit: true, type: "string" },
+  // 19. מה נבדק בפועל
+  { field: "actuallyChecked", headerName: "מה נבדק בפועל", isEdit: true, type: "string" },
+  // 20. סוג ח"ח ממתין
+  { field: "waitingHHType", headerName: 'סוג ח"ח ממתין', isEdit: true, isMultiSelect: true, valueOptions: waitingHHTypeOptions },
+  // 21. פירוט ח"ח
+  { field: "detailsHH", headerName: 'פירוט ח"ח', isEdit: true, type: "string" },
+  // 22. בנק תקלות מנוע
+  { field: "engineFaultBank", headerName: "בנק תקלות מנוע", isEdit: true, type: "string" },
+  // 23. בנק תקלות ממסרת
+  { field: "minseretFaultBank", headerName: "בנק תקלות ממסרת", isEdit: true, type: "string" },
+  // 24. מספר השבתה מנוע
+  { field: "engineDeactivationNumber", headerName: "מספר השבתה מנוע", isEdit: true, type: "string" },
+  // 25. מספר השבתה ממסרת
+  { field: "minseretDeactivationNumber", headerName: "מספר השבתה ממסרת", isEdit: true, type: "string" },
+  // מנוע יוצא + שע"מ
+  { field: "outgoingEngine", headerName: "מנוע יוצא", isEdit: true, type: "string" },
+  { field: "shamOutgoingEngine", headerName: 'שע"מ מנוע יוצא', isEdit: true, type: "string" },
+  // ממסרת יוצאת + שע"מ
+  { field: "outgoingMinseret", headerName: "ממסרת יוצאת", isEdit: true, type: "string" },
+  { field: "shamOutgoingMinseret", headerName: 'שע"מ ממסרת יוצאת', isEdit: true, type: "string" },
+  // 26. אוגדה מקבלת
+  { field: "recivingDivision", headerName: "אוגדה מקבלת", isEdit: true, type: "singleSelect", valueOptions: ogdotOptions },
+  // 27. חטיבה מקבלת
+  { field: "recivingBrigade", headerName: "חטיבה מקבלת", isEdit: true, type: "string" },
+  // 28. גדוד מקבל
+  { field: "recivingBattalion", headerName: "גדוד מקבל", isEdit: true, type: "string" },
+  // 29. תאריך לפקודה
+  { field: "startWorkingDate", headerName: "תאריך לפקודה", isEdit: true, type: "date" },
+  // 30. מנועיה לפקודה
+  { field: "forManoiya", headerName: "מנועיה לפקודה", isEdit: true, type: "singleSelect", valueOptions: manoiyaOptions },
+  // 31. צפי ביצוע
+  { field: "performenceExpectation", headerName: "צפי ביצוע", isEdit: true, type: "singleSelect", valueOptions: performenceExpectationOptions },
+  // 32. פירוט אי עמידה
+  { field: "detailsOfNonCompliance", headerName: "פירוט אי עמידה", isEdit: true, type: "string" },
+  // 33. מיועד ל?
+  { field: "intended", headerName: "מיועד ל?", isEdit: true, type: "singleSelect", valueOptions: intendedOptions },
+  // 34. עדכון אחרון
+  { field: "updatedAt", headerName: "עודכן אחרון", isEdit: false, type: "date" },
+  // 35-37. פעולות
   { field: "history", headerName: "היסטוריה", type: "actions" },
   { field: "edit", headerName: "ערוך", type: "actions" },
   { field: "delete", headerName: "מחק", type: "actions" },
@@ -622,7 +558,7 @@ export default function RepairsPage() {
           res = await fetch(`${baseUrl}/api/${ROUTE}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data),
+            body: JSON.stringify({ data, user }),
           });
 
           if (!res.ok) {
@@ -1213,7 +1149,7 @@ export default function RepairsPage() {
           onFetchData={handleFetchData}
           initialPageSize={15}
           showPageSize={true}
-          pageSizeOptions={[10, 15, 25, 50, 100, 200 ,"הכל"]}
+          pageSizeOptions={[10, 15, 25, 50, 100]}
           debounceDelay={300}
           resetToPage1={triggerPaginationReset} // NEW PROP
           onResetComplete={handlePaginationResetComplete} // NEW PROP
