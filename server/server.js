@@ -17,6 +17,7 @@ app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
 const repairsRouter = require('./routes/Repairs');
+const michlolRouter = require('./routes/Michlol');
 const switchRulesRouter = require('./routes/SwitchRules');
 const biRouter = require('./routes/biRoutes')
 const testRouter = require('./routes/testRoutes')
@@ -25,6 +26,7 @@ const zadikRouter = require('./routes/ZadikList')
 // routes
 
 app.use('/api/repairs', repairsRouter);
+app.use('/api/michlol', michlolRouter);
 app.use('/api/switch-rules', switchRulesRouter);
 app.use('/api/bi', biRouter)
 app.use('/api/test', testRouter)

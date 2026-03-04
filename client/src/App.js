@@ -3,6 +3,7 @@ import { Routes, Route, useNavigate } from "react-router-dom";
 import { Box, AppBar, Toolbar, Typography } from "@mui/material";
 import Sidebar from "./components/Sidebar";
 import Repairs from "./pages/Repairs/Repairs";
+import MichlolPage from "./pages/Michlol/Michlol";
 import RepairsPendingDeletionPage from "./pages/Repairs/RepairsPendingDeletion";
 import BI from "./pages/BI";
 import '@fontsource/assistant/400.css';
@@ -98,6 +99,14 @@ function App() {
             <Route path="/" element={<DistinctValuesProvider><Repairs /></DistinctValuesProvider>} />
             <Route path="/bi" element={<BI />} />
             <Route path="/hataks" element={<DistinctValuesProvider><Repairs /></DistinctValuesProvider>} />
+            <Route
+              path="/michlol"
+              element={
+                <DistinctValuesProvider>
+                  <MichlolPage />
+                </DistinctValuesProvider>
+              }
+            />
             <Route
               path="/hataks-to-delete"
               element={

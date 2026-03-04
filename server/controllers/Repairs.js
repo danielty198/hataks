@@ -102,6 +102,18 @@ const getRows = async (req, res) => {
       matchStage.hatakStatus = { $ne: "נופק" };
     }
 
+    // Only "regular" repairs: must have BOTH engine and minseret (non-empty, existing)
+    matchStage.engineSerial = {
+      ...(matchStage.engineSerial || {}),
+      $nin: [null, ""],
+      $exists: true,
+    };
+    matchStage.minseretSerial = {
+      ...(matchStage.minseretSerial || {}),
+      $nin: [null, ""],
+      $exists: true,
+    };
+
     // Use facet to run count and data queries in parallel within one aggregation
 
     const pipeline = [];
@@ -164,6 +176,101 @@ const getRows = async (req, res) => {
   } catch (err) {
     console.error("Aggregate error:", err);
     res.status(500).json({ error: "Failed to fetch data" });
+  }
+};
+
+// Michlol = repair that has EITHER engine OR minseret, but NOT both
+const getMichlolRows = async (req, res) => {
+  try {
+    const filters = req.query;
+    const pageSize = parseInt(filters.pageSize) || 10;
+    const page = parseInt(filters.page) || 0;
+    const skip = page * pageSize;
+
+    const matchStage = buildMatchStage(filters);
+
+    if (typeof filters.goingToBeDeleted === "undefined") {
+      matchStage.goingToBeDeleted = { $ne: true };
+    }
+
+    if (typeof filters.hatakStatus === "undefined") {
+      matchStage.hatakStatus = { $ne: "נופק" };
+    }
+
+    // Michlol condition: XOR between engineSerial and minseretSerial.
+    // Treat "missing field" like "empty".
+    const xorCondition = {
+      $or: [
+        {
+          engineSerial: { $nin: [null, ""] },
+          $or: [
+            { minseretSerial: { $in: [null, ""] } },
+            { minseretSerial: { $exists: false } },
+          ],
+        },
+        {
+          minseretSerial: { $nin: [null, ""] },
+          $or: [
+            { engineSerial: { $in: [null, ""] } },
+            { engineSerial: { $exists: false } },
+          ],
+        },
+      ],
+    };
+
+    const pipeline = [];
+
+    if (Object.keys(matchStage).length > 0) {
+      pipeline.push({ $match: matchStage });
+    }
+
+    pipeline.push({ $match: xorCondition });
+
+    pipeline.push({ $sort: { _id: -1 } });
+
+    pipeline.push({
+      $lookup: {
+        from: "repairhistories",
+        let: { repairId: "$_id" },
+        pipeline: [
+          { $match: { $expr: { $eq: ["$repairId", "$$repairId"] } } },
+          { $sort: { createdAt: -1 } },
+          { $limit: 1 },
+        ],
+        as: "lastHistory",
+      },
+    });
+
+    pipeline.push({
+      $addFields: {
+        lastUpdatedBy: { $arrayElemAt: ["$lastHistory.changedBy", 0] },
+        lastUpdatedAt: { $arrayElemAt: ["$lastHistory.createdAt", 0] },
+      },
+    });
+
+    pipeline.push({ $project: { lastHistory: 0 } });
+
+    pipeline.push({
+      $facet: {
+        metadata: [{ $count: "total" }],
+        data: [{ $skip: skip }, { $limit: pageSize }],
+      },
+    });
+
+    const [result] = await model.aggregate(pipeline).allowDiskUse(true);
+
+    const rowsCount = result.metadata.length > 0 ? result.metadata[0].total : 0;
+    const data = result.data;
+
+    res.json({
+      data,
+      rowsCount,
+      page,
+      pageSize,
+    });
+  } catch (err) {
+    console.error("Michlol aggregate error:", err);
+    res.status(500).json({ error: "Failed to fetch michlol data" });
   }
 };
 
@@ -418,7 +525,22 @@ const exportToExcel = async (req, res) => {
       projection[field] = 1;
     });
 
-    const query = Object.keys(matchStage).length > 0 ? matchStage : {};
+    // Regular repairs export: must have BOTH engine and minseret
+    const baseMatch = {
+      ...matchStage,
+      engineSerial: {
+        ...(matchStage.engineSerial || {}),
+        $nin: [null, ""],
+        $exists: true,
+      },
+      minseretSerial: {
+        ...(matchStage.minseretSerial || {}),
+        $nin: [null, ""],
+        $exists: true,
+      },
+    };
+
+    const query = Object.keys(baseMatch).length > 0 ? baseMatch : {};
     const docs = await model
       .find(query, projection)
       .sort({ _id: -1 })
@@ -466,6 +588,90 @@ const exportToExcel = async (req, res) => {
   } catch (err) {
     console.error("Export to excel error:", err);
     res.status(500).json({ error: "Failed to export to excel" });
+  }
+};
+
+// Export Michlol (XOR engine/minseret)
+const exportMichlolToExcel = async (req, res) => {
+  try {
+    const filters = req.query || {};
+    const matchStage = buildMatchStage(filters);
+
+    const rawColumns = typeof filters.columns === "string" ? filters.columns : "";
+    const selectedFields = rawColumns
+      ? rawColumns.split(",").map((c) => c.trim()).filter(Boolean)
+      : Object.keys(fieldHeaderMap);
+
+    const projection = {};
+    selectedFields.forEach((field) => {
+      projection[field] = 1;
+    });
+
+    const xorCondition = {
+      $or: [
+        {
+          engineSerial: { $nin: [null, ""] },
+          $or: [
+            { minseretSerial: { $in: [null, ""] } },
+            { minseretSerial: { $exists: false } },
+          ],
+        },
+        {
+          minseretSerial: { $nin: [null, ""] },
+          $or: [
+            { engineSerial: { $in: [null, ""] } },
+            { engineSerial: { $exists: false } },
+          ],
+        },
+      ],
+    };
+
+    const query =
+      Object.keys(matchStage).length > 0
+        ? { $and: [matchStage, xorCondition] }
+        : xorCondition;
+
+    const docs = await model
+      .find(query, projection)
+      .sort({ _id: -1 })
+      .lean();
+
+    const dataRows = (docs || []).map((doc) => {
+      const row = {};
+      selectedFields.forEach((field) => {
+        let value = doc[field];
+        if (["reciveDate", "startWorkingDate", "createdAt", "updatedAt"].includes(field)) {
+          value = formatDateForExcel(value);
+        }
+        row[field] = value !== undefined && value !== null ? value : "";
+      });
+      return row;
+    });
+
+    const headers = selectedFields.map((field) => fieldHeaderMap[field] || field);
+
+    const worksheet = XLSX.utils.json_to_sheet(dataRows, { header: selectedFields });
+    XLSX.utils.sheet_add_aoa(worksheet, [headers], { origin: "A1" });
+    XLSX.utils.sheet_add_json(worksheet, dataRows, { skipHeader: true, origin: "A2" });
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "michlol");
+
+    const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+
+    const filename = "ייצוא_מכלול.xlsx";
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`
+    );
+    res.send(buffer);
+  } catch (err) {
+    console.error("Export michlol to excel error:", err);
+    res.status(500).json({ error: "Failed to export michlol to excel" });
   }
 };
 
@@ -999,6 +1205,7 @@ module.exports = {
   createRepair,
   updateById,
   getRows,
+  getMichlolRows,
   getDistinctEngineSerials,
   getByEngine,
   getHistory,
@@ -1006,6 +1213,7 @@ module.exports = {
   getDistinctValuesPaged,
   getCompatibleForSwap,
   exportToExcel,
+  exportMichlolToExcel,
   getAll,
   changeEngineSerial,
   changeMinseretSerial,

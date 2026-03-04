@@ -16,6 +16,12 @@ export default function Sidebar() {
       roles: [], // visible to these roles
     },
     {
+      label: "מכלול",
+      path: "/michlol",
+      icon: "🧩",
+      roles: ["admin", "manoiya"], // admin + מנויעה only
+    },
+    {
       label: "חטכים למחיקה",
       path: "/hataks-to-delete",
       icon: "🗑️",
